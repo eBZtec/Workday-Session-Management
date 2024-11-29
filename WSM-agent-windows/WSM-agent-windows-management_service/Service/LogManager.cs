@@ -1,0 +1,22 @@
+﻿namespace SessionService.Service
+{
+    internal static class LogManager
+    {
+        private static readonly string logFilePath = Path.Combine(StartupManager.wsmDir, "WSMservice.log");
+
+        public static void Log(string message)
+        {
+            try
+            {
+                using (StreamWriter writer = new StreamWriter(logFilePath, true))
+                {
+                    writer.WriteLine($"{DateTime.Now:G}: {message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Logging failed: {ex.Message}");
+            }
+        }
+    }
+}

@@ -1,0 +1,169 @@
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, Boolean, Text
+from sqlalchemy.dialects.postgresql import CITEXT
+from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.sql import func
+from src.models.schema.request_models import SessionTerminationActionSchema
+from datetime import datetime
+
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
+
+# Classe Client (tabela client)
+class Client(Base):
+    __tablename__ = 'client'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    hostname = Column(String(100), nullable=False)
+    ip_address = Column(String(100), nullable=False)
+    client_version = Column(String(50), nullable=False)
+    os_name = Column(String(50))
+    os_version = Column(String(50), nullable=False)
+    agent_info = Column(String(50))
+    create_timestamp = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+    update_timestamp = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=True)
+
+    # Relacionamento com Sessions
+    sessions = relationship("Sessions", back_populates="client", cascade='all, delete')
+
+class Sessions(Base):
+    __tablename__ = 'sessions'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    hostname = Column (String(100), nullable=False)
+    client_id = Column(Integer, ForeignKey('client.id'))
+    event_type = Column(String(50), nullable=False)
+    user = Column(String(100), nullable =False)
+    status = Column(String(50))
+    start_time = Column(DateTime(timezone=True), nullable=False)
+    end_time = Column(DateTime(timezone=True), nullable=True)
+    create_timestamp = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+    update_timestamp = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=True)
+
+    # Relacionamento com Client
+    client = relationship("Client", back_populates="sessions", cascade='all, delete')
+
+    # Relacionamento com Events
+    # events = relationship("Events", back_populates="session", cascade='all, delete')
+
+class Events(Base):
+    __tablename__ = 'events'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    # session_id = Column(Integer, ForeignKey('sessions.id'))
+    event_type = Column(String(50), nullable=False)
+    description = Column(String(255), nullable=False)
+    create_timestamp = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+    update_timestamp = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False)
+    # Relacionamento com Sessions
+    # session = relationship("Sessions", back_populates="events", cascade='all, delete')
+
+class StandardWorkHours(Base):
+    __tablename__ = 'standard_workhours'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    uid = Column(CITEXT)
+    start_time = Column(DateTime(timezone=True), nullable=False)
+    end_time = Column(DateTime(timezone=True), nullable=False)
+    allowed_work = Column (String(15), default=SessionTerminationActionSchema.LOGOFF)
+    uf = Column(String(2), nullable=False)
+    st = Column(String(35), nullable=False)
+    c = Column(String(100), nullable=False)
+    weekdays = Column(String(7), nullable=False)
+    session_termination_action = Column(String()) ## Se a sesão for Lock, ou logoff
+    cn = Column(String(240))
+    l = Column(String(240))
+    unrestricted = Column(Boolean)
+    deactivation_date = Column(DateTime(timezone=True),nullable=True)
+    create_timestamp = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+    update_timestamp = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False)
+
+    # Relacionamento com Messages
+    messages_entries = relationship("Messages", back_populates="standard_workhours", cascade='all, delete')
+
+    # Relacionamento com TargetStatus
+    target_status_entries = relationship("TargetStatus", back_populates="standard_workhours", cascade='all, delete')
+
+     # Relacionamento com ExtendedWorkhours
+    extended_workhours_entries = relationship("ExtendedWorkHours", back_populates="standard_workhours", cascade='all, delete')
+
+# Classe Messages (tabela messages)
+class Messages(Base):
+    __tablename__ = 'messages'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    std_wrk_id = Column(Integer, ForeignKey('standard_workhours.id'), nullable=True) # antigo num_reg
+    uid = Column(CITEXT)
+    message = Column(String(200), nullable=False)
+    create_timestamp = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+    update_timestamp = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False)
+
+    # Relacionamento com StandardWorkHours
+    standard_workhours = relationship("StandardWorkHours", back_populates="messages_entries",cascade='all, delete')
+
+
+class Exceptions(Base):
+    __tablename__ = 'exceptions'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    type = Column(String(50))
+    ip_address = Column(String(50))
+    create_timestamp = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+    update_timestamp = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False)
+
+class ExtendedWorkHours(Base):
+    __tablename__ = 'extended_workhours'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    std_wrk_id = Column(Integer, ForeignKey('standard_workhours.id'), nullable=False)
+    uid = Column(String)  ## usado pra procurar o stdwrkhours
+    extension_start_time = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+    extension_end_time = Column(DateTime(timezone=True),default=func.now(), nullable=False)
+    extended_workhours_type = Column(String(2), nullable=False)
+    uf = Column(String(2), nullable=False)
+    c = Column(String(100), nullable=False)
+    week_days_count = Column(String(7), nullable=False)
+    extension_active = Column(Integer, nullable=False)
+    ou = Column(Integer)
+    create_timestamp = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+    update_timestamp = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False)
+
+    # Relacionamento com StandardWorkHours
+    standard_workhours = relationship("StandardWorkHours", back_populates="extended_workhours_entries",cascade="all,delete")
+
+# Classe de Feriados
+class Holidays(Base):
+    __tablename__ = 'holidays'
+    holiday_date = Column(DateTime, primary_key=True, nullable=False)
+    city = Column(Integer, nullable=False)
+    holiday_type = Column(String(2), nullable=False)
+    create_timestamp = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+    update_timestamp = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class TargetStatus(Base):
+    __tablename__ = 'target_status'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    std_wrk_id = Column(Integer, ForeignKey('standard_workhours.id'), nullable=True)
+    id_target = Column(Integer, ForeignKey('target.id'), nullable=False)
+    uuid = Column(String(37))
+    create_timestamp = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+    update_timestamp = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False)
+
+    # Relacionamento com StandardWorkHours
+    standard_workhours = relationship("StandardWorkHours", back_populates="target_status_entries", cascade='all, delete')
+
+    # Relacionamento com Target
+    target = relationship("Target", back_populates="target_status_entries", cascade='all, delete')
+
+class Target(Base):
+    __tablename__ = 'target'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    target = Column(String(100), nullable=False)
+    service = Column(String(100), nullable=False)
+    enabled = Column(Integer, nullable=False)
+    create_timestamp = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+    update_timestamp = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False)
+
+    # Relacionamento com TargetStatus
+    target_status_entries = relationship("TargetStatus", back_populates="target", cascade='all, delete')
+
+class Certificate_Authority(Base):
+    __tablename__ = 'certificate_authority'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    fqdn = Column(String(100), nullable=False)
+    certificate = Column(Text, nullable=False) 
+    validity = Column(DateTime(timezone=True), nullable=False)
