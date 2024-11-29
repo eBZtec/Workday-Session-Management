@@ -10,7 +10,7 @@
             {
                 using (StreamWriter writer = new StreamWriter(logFilePath, true))
                 {
-                    writer.WriteLine($"{DateTime.Now:G}: {message}");
+                    writer.WriteLine($"{DateTime.UtcNow.ToLocalTime:G}: {message}");
                 }
             }
             catch (Exception ex)
