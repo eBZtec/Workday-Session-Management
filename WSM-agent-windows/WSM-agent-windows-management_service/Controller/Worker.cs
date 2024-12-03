@@ -84,7 +84,6 @@ public class Worker : BackgroundService
                                     interactmessage.Append(messageObject.user);
                                     interactmessage.Append(JsonSerializer.Serialize(Command.ResponseToCommand(messageObject)));
                                     publisher.SendMultipartMessage(interactmessage);
-
                                     break;
 
                                 case "lock":
@@ -110,7 +109,6 @@ public class Worker : BackgroundService
                                     notifymessage.Append(messageObject.user);
                                     notifymessage.Append(JsonSerializer.Serialize(Command.ResponseToCommand(messageObject)));
                                     publisher.SendMultipartMessage(notifymessage);
-
                                     break;
 
                                 case "ping":
@@ -150,13 +148,11 @@ public class Worker : BackgroundService
         {
             case 4624: // Logon
                 userSessions = SessionManager.EnumerateSessions();
-
                 if (e.Entry.ReplacementStrings[6].Equals(Environment.MachineName) && e.Entry.ReplacementStrings[0].Equals("S-1-0-0"))
                 {
                     EventManager.HandleLogonEvent(e.Entry, dealer);
                     SessionManager.DescribeUsers(userSessions);
                 }
-
                 userSessions = SessionManager.EnumerateSessions();
                 break;
 
