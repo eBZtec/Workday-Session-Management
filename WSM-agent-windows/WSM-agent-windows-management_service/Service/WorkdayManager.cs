@@ -2,7 +2,6 @@
 using NetMQ.Sockets;
 using SessionService.Model;
 using System.Text.Json;
-
 namespace SessionService.Service
 {
     internal class WorkdayManager
@@ -13,7 +12,7 @@ namespace SessionService.Service
 
             NetMQMessage messagemq = new NetMQMessage(2);
             messagemq.Append(userWorkhour.username);
-            Command cmd = new Command("notify", "Jornada Atualizada", "Sua jornada de trabalho foi atualizada nessa sessão", "yes_no");
+            Command cmd = new Command("notify", Utils.Utils.updated_workhour_title, Utils.Utils.updated_workhour, "yes_no");
             messagemq.Append(JsonSerializer.Serialize(cmd));
 
             foreach (UserAllowed userAllowed in usersAllowed)
@@ -53,22 +52,18 @@ namespace SessionService.Service
                                     {
                                         if (currentMinutes >= sunday.start && currentMinutes <= sunday.end)
                                         {
-                                            Console.WriteLine($"User: {user.username} allowed to work");
                                             goto default;
                                         }
                                     }
-                                    Console.WriteLine($"User: {user.username} not allowed at this time!");
+                                    LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
 
                                     msg = new(2);
                                     msg.Append(user.username);
-                                    cmd = new Command("notify", "Atuação fora de horário", "Sua jornada de trabalho não compreende a data atual.\n REALIZANDO LOGOFF...", "yes_no");
+                                    cmd = new Command("notify", Utils.Utils.unallowed_work_title, Utils.Utils.unallowed_work, "yes_no");
                                     msg.Append(JsonSerializer.Serialize(cmd));
 
                                     publisher.SendMultipartMessage(msg);
-
-                                    Thread.Sleep(TimeSpan.FromSeconds(5));
-
-                                    SessionManager.LogoffSession(user.sessionID);
+                                    _ = Task.Run(() => LogoffUnallowed(user.sessionID, user.username));
                                     break;
 
                                 case DayOfWeek.Monday:
@@ -80,18 +75,15 @@ namespace SessionService.Service
                                             goto default;
                                         }
                                     }
-                                    Console.WriteLine($"User: {user.username} not allowed at this time!");
+                                    LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
 
                                     msg = new(2);
                                     msg.Append(user.username);
-                                    cmd = new Command("notify", "Atuação fora de horário", "Sua jornada de trabalho não compreende a data atual.\n REALIZANDO LOGOFF...", "yes_no");
+                                    cmd = new Command("notify", Utils.Utils.unallowed_work_title, Utils.Utils.unallowed_work, "yes_no");
                                     msg.Append(JsonSerializer.Serialize(cmd));
 
                                     publisher.SendMultipartMessage(msg);
-
-                                    Thread.Sleep(TimeSpan.FromSeconds(5));
-
-                                    SessionManager.LogoffSession(user.sessionID);
+                                    _ = Task.Run(() => LogoffUnallowed(user.sessionID, user.username));
                                     break;
 
                                 case DayOfWeek.Tuesday:
@@ -103,18 +95,15 @@ namespace SessionService.Service
                                             goto default;
                                         }
                                     }
-                                    Console.WriteLine($"User: {user.username} not allowed at this time!");
+                                    LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
 
                                     msg = new(2);
                                     msg.Append(user.username);
-                                    cmd = new Command("notify", "Atuação fora de horário", "Sua jornada de trabalho não compreende a data atual.\n REALIZANDO LOGOFF...", "yes_no");
+                                    cmd = new Command("notify", Utils.Utils.unallowed_work_title, Utils.Utils.unallowed_work, "yes_no");
                                     msg.Append(JsonSerializer.Serialize(cmd));
 
                                     publisher.SendMultipartMessage(msg);
-
-                                    Thread.Sleep(TimeSpan.FromSeconds(5));
-
-                                    SessionManager.LogoffSession(user.sessionID);
+                                    _ = Task.Run(() => LogoffUnallowed(user.sessionID, user.username));
                                     break;
 
                                 case DayOfWeek.Wednesday:
@@ -126,18 +115,15 @@ namespace SessionService.Service
                                             goto default;
                                         }
                                     }
-                                    Console.WriteLine($"User: {user.username} not allowed at this time!");
+                                    LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
 
                                     msg = new(2);
                                     msg.Append(user.username);
-                                    cmd = new Command("notify", "Atuação fora de horário", "Sua jornada de trabalho não compreende a data atual.\n REALIZANDO LOGOFF...", "yes_no");
+                                    cmd = new Command("notify", Utils.Utils.unallowed_work_title, Utils.Utils.unallowed_work, "yes_no");
                                     msg.Append(JsonSerializer.Serialize(cmd));
 
                                     publisher.SendMultipartMessage(msg);
-
-                                    Thread.Sleep(TimeSpan.FromSeconds(5));
-
-                                    SessionManager.LogoffSession(user.sessionID);
+                                    _ = Task.Run(() => LogoffUnallowed(user.sessionID, user.username));
                                     break;
 
                                 case DayOfWeek.Thursday:
@@ -149,18 +135,15 @@ namespace SessionService.Service
                                             goto default;
                                         }
                                     }
-                                    Console.WriteLine($"User: {user.username} not allowed at this time!");
+                                    LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
 
                                     msg = new(2);
                                     msg.Append(user.username);
-                                    cmd = new Command("notify", "Atuação fora de horário", "Sua jornada de trabalho não compreende a data atual.\n REALIZANDO LOGOFF...", "yes_no");
+                                    cmd = new Command("notify", Utils.Utils.unallowed_work_title, Utils.Utils.unallowed_work, "yes_no");
                                     msg.Append(JsonSerializer.Serialize(cmd));
 
                                     publisher.SendMultipartMessage(msg);
-
-                                    Thread.Sleep(TimeSpan.FromSeconds(5));
-
-                                    SessionManager.LogoffSession(user.sessionID);
+                                    _ = Task.Run(() => LogoffUnallowed(user.sessionID, user.username));
                                     break;
 
                                 case DayOfWeek.Friday:
@@ -172,18 +155,15 @@ namespace SessionService.Service
                                             goto default;
                                         }
                                     }
-                                    Console.WriteLine($"User: {user.username} not allowed at this time!");
+                                    LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
 
                                     msg = new(2);
                                     msg.Append(user.username);
-                                    cmd = new Command("notify", "Atuação fora de horário", "Sua jornada de trabalho não compreende a data atual.\n REALIZANDO LOGOFF...", "yes_no");
+                                    cmd = new Command("notify", Utils.Utils.unallowed_work_title, Utils.Utils.unallowed_work, "yes_no");
                                     msg.Append(JsonSerializer.Serialize(cmd));
 
                                     publisher.SendMultipartMessage(msg);
-
-                                    Thread.Sleep(TimeSpan.FromSeconds(5));
-
-                                    SessionManager.LogoffSession(user.sessionID);
+                                    _ = Task.Run(() => LogoffUnallowed(user.sessionID, user.username));
                                     break;
 
                                 case DayOfWeek.Saturday:
@@ -195,18 +175,15 @@ namespace SessionService.Service
                                             goto default;
                                         }
                                     }
-                                    Console.WriteLine($"User: {user.username} not allowed at this time!");
+                                    LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
 
                                     msg = new(2);
                                     msg.Append(user.username);
-                                    cmd = new Command("notify", "Atuação fora de horário", "Sua jornada de trabalho não compreende a data atual.\n REALIZANDO LOGOFF...", "yes_no");
+                                    cmd = new Command("notify", Utils.Utils.unallowed_work_title, Utils.Utils.unallowed_work, "yes_no");
                                     msg.Append(JsonSerializer.Serialize(cmd));
 
                                     publisher.SendMultipartMessage(msg);
-
-                                    Thread.Sleep(TimeSpan.FromSeconds(5));
-
-                                    SessionManager.LogoffSession(user.sessionID);
+                                    _ = Task.Run(() => LogoffUnallowed(user.sessionID, user.username));
                                     break;
 
                                 default:
@@ -217,6 +194,12 @@ namespace SessionService.Service
                 }
                 Thread.Sleep(TimeSpan.FromSeconds(30));
             }
+        }
+
+        public static void LogoffUnallowed(int id, string username)
+        {
+            Thread.Sleep(TimeSpan.FromSeconds(5));
+            SessionManager.LogoffSession(id, username);
         }
     }
 }

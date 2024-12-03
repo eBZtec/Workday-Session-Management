@@ -45,18 +45,16 @@ public class Worker : BackgroundService
                 publisher.Options.CurveCertificate = new NetMQCertificate(StartupManager.LoadCurveKeys(true), StartupManager.LoadCurveKeys(false));
 
                 publisher.Bind(pubUrl);
-                Console.WriteLine($"Publisher bound to: {pubUrl}");
                 LogManager.Log($"Worker -> Publisher bound to: {pubUrl}");
 
                 dealer.Connect(dealerUrl);
-                Console.WriteLine($"Dealer connected to: {dealerUrl}");
                 LogManager.Log($"Worker -> Dealer connected to: {dealerUrl}");
 
                 dealer.Options.Identity = System.Text.Encoding.UTF8.GetBytes(System.Net.Dns.GetHostName());
 
                 //info da versão do agente
                 Console.WriteLine(clientInfo);
-                LogManager.Log($"Client information: {clientInfo}");
+                LogManager.LogClientInfo(clientInfo.ToString());
 
                 //Print active users
                 userSessions = SessionManager.EnumerateSessions();
@@ -64,7 +62,7 @@ public class Worker : BackgroundService
 
                 //-------------------------------------------------
                 _ = Task.Run(() => WorkdayManager.Vigilance(userSessions, usersAllowed, publisher));
-
+                _ = Task.Run(() => StartupManager.HeartBeat(clientInfo, dealer));
                 //-------------------------------------------------
                 while (!stoppingToken.IsCancellationRequested)
                 {
@@ -193,7 +191,7 @@ public class Worker : BackgroundService
         List<int> ids = SessionManager.GetSessionIDs(messageObject.user ?? "Unknown", userSessions);
         foreach (int id in ids)
         {
-            SessionManager.LogoffSession(id);
+            SessionManager.LogoffSession(id, messageObject.user);
         }
     }
 
@@ -204,7 +202,7 @@ public class Worker : BackgroundService
         List<int> ids = SessionManager.GetSessionIDs(messageObject.user ?? "Unknown", userSessions);
         foreach (int id in ids)
         {
-            SessionManager.Lock(id);
+            SessionManager.Lock(id, messageObject.user);
         }
     }
 }
