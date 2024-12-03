@@ -28,7 +28,7 @@ namespace SessionService.Service
 
             EventInfoHandler info = new("locked", entry.ReplacementStrings[1]);
 
-            var encapsulatedJson = new Dictionary<string, EventInfoHandler> { { "LockUnlock", info } };
+            var encapsulatedJson = new Dictionary<string, string> { { "LockUnlock", JsonSerializer.Serialize<EventInfoHandler>(info) } };
             var result = JsonSerializer.Serialize(encapsulatedJson);
             //dealer.SendFrame(result);
         }
@@ -40,7 +40,7 @@ namespace SessionService.Service
 
             EventInfoHandler info = new("active", entry.ReplacementStrings[1]);
 
-            var encapsulatedJson = new Dictionary<string, EventInfoHandler> { { "LockUnlock", info } };
+            var encapsulatedJson = new Dictionary<string, string> { { "LockUnlock", JsonSerializer.Serialize<EventInfoHandler>(info) } };
             var result = JsonSerializer.Serialize(encapsulatedJson);
             // dealer.SendFrame(result);
         }
@@ -52,7 +52,7 @@ namespace SessionService.Service
 
             EventInfoHandler info = new("disconnected", entry.ReplacementStrings[1]);
 
-            var encapsulatedJson = new Dictionary<string, EventInfoHandler> { { "SessionDisconnected", info } };
+            var encapsulatedJson = new Dictionary<string, string> { { "SessionDisconnected", JsonSerializer.Serialize<EventInfoHandler>(info) } };
             var result = JsonSerializer.Serialize(encapsulatedJson);
             dealer.SendFrame(result);
         }

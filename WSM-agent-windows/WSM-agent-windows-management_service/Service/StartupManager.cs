@@ -113,6 +113,7 @@ namespace SessionService.Service
             catch (Exception ex)
             {
                 Console.WriteLine($"An error occurred while loading the keys: {ex.Message}");
+                LogManager.Log($"An error occurred while loading the keys: {ex.Message}");
                 return null;
             }
         }
