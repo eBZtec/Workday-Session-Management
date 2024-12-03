@@ -1,6 +1,10 @@
-﻿using Sodium;
+﻿using NetMQ;
+using NetMQ.Sockets;
+using SessionService.Model;
+using Sodium;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.Text.Json;
 
 namespace SessionService.Service
 {
@@ -109,6 +113,7 @@ namespace SessionService.Service
             catch (Exception ex)
             {
                 Console.WriteLine($"An error occurred while loading the keys: {ex.Message}");
+                LogManager.Log($"An error occurred while loading the keys: {ex.Message}");
                 return null;
             }
         }
@@ -123,6 +128,24 @@ namespace SessionService.Service
             fileSecurity.SetAccessRuleProtection(isProtected: true, preserveInheritance: false);
 
             fileInfo.SetAccessControl(fileSecurity);
+        }
+
+        public static void HeartBeat(ClientInfo clientInfo, DealerSocket dealer)
+        {
+            while (true)
+            {
+                clientInfo = new ClientInfo();
+
+                var msg = new Dictionary<string, string>();
+                msg.Add("Heartbeat", JsonSerializer.Serialize(clientInfo));
+
+                var jsonMsg = JsonSerializer.Serialize(msg);
+
+                dealer.SendFrame(jsonMsg);
+
+                LogManager.Log($"Heartbeat sent, uptime: {clientInfo.uptime}");
+                Thread.Sleep(TimeSpan.FromMinutes(30));
+            }
         }
     }
 }
