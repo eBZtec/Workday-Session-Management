@@ -2,7 +2,7 @@
 {
     internal static class LogManager
     {
-        private static readonly string logFilePath = Path.Combine(StartupManager.wsmDir, "WSMservice.log");
+        public static readonly string logFilePath = Path.Combine(StartupManager.wsmDir, "WSMservice.log");
 
         public static void Log(string message)
         {

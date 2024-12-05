@@ -152,10 +152,12 @@ namespace SessionService.Service
 
         public static void DescribeUsers(List<UserSession> users)
         {
+            Console.WriteLine("----------");
             foreach (UserSession user in users)
             {
                 Console.WriteLine(user);
             }
+            Console.WriteLine("----------");
         }
 
         public static List<int> GetSessionIDs(string user_id, List<UserSession> sessions)
