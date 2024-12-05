@@ -73,6 +73,7 @@ namespace SessionService.Service
             {
                 int errorCode = Marshal.GetLastWin32Error();
                 Console.WriteLine($"Failed to enumerate sessions. Error code: {errorCode}");
+                LogManager.Log($"Failed to enumerate sessions. Error code: {errorCode}");
                 return new List<UserSession>();
             }
         }
@@ -93,13 +94,13 @@ namespace SessionService.Service
             return "Unknown";
         }
 
-        public static void Lock(int sessionId)
+        public static void Lock(int sessionId, string user)
         {
             string remoteMachine = System.Net.Dns.GetHostName();
 
             try
             {
-                LockRemoteSession(remoteMachine, sessionId);
+                LockRemoteSession(remoteMachine, sessionId, user);
             }
             catch (Exception ex)
             {
@@ -107,7 +108,7 @@ namespace SessionService.Service
             }
         }
 
-        private static void LockRemoteSession(string remoteMachine, int sessionId)
+        private static void LockRemoteSession(string remoteMachine, int sessionId, string user)
         {
             IntPtr serverHandle = WTSOpenServer(remoteMachine);
             if (serverHandle == IntPtr.Zero)
@@ -125,7 +126,7 @@ namespace SessionService.Service
                     throw new Exception("Failed to lock the remote session.");
                 }
                 Console.WriteLine("Successfully locked the remote session.");
-                LogManager.Log($"SessionManager -> Successfully locked the remote session {sessionId}");
+                LogManager.Log($"SessionManager -> Successfully locked the remote session {sessionId} FROM user: {user}");
             }
             finally
             {
@@ -133,13 +134,13 @@ namespace SessionService.Service
             }
         }
 
-        public static void LogoffSession(int sessionId)
+        public static void LogoffSession(int sessionId, string user)
         {
             bool result = WTSLogoffSession((IntPtr)WTS_CURRENT_SERVER_HANDLE, sessionId, false);
             if (result)
             {
                 Console.WriteLine($"Successfully logged off session {sessionId}");
-                LogManager.Log($"SessionManager -> Successfully logged off session {sessionId}");
+                LogManager.Log($"SessionManager -> Successfully logged off session {sessionId} FROM user: {user}");
             }
             else
             {
@@ -151,10 +152,12 @@ namespace SessionService.Service
 
         public static void DescribeUsers(List<UserSession> users)
         {
+            Console.WriteLine("----------");
             foreach (UserSession user in users)
             {
                 Console.WriteLine(user);
             }
+            Console.WriteLine("----------");
         }
 
         public static List<int> GetSessionIDs(string user_id, List<UserSession> sessions)
