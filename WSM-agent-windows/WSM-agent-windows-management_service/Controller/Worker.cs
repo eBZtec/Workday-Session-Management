@@ -24,8 +24,11 @@ public class Worker : BackgroundService
         _eventLog.EnableRaisingEvents = true;
 
         userSessions = new List<UserSession>();
-        clientInfo = new ClientInfo();
         usersAllowed = new List<UserAllowed>();
+
+        clientInfo = new ClientInfo();
+        LogManager.LogClientInfo(clientInfo.ToString());
+
         StartupManager.Init();
     }
 
@@ -35,9 +38,7 @@ public class Worker : BackgroundService
         {
             try
             {
-                LogManager.LogClientInfo(clientInfo.ToString());
                 Console.WriteLine(clientInfo);
-
                 await InitializeSocketsAndRun(stoppingToken);
             }
             catch (Exception ex)
@@ -54,12 +55,12 @@ public class Worker : BackgroundService
         using (publisher = new PublisherSocket())
         using (dealer = new DealerSocket())
         {
-            string pubUrl = "tcp://localhost:12345";        // Publisher URL
-            string dealerUrl = "tcp://localhost:5555";      // Dealer URL
+            string pubUrl = "tcp://localhost:12345";
+            string dealerUrl = "tcp://" + StartupManager.getServerURL();
+            //string dealerUrl = "tcp://localhost:5555";
 
             try
             {
-                // Initialize sockets
                 InitializePublisher(publisher, pubUrl);
                 InitializeDealer(dealer, dealerUrl);
 
@@ -101,7 +102,7 @@ public class Worker : BackgroundService
     private async Task HandleMessages(CancellationToken stoppingToken)
     {
         var messageParts = new List<string>();
-        TimeSpan timeout = TimeSpan.FromSeconds(60);
+        TimeSpan timeout = TimeSpan.FromSeconds(20);
 
         if (dealer.TryReceiveMultipartStrings(timeout, ref messageParts, 2))
         {
@@ -175,7 +176,6 @@ public class Worker : BackgroundService
                 if (e.Entry.ReplacementStrings[6].Equals(Environment.MachineName) && e.Entry.ReplacementStrings[0].Equals("S-1-0-0"))
                 {
                     EventManager.HandleLogonEvent(e.Entry, dealer);
-                    SessionManager.DescribeUsers(userSessions);
                 }
                 userSessions = SessionManager.EnumerateSessions();
                 break;
@@ -196,7 +196,6 @@ public class Worker : BackgroundService
                 userSessions = SessionManager.EnumerateSessions();
                 EventManager.HandleLogoffEvent(e.Entry, dealer);
                 userSessions = SessionManager.EnumerateSessions();
-                SessionManager.DescribeUsers(userSessions);
                 break;
 
             default:

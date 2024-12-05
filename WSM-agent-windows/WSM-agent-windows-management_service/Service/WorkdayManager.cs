@@ -36,6 +36,8 @@ namespace SessionService.Service
                 try
                 {
                     userSessions = SessionManager.EnumerateSessions();
+                    SessionManager.DescribeUsers(userSessions);
+
                     foreach (UserSession user in userSessions)
                     {
                         foreach (UserAllowed userAllowed in usersAllowed)
@@ -64,7 +66,6 @@ namespace SessionService.Service
                                         {
                                             if (currentMinutes >= monday.start && currentMinutes <= monday.end)
                                             {
-                                                Console.WriteLine($"User: {user.username} allowed to work");
                                                 goto default;
                                             }
                                         }
@@ -78,7 +79,6 @@ namespace SessionService.Service
                                         {
                                             if (currentMinutes >= tuesday.start && currentMinutes <= tuesday.end)
                                             {
-                                                Console.WriteLine($"User: {user.username} allowed to work");
                                                 goto default;
                                             }
                                         }
@@ -92,7 +92,6 @@ namespace SessionService.Service
                                         {
                                             if (currentMinutes >= wednesday.start && currentMinutes <= wednesday.end)
                                             {
-                                                Console.WriteLine($"User: {user.username} allowed to work");
                                                 goto default;
                                             }
                                         }
@@ -106,7 +105,6 @@ namespace SessionService.Service
                                         {
                                             if (currentMinutes >= thursday.start && currentMinutes <= thursday.end)
                                             {
-                                                Console.WriteLine($"User: {user.username} allowed to work");
                                                 goto default;
                                             }
                                         }
@@ -120,7 +118,6 @@ namespace SessionService.Service
                                         {
                                             if (currentMinutes >= friday.start && currentMinutes <= friday.end)
                                             {
-                                                Console.WriteLine($"User: {user.username} allowed to work");
                                                 goto default;
                                             }
                                         }
@@ -134,7 +131,6 @@ namespace SessionService.Service
                                         {
                                             if (currentMinutes >= saturday.start && currentMinutes <= saturday.end)
                                             {
-                                                Console.WriteLine($"User: {user.username} allowed to work");
                                                 goto default;
                                             }
                                         }
@@ -155,7 +151,7 @@ namespace SessionService.Service
                     LogManager.Log($"Vigilance -> exception: {ex.Message}");
                 }
 
-                Thread.Sleep(TimeSpan.FromSeconds(30));
+                Thread.Sleep(TimeSpan.FromSeconds(20));
             }
         }
 
@@ -172,7 +168,7 @@ namespace SessionService.Service
 
         public static void LogoffUnallowed(int id, string username)
         {
-            Thread.Sleep(TimeSpan.FromSeconds(5));
+            Thread.Sleep(TimeSpan.FromSeconds(10));
             SessionManager.LogoffSession(id, username);
         }
     }

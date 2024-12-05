@@ -1,7 +1,9 @@
-﻿using NetMQ;
+﻿using DnsClient;
+using NetMQ;
 using NetMQ.Sockets;
 using SessionService.Model;
 using Sodium;
+using System.Management;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text.Json;
@@ -15,6 +17,7 @@ namespace SessionService.Service
 
         public static void Init()
         {
+            SetAdminOnlyAccess(new FileInfo(LogManager.logFilePath));
             CheckDirectory();
             CheckKeys();
         }
@@ -70,7 +73,7 @@ namespace SessionService.Service
         {
             if (!File.Exists(Path.Combine(wsmDir, "publisher_communication.key")) || !File.Exists(Path.Combine(wsmDir, "publisher_secret.key")))
             {
-                Console.WriteLine("Could not find the Curve key-pair, generating new pair...");
+                LogManager.Log("Could not find the Curve key-pair, generating new pair...");
                 StoreCurveKeys();
             }
         }
@@ -88,7 +91,7 @@ namespace SessionService.Service
             File.WriteAllText(publicKeyPath, publicKey);
             File.WriteAllText(privateKeyPath, privateKey);
 
-            Console.WriteLine("Keys successfully generated and saved");
+            LogManager.Log("Keys successfully generated and saved");
 
             SetAdminOnlyAccess(new FileInfo(privateKeyPath));
         }
@@ -112,13 +115,12 @@ namespace SessionService.Service
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An error occurred while loading the keys: {ex.Message}");
                 LogManager.Log($"An error occurred while loading the keys: {ex.Message}");
                 return null;
             }
         }
 
-        private static void SetAdminOnlyAccess(FileInfo fileInfo)
+        public static void SetAdminOnlyAccess(FileInfo fileInfo)
         {
             FileSecurity fileSecurity = fileInfo.GetAccessControl();
             SecurityIdentifier adminSid = new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null);
@@ -146,6 +148,50 @@ namespace SessionService.Service
                 LogManager.Log($"Heartbeat sent, uptime: {clientInfo.uptime}");
                 Thread.Sleep(TimeSpan.FromMinutes(30));
             }
+        }
+
+        public static string getServerURL()
+        {
+            string domainName = "";
+
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher("SELECT Domain FROM Win32_ComputerSystem"))
+                {
+                    foreach (ManagementObject domain in searcher.Get())
+                    {
+                        domainName = domain["Domain"].ToString();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogManager.Log($"ServerURL -> Error retrieving information: {ex.Message}");
+            }
+
+            try
+            {
+                var lookup = new LookupClient();
+                var result = lookup.Query(domainName, QueryType.TXT);
+
+                foreach (var txtRecord in result.Answers.TxtRecords())
+                {
+                    foreach (var text in txtRecord.Text)
+                    {
+                        if (text.StartsWith("wsm_session_servers=", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return text.Split('=')[1].Trim();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogManager.Log($"ServerURL -> Error retrieving TXT record info: {ex.Message}");
+            }
+
+            LogManager.Log("ServerURL -> Could not retrieve the server URL. Dealer not properly bound (localhost:5555)");
+            return "localhost:5555";
         }
     }
 }
