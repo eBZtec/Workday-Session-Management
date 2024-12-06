@@ -27,9 +27,8 @@ public class Worker : BackgroundService
         usersAllowed = new List<UserAllowed>();
 
         clientInfo = new ClientInfo();
-        LogManager.LogClientInfo(clientInfo.ToString());
-
         StartupManager.Init();
+        LogManager.LogClientInfo(clientInfo.ToString());
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -164,7 +163,7 @@ public class Worker : BackgroundService
                 LogManager.Log($"HandleMessages -> Error handling message: {ex.Message}");
             }
         }
-        await Task.Delay(100, stoppingToken);
+        await Task.Delay(1000, stoppingToken);
     }
 
     private void OnEntryWritten(object sender, EntryWrittenEventArgs e)

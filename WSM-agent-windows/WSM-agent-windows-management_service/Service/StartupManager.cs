@@ -17,9 +17,10 @@ namespace SessionService.Service
 
         public static void Init()
         {
-            SetAdminOnlyAccess(new FileInfo(LogManager.logFilePath));
             CheckDirectory();
             CheckKeys();
+            LogManager.LogClientInfo("");
+            SetAdminOnlyAccess(new FileInfo(LogManager.logFilePath));
         }
 
         public static void CheckDirectory()
@@ -145,7 +146,7 @@ namespace SessionService.Service
 
                 dealer.SendFrame(jsonMsg);
 
-                LogManager.Log($"Heartbeat sent, uptime: {clientInfo.uptime}");
+                LogManager.Log($"Heartbeat sent, uptime: {clientInfo.uptime} minutes");
                 Thread.Sleep(TimeSpan.FromMinutes(30));
             }
         }
