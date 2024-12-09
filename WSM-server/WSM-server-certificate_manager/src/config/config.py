@@ -71,8 +71,8 @@ def load_encrypted_env(encrypted_file_path, key_file_path):
                 print("INFO - NO .ini file detected")
     
 # Path of key and encrypt env
-encrypted_env_path = '/root/wsm_certificate_manager/encrypted.env'
-key_path = '/root/wsm_certificate_manager/secret.key'
+encrypted_env_path = '/root/wsm_certificate_manager/src/config/encrypted.env'
+key_path = '/root/wsm_certificate_manager/src/config/secret.key'
 
 try:
     load_encrypted_env(encrypted_file_path=encrypted_env_path, key_file_path=key_path)
@@ -84,10 +84,12 @@ try:
     # Configurações gerais
     DATABASE_URL = os.getenv("DEV_DATABASE_URL")
     Z_MQ_PORT = os.getenv("Z_MQ_PORT")
-    CA_KEY_PASS = os.getenv("CA_KEY_PASS")
+    CA_KEY_PASSWORD = os.getenv("CA_KEY_PASSWORD")
+    CA_CERT_CN = os.getenv("CA_CERT_CN")
     CA_KEY_PATH = os.getenv("CA_KEY_PATH")
     CA_CERT_FILE = os.getenv("CA_CERT_FILE")
     WSM_CERT_FILE = os.getenv("WSM_CERT_FILE")
+    WSM_CERT_CN = os.getenv("WSM_CERT_CN")
 
     # Verificações para cada variável de ambiente
     if not DATABASE_URL:
@@ -98,9 +100,9 @@ try:
         logger.error("A variável de ambiente Z_MQ_PORT não está definida.")
         raise ValueError("Z_MQ_PORT não definida.")
 
-    if not CA_KEY_PASS:
-        logger.error("A variável de ambiente CA_KEY_PASS não está definida.")
-        raise ValueError("CA_KEY_PASS não definida.")
+    if not CA_KEY_PASSWORD:
+        logger.error("A variável de ambiente CA_KEY_PASSWORD não está definida.")
+        raise ValueError("CA_KEY_PASSWORD não definida.")
 
     if not CA_KEY_PATH:
         logger.error("A variável de ambiente CA_KEY_PATH não está definida.")
@@ -113,6 +115,14 @@ try:
     if not WSM_CERT_FILE:
         logger.error("A variável de ambiente WSM_CERT_FILE não está definida.")
         raise ValueError("WSM_CERT_FILE não definida.")
+
+    if not WSM_CERT_CN:
+        logger.error("A variável de ambiente WSM_CERT_CN não está definida.")
+        raise ValueError("WSM_CERT_CN não definida.")
+
+    if not CA_CERT_CN:
+        logger.error("A variável de ambiente CA_CERT_CN não está definida.")
+        raise ValueError("CA_CERT_CN não definida.")
 
     logger.info("Todas as variáveis de ambiente foram carregadas com sucesso.")
 

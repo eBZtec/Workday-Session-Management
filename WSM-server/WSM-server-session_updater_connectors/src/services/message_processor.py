@@ -1,5 +1,6 @@
 import json
 from src.logs.logger import Logger
+from src.config import config
 
 logger = Logger(log_name="message_processor").get_logger()
 
@@ -40,10 +41,15 @@ class MessageProcessor:
             # Parse do JSON recebido
             message = json.loads(body)
             logger.info(f"WSM - Session Updater COnnectors - Processing message: {message}")
-
+            target_queue = None
             # Obter o nome da fila com base no serviço
-            uid = message["uid"]
-            target_queue = self.db_manager.fetch_target_queue_by_user_uid(uid)
+            if "uid" in message:
+                uid = message["uid"]
+                target_queue = self.db_manager.fetch_target_queue_by_user_uid(uid)
+            else:
+                uid = message["user"] # direct messages use "user" to refer a user himself 
+                target_queue = [config.RABBITMQ_SESSION_AGENT_QUEUE_NAME]
+            
 
             if not target_queue:
                 logger.warning(f"WSM - Session Updater COnnectors - No target queue for user {uid}. Message skipped.")
