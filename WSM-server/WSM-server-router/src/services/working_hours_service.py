@@ -8,10 +8,8 @@ from datetime import datetime
 class WorkingHoursService:
     
     def __init__(self):
-        self.logger = Logger(log_name=self.__class__.__name__).get_logger()
+        self.logger = Logger().get_logger()
         self.dm = DatabaseManager()
-
-
 
     def get_allowed_schedule(self, uid):
         try:
@@ -19,10 +17,3 @@ class WorkingHoursService:
         except Exception as e:
             return None
         return schedule
-
-
-    #check if the client session starts between start and end standart working hours
-    def check_valid_session(self, uid):
-
-        
-        return

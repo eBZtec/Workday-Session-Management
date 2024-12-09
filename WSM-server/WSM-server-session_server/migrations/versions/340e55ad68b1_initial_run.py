@@ -1,8 +1,8 @@
-"""removed citext
+"""Initial run
 
-Revision ID: 2839e44e3d16
+Revision ID: 340e55ad68b1
 Revises: 
-Create Date: 2024-11-20 17:20:02.076423
+Create Date: 2024-12-06 13:40:29.575072
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '2839e44e3d16'
+revision: str = '340e55ad68b1'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -26,17 +26,6 @@ def upgrade() -> None:
     sa.Column('certificate', sa.Text(), nullable=False),
     sa.Column('validity', sa.DateTime(timezone=True), nullable=False),
     sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('client',
-    sa.Column('hostname', sa.String(length=100), nullable=False),
-    sa.Column('ip_address', sa.String(length=100), nullable=False),
-    sa.Column('client_version', sa.String(length=50), nullable=False),
-    sa.Column('os_name', sa.String(length=50), nullable=True),
-    sa.Column('os_version', sa.String(length=50), nullable=False),
-    sa.Column('agent_info', sa.String(length=50), nullable=True),
-    sa.Column('create_timestamp', sa.DateTime(timezone=True), nullable=False),
-    sa.Column('update_timestamp', sa.DateTime(timezone=True), nullable=True),
-    sa.PrimaryKeyConstraint('hostname')
     )
     op.create_table('events',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -55,31 +44,37 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('holidays',
-    sa.Column('holiday_date', sa.DateTime(), nullable=False),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('name', sa.String(length=20), nullable=False),
+    sa.Column('day', sa.Integer(), nullable=False),
+    sa.Column('month', sa.Integer(), nullable=False),
     sa.Column('city', sa.Integer(), nullable=False),
     sa.Column('holiday_type', sa.String(length=2), nullable=False),
     sa.Column('create_timestamp', sa.DateTime(timezone=True), nullable=False),
     sa.Column('update_timestamp', sa.DateTime(timezone=True), nullable=False),
-    sa.PrimaryKeyConstraint('holiday_date')
+    sa.PrimaryKeyConstraint('id', 'day', 'month'),
+    sa.UniqueConstraint('name')
     )
     op.create_table('standard_workhours',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('uid', sa.String(length=50), nullable=False),
-    sa.Column('start_time', sa.DateTime(timezone=True), nullable=False),
-    sa.Column('end_time', sa.DateTime(timezone=True), nullable=False),
-    sa.Column('allowed_work', sa.String(length=15), nullable=True),
+    sa.Column('start_time', sa.String(length=5), nullable=False),
+    sa.Column('end_time', sa.String(length=5), nullable=False),
+    sa.Column('allowed_work_hours', sa.Text(), nullable=True),
     sa.Column('uf', sa.String(length=2), nullable=False),
     sa.Column('st', sa.String(length=35), nullable=False),
     sa.Column('c', sa.String(length=100), nullable=False),
     sa.Column('weekdays', sa.String(length=7), nullable=False),
-    sa.Column('session_termination_action', sa.String(), nullable=True),
-    sa.Column('cn', sa.String(length=240), nullable=True),
+    sa.Column('session_termination_action', sa.String(length=15), nullable=True),
+    sa.Column('cn', sa.String(length=240), nullable=False),
     sa.Column('l', sa.String(length=240), nullable=True),
     sa.Column('unrestricted', sa.Boolean(), nullable=True),
+    sa.Column('enable', sa.Boolean(), nullable=False),
     sa.Column('deactivation_date', sa.DateTime(timezone=True), nullable=True),
     sa.Column('create_timestamp', sa.DateTime(timezone=True), nullable=False),
     sa.Column('update_timestamp', sa.DateTime(timezone=True), nullable=False),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('uid')
     )
     op.create_table('target',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -90,12 +85,27 @@ def upgrade() -> None:
     sa.Column('update_timestamp', sa.DateTime(timezone=True), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('client',
+    sa.Column('hostname', sa.String(length=100), nullable=False),
+    sa.Column('ip_address', sa.String(length=100), nullable=False),
+    sa.Column('client_version', sa.String(length=50), nullable=False),
+    sa.Column('os_name', sa.String(length=50), nullable=True),
+    sa.Column('os_version', sa.String(length=50), nullable=False),
+    sa.Column('uptime', sa.String(length=50), nullable=True),
+    sa.Column('agent_info', sa.String(length=50), nullable=True),
+    sa.Column('create_timestamp', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('update_timestamp', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('certificate_authority_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['certificate_authority_id'], ['certificate_authority.id'], ),
+    sa.PrimaryKeyConstraint('hostname'),
+    sa.UniqueConstraint('certificate_authority_id')
+    )
     op.create_table('extended_workhours',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('std_wrk_id', sa.Integer(), nullable=False),
     sa.Column('uid', sa.String(), nullable=True),
-    sa.Column('extension_start_time', sa.DateTime(timezone=True), nullable=False),
-    sa.Column('extension_end_time', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('extension_start_time', sa.DateTime(), nullable=False),
+    sa.Column('extension_end_time', sa.DateTime(), nullable=False),
     sa.Column('extended_workhours_type', sa.String(length=2), nullable=False),
     sa.Column('uf', sa.String(length=2), nullable=False),
     sa.Column('c', sa.String(length=100), nullable=False),
@@ -117,6 +127,17 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['std_wrk_id'], ['standard_workhours.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('target_status',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('std_wrk_id', sa.Integer(), nullable=True),
+    sa.Column('id_target', sa.Integer(), nullable=False),
+    sa.Column('uuid', sa.String(length=37), nullable=True),
+    sa.Column('create_timestamp', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('update_timestamp', sa.DateTime(timezone=True), nullable=False),
+    sa.ForeignKeyConstraint(['id_target'], ['target.id'], ),
+    sa.ForeignKeyConstraint(['std_wrk_id'], ['standard_workhours.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('sessions',
     sa.Column('hostname', sa.String(length=100), nullable=False),
     sa.Column('event_type', sa.String(length=50), nullable=False),
@@ -129,31 +150,20 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['hostname'], ['client.hostname'], ),
     sa.PrimaryKeyConstraint('user', 'hostname')
     )
-    op.create_table('target_status',
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('std_wrk_id', sa.Integer(), nullable=True),
-    sa.Column('id_target', sa.Integer(), nullable=False),
-    sa.Column('uuid', sa.String(length=37), nullable=True),
-    sa.Column('create_timestamp', sa.DateTime(timezone=True), nullable=False),
-    sa.Column('update_timestamp', sa.DateTime(timezone=True), nullable=False),
-    sa.ForeignKeyConstraint(['id_target'], ['target.id'], ),
-    sa.ForeignKeyConstraint(['std_wrk_id'], ['standard_workhours.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_table('target_status')
     op.drop_table('sessions')
+    op.drop_table('target_status')
     op.drop_table('messages')
     op.drop_table('extended_workhours')
+    op.drop_table('client')
     op.drop_table('target')
     op.drop_table('standard_workhours')
     op.drop_table('holidays')
     op.drop_table('exceptions')
     op.drop_table('events')
-    op.drop_table('client')
     op.drop_table('certificate_authority')
     # ### end Alembic commands ###

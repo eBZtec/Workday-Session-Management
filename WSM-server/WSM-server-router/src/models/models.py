@@ -17,6 +17,7 @@ class Client(Base):
     client_version = Column(String(50), nullable=False)
     os_name = Column(String(50))
     os_version = Column(String(50), nullable=False)
+    uptime = Column(String (50), nullable=True)
     agent_info = Column(String(50))
     create_timestamp = Column(DateTime(timezone=True), default=func.now(), nullable=False)
     update_timestamp = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=True)
