@@ -4,6 +4,7 @@ from src.connections.database_manager import DatabaseManager
 from src.config import config
 from src.serialization.message_processor import MessageProcessor
 from src.services.encripted_messages_services import CryptoMessages
+from src.ca_services.ca_server import Server 
 
 class FlexibleRouterServerService:
     
@@ -14,6 +15,7 @@ class FlexibleRouterServerService:
         self.message_processor = MessageProcessor()
         self.dm = DatabaseManager()
         self.cm = CryptoMessages()
+        self.ca_srvr = Server()
 
         # socket ROUTER config
         self.socket = self.context.socket(zmq.ROUTER)
@@ -24,78 +26,118 @@ class FlexibleRouterServerService:
         self.logger.info("WSM - simple_route_server_service - Flexible Router server started...")
         #self.logger.info("Flexible Router server started...")
         while True:
-            # Receive two parts message: [identidade, mensagem]
-            identity, message = self.socket.recv_multipart()
 
-            ##NÃO POSSO DEIXAR DESSA FORMA
-            #client_id = identity.decode()
-            client_id = identity
-            message_text = message.decode()
-            client_id = client_id.decode()
-            self.logger.info(f"WSM - simple_route_server_service - Received from {client_id}: {message_text}")
-            
-            # process the message
-            self.handle_message(client_id, message_text)
+            try:    
+                # Receive two parts message: [identidade, mensagem]
+                identity, message = self.socket.recv_multipart()
+                client_id = identity
+                message_text = message.decode()
+                client_id = client_id.decode()
+                self.logger.info(f"WSM - simple_route_server_service - Received from {client_id}: {message_text}")
+                
+                # process the message
+                self.handle_message(client_id, message_text)
+            except zmq.ZMQError as e:
+                self.logger.error(f"WSM - simple_route_server_service - ZQM error: {e}")
+            except UnicodeDecodeError as e:
+                self.logger.error(f"WSM - simple_route_server_service - Decoding error: {e}")
+            except Exception as e:
+                self.logger.error(f"WSM - simple_route_server_service - Unexpected error: {e}")
 
     def handle_message(self, client_id, message):
         try:
             message_data = json.loads(message)
-            self.logger.info(f"WSM - simple_route_server_service - Parsing message : {message_data}")
-            # FROM CLIENTS
-            if "Client" in message_data: # upsert CLient + need to return client info to client
-                response =  self.message_processor.process_client_message(client_id,message_data["Client"])
-                self.send_message(client_id,response)
-            elif "Session" in message_data: # upsert Session
-                response = self.message_processor.process_session_message(client_id,message_data["Session"])
-                self.send_message(client_id,response)
-            elif "SessionDisconnected" in message_data: # when client send the user was disconnected
-                response = self.message_processor.process_user_already_disconnected(message_data)
-                self.send_message(client_id,response)
-            elif "LockUnlock" in message_data:
-                response = self.message_processor.process_lock_or_unlock_user(message_data)
-                self.send_message(client_id,response)
-
-            #FROM API
-            elif "DisconnectionRequest" in message_data: # when API sent a disconnection to a user
-                response = self.message_processor.process_user_disconnection(message_data)
-                client_id = response["hostname"]
-                self.send_message(client_id,response)
-            elif "RoutingClientMessage" in message_data:
-                # Here we build the json for the client we get client_id because this message comes from RabbitMQ queue
-
-                if "uid" in message_data["RoutingClientMessage"]: 
-                    user = message_data["RoutingClientMessage"]["uid"]
-                elif "user" in message_data["RoutingClientMessage"]: #direct message send "user" attr
-                    user = message_data["RoutingClientMessage"]["user"]
-                sessions = self.dm.get_sessions_by_uid(user)
-                for session in sessions:
-                    try:
-                        if "user" in message_data["RoutingClientMessage"]:
-                            client_id, response = self.message_processor.process_direct_message(message_data,session.hostname)
-                            self.send_message(client_id,response)
-                        else:
-                            client_id, response = self.message_processor.process_wsm_agent_updater_message(message_data, session.hostname)
-                            self.send_message(client_id,response) 
-                    except Exception as e :
-                        self.logger.error(f"WSM - simple_route_server_service - Could not send message to client, reason {e}")
-                        continue
-                return
-            elif "Heartbeat" in message_data:
-                response =  self.message_processor.process_client_message(client_id,message_data)
-                # response = {"status": "beating", "message": "Done"}
-                self.send_message(client_id,response)
-            elif "LogonRequest" in message_data: # when client sent via 0MQ que user logon, need to return the entire work time
-                response = self.message_processor.process_connected_user(message_data)
+            self.logger.info(f"Parsing message: {message_data}")
+            response = self.route_message(client_id,message_data)
+            if response:
                 self.send_message(client_id,response)
             else:
-                response = self.send_message(client_id,{"status":"error","message":"unknown message type"})
-            #self.send_message(client_id,response)       
-        except json.JSONDecodeError:
-            self.logger.error("WSM - simple_route_server_service - Failed to decode JSON message")
-            self.send_message(client_id, {"status": "error", "message": "Invalid JSON format"})
+                self.logger.warning("No response for message")
+        except json.JSONDecoderError:
+            self.logger.error("Failed to decode JSON message")
+            self.send_message(client_id,{"status": "error","message":"Invalid JSON format"})
         except Exception as e:
-            self.logger.error(f"Cant process the request, reason: {e}")
+            self.logger.error(f"Unable to process the request: {e}")
+            self.send_message(client_id, {"status": "error", "message": "An unexpected error occurred"})
 
+    def route_message(self, client_id, message_data):
+        try:
+            message_handlers = {
+                "Client": lambda: self.handle_client_message(client_id, message_data["Client"]),
+                "Session": lambda: self.handle_session_message(client_id, message_data["Session"]),
+                "SessionDisconnected": lambda: self.handle_session_disconnection(message_data),
+                "LockUnlock": lambda: self.handle_lock_unlock(message_data),
+                "DisconnectionRequest": lambda: self.handle_disconnection_request(message_data),
+                "RoutingClientMessage": lambda: self.handle_routing_client_message(message_data),
+                "Heartbeat": lambda: self.handle_heartbeat(client_id, message_data),
+                "LogonRequest": lambda: self.handle_logon_request(message_data),
+                "CARequest": lambda: self.handle_ca_request(message_data["CARequest"]),
+            }
+            # Find the appropriate handler
+            for key, handler in message_handlers.items():
+                if key in message_data:
+                    return handler()
+            # Default case for unknown message types
+            self.logger.warning(f"Unknown message type: {message_data}")
+            return {"status": "error", "message": "Unknown message type"}
+        except KeyError as e:
+            self.logger.error(f"Missing expected key in message: {e}")
+            return {"status": "error", "message": f"Invalid message structure: {e}"}
+        except Exception as e:
+            self.logger.error(f"Error routing message: {e}")
+            raise
+    
+        # Individual handlers for each message type
+    def handle_client_message(self, client_id, client_data):
+        self.logger.info("Processing client message")
+        return self.message_processor.process_client_message(client_id, client_data)
+
+    def handle_session_message(self, client_id, session_data):
+        self.logger.info("Processing session message")
+        return self.message_processor.process_session_message(client_id, session_data)
+
+    def handle_session_disconnection(self, message_data):
+        self.logger.info("Processing session disconnection")
+        return self.message_processor.process_user_already_disconnected(message_data)
+
+    def handle_lock_unlock(self, message_data):
+        self.logger.info("Processing lock/unlock message")
+        return self.message_processor.process_lock_or_unlock_user(message_data)
+
+    def handle_disconnection_request(self, message_data):
+        self.logger.info("Processing disconnection request")
+        response = self.message_processor.process_user_disconnection(message_data)
+        client_id = response.get("hostname")
+        self.send_message(client_id, response)
+
+    def handle_routing_client_message(self, message_data):
+        self.logger.info("Processing routing client message")
+        user = message_data["RoutingClientMessage"].get("uid") or message_data["RoutingClientMessage"].get("user")
+        sessions = self.dm.get_sessions_by_uid(user)
+
+        for session in sessions:
+            try:
+                hostname = session.hostname
+                if "user" in message_data["RoutingClientMessage"]:
+                    client_id, response = self.message_processor.process_direct_message(message_data, hostname)
+                else:
+                    client_id, response = self.message_processor.process_wsm_agent_updater_message(message_data, hostname)
+                self.send_message(client_id, response)
+            except Exception as e:
+                self.logger.error(f"Could not send message to client: {e}")
+                continue
+
+    def handle_heartbeat(self, client_id, message_data):
+        self.logger.info("Processing heartbeat")
+        return self.message_processor.process_client_message(client_id, message_data)
+
+    def handle_logon_request(self, message_data):
+        self.logger.info("Processing logon request")
+        return self.message_processor.process_connected_user(message_data)
+
+    def handle_ca_request(self, ca_request):
+        self.logger.info("Processing CA request")
+        return self.ca_srvr.processRequests(json.loads(ca_request))
 
     #SEND ENCRYPTED MESSAGE TO CLIENT
     def encrypt_message(self,hostname,message):

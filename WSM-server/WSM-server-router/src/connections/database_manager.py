@@ -176,6 +176,10 @@ class DatabaseManager:
                 return True
             return False
 
+    def get_cert_by_fqdn(self,model,fqdn_):
+        with self.session_scope() as session:
+            return session.query(model).filter_by(fqdn=fqdn_).first()
+
 
     """
     PONTUAL QUERIES

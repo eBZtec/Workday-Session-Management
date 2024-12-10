@@ -8,7 +8,6 @@ from cryptography.hazmat.primitives import serialization, hashes
 from src.connections.database_manager import DatabaseManager
 from src.logs.logger import Logger
 
-
 class CryptoMessages:
 
     def __init__(self):
