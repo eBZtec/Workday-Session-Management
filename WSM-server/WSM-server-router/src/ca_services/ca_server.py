@@ -222,27 +222,3 @@ class Server():
                "status": "error",
                "message": str(e)
          })
-
-   def zmqClient(self):
-      context = zmq.Context()
-      socket = context.socket(zmq.REP)
-      port = config.Z_MQ_PORT
-      socket.bind(f"tcp://*:{port}")
-      self.logger.info(f"ZeroMQ initiated on port {port}")
-      
-      while True:
-         try:
-               message = socket.recv()
-               self.logger.info(str(message))
-               if isinstance(json.loads(message), dict):
-                  response = self.processRequests(json.loads(message))
-               else:
-                  response = json.dumps({"status":"success","message":message})
-               socket.send_string(response)
-
-         except Exception as e:
-               logging.info(f"An error occurred: {e}")
-               try:
-                  socket.send_string(json.dumps({"status":"erro","message":{e}}))
-               except zmq.erro.ZMQerro as send_erro:
-                  logging.info(f"Failed to send error response: {send_erro}")

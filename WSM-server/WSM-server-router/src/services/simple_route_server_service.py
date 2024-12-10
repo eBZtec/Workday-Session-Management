@@ -16,7 +16,6 @@ class FlexibleRouterServerService:
         self.dm = DatabaseManager()
         self.cm = CryptoMessages()
         self.ca_srvr = Server()
-
         # socket ROUTER config
         self.socket = self.context.socket(zmq.ROUTER)
         self.socket.bind(self.bind_address)
