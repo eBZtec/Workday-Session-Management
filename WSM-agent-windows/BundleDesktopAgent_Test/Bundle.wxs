@@ -1,0 +1,29 @@
+﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal">
+  <Bundle Name="BundleDesktopAgent_Test" Manufacturer="TODO Manufacturer" Version="1.0.0.0" UpgradeCode="17891b38-01a7-4858-af2e-d1c98099ad1e">
+    <BootstrapperApplication>
+      <bal:WixStandardBootstrapperApplication LicenseUrl="https://www.example.com/license" Theme="hyperlinkLicense" />
+    </BootstrapperApplication>
+
+    <Chain>
+		<!-- Install .NET Runtime -->
+		<ExePackage
+			Id="NetCoreRuntime8"
+			DisplayName=".NET 8.0 Runtime"
+			SourceFile="C:\Users\Developer1\Downloads\dotnet-runtime-8.0.11-win-x64.exe"
+			InstallArguments=" /quiet /norestart"
+			Compressed="yes"
+			PerMachine="yes"
+			Vital="yes"
+			DetectCondition="NetCoreRuntimeInstalled"
+			UninstallArguments="/quiet /uninstall"/>
+
+		<ExePackage
+			Id="DesktopAgent"
+			SourceFile="..\WSM-agent-windows-desktop_agent\bin\Release\net8.0-windows10.0.26100.0\DesktopAgent.exe"
+			InstallArguments=" /quiet /norestart"
+			Compressed="yes"
+			UninstallArguments="/quiet /uninstall"/>
+    </Chain>
+
+  </Bundle>
+</Wix>
