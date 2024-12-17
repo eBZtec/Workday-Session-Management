@@ -9,12 +9,13 @@ import datetime, json
 class MessageProcessor:
 
     def __init__(self):
-        self.logger = Logger(log_name=self.__class__.__name__).get_logger()
+        self.logger = Logger().get_logger()
         self.dm = DatabaseManager()
         self.work_hours = WorkingHoursService()
 
 
     def process_client_message(self, ZMQ_client_id, client_data):
+        client_data = json.loads(client_data["Heartbeat"])
         try:
             client = Client(
                 hostname = client_data.get("hostname"),
@@ -23,6 +24,7 @@ class MessageProcessor:
                 os_name = client_data.get("os_name"),
                 os_version = client_data.get("os_version"),
                 agent_info = client_data.get("agent_info"),
+                uptime = client_data.get("uptime"),
                 create_timestamp = client_data.get("create_timestamp"),
                 update_timestamp = client_data.get("update_timestamp")
                 )
@@ -34,9 +36,10 @@ class MessageProcessor:
                 client.update({"create_timestamp": existing_client.create_timestamp})
                 client.update({"update_timestamp": datetime.datetime.now(datetime.timezone.utc)})
                 self.dm.update_entry(Client,existing_client.hostname,client)
+                return {"status": "beating", "message": "Done"}
             else:
                 self.dm.add_entry(client)     
-            self.logger.info(f"Processing Client: Hostname={client_data.get("hostname")}, IP={client_data.get("ip_address")},"
+            self.logger.info(f"WSM Router - message_processor - Processing Client: Hostname={client_data.get("hostname")}, IP={client_data.get("ip_address")},"
               f"Version={client_data.get("client_version")}, OS={client_data.get("os_name")} {client_data.get("os_version")}, Agent={client_data.get("agent_info")}")
             # return confirmation
             message = {"status": "success", "message": "Client information processed"}
@@ -115,7 +118,7 @@ class MessageProcessor:
                     self.logger.error(f"Error adding new session: {e}")
                     return {"status": "error", "message": f"Error adding new session: {e}"}
         except Exception as e:
-            self.logger.error(f"Error processing session message: {e}")
+            self.logger.error(f"WSM - process_session_message - Error processing session message: {e}")
             return {"status": "error", "message": f"Error processing session message: {e}"}  
         
     def process_user_disconnection(self, disconnection_data):
@@ -125,7 +128,7 @@ class MessageProcessor:
             dc_datetime = disconnection_data["DisconnectionRequest"].get("dc_datetime")
             
             if not hostname or not user or not dc_datetime:
-                self.logger.error("Invalid disconnection request data: missing hostname or user")
+                self.logger.error("WSM - process_user_disconnection - Invalid disconnection request data: missing hostname or user")
                 return {"status": "error", "message": "Invalid disconnection request data"}
             else:
                 message_data = {
@@ -137,18 +140,19 @@ class MessageProcessor:
                 return message_data
         
         except KeyError as e:
-            self.logger.error(f"Missing key in disconnection request data: {str(e)}")
+            self.logger.error(f"WSM - process_user_disconnection - Missing key in disconnection request data: {str(e)}")
             return {"status": "error", "message": "Invalid disconnection request format"}
         except Exception as e:
-            self.logger.error(f"General error in process_user_disconnection: {str(e)}")
+            self.logger.error(f"WSM - process_user_disconnection - General error in process_user_disconnection: {str(e)}")
             return {"status": "error", "message": "Failed to process disconnection request"}
 
 
     #Delete user from Sessions table when the disconnection was processed
     def process_user_already_disconnected(self,disconnected_data):
+        disconnected_data = json.loads(disconnected_data["SessionDisconnected"])
         try:
-            hostname = disconnected_data["SessionDisconnected"]["hostname"]
-            user = disconnected_data["SessionDisconnected"]["user"]
+            hostname = disconnected_data["hostname"]
+            user = disconnected_data["user"]
             if not hostname or not user:
                 self.logger.error("Invalid disconnection request data: missing hostname or user")
                 return {"status": "error", "message": "Invalid disconnection request data"}
@@ -157,19 +161,19 @@ class MessageProcessor:
                     self.dm.delete_user_disconnected(Sessions,hostname,user)
                     return {"status": "success", "message": "Disconnected user removed from database."}
                 except KeyError as e:
-                    self.logger.error(f"Missing key in disconnection request data: {str(e)}")
+                    self.logger.error(f"WSM Router - process_user_already_disconnected - Missing key in disconnection request data: {str(e)}")
                     return {"status": "error", "message": "Invalid disconnection request format"}
                 except Exception as e:
-                    self.logger.error(f"General error in process_user_disconnection: {str(e)}")
+                    self.logger.error(f"WSM Router - process_user_already_disconnected - General error in process_user_disconnection: {str(e)}")
                     return {"status": "error", "message": "Failed to process disconnection request"}  
         except KeyError as e:
-            self.logger.error(f"Missing key in disconnection request data: {str(e)}")
+            self.logger.error(f"WSM Router - process_user_already_disconnected - Missing key in disconnection request data: {str(e)}")
             return {"status": "error", "message": "Invalid disconnection request format"}
         except Exception as e:
-            self.logger.error(f"General error in process_user_disconnection: {str(e)}")
+            self.logger.error(f"WSM Router - process_user_already_disconnected - General error in process_user_disconnection: {str(e)}")
             return {"status": "error", "message": "Failed to process disconnection request"}
 
-#Testar com o Gabs
+
     def process_connected_user(self,message_data):
         message_data = message_data["LogonRequest"]
         message_data = json.loads(message_data)
@@ -205,17 +209,37 @@ class MessageProcessor:
                     user_json = {"action": action, "hostname": hostname, "user": user, "timezone": timezone,"unrestricted": unrestricted,"enable": enable, "allowed_schedule": allowed_schedule,"timestamp": timestamp,"message":message,"title":title,"options":options}
                     return user_json
                 else:
-                    self.logger.error(f"WSM Router: Error when trying to find user:{user}")
+                    self.logger.error(f"WSM Router - message_processor -  Error when trying to find user:{user}")
                     not_allowed_user = {"action": "logoff", "hostname": hostname, "user": user, "timezone": timezone, "unrestricted": False, "enable": False, "allowed_schedule": None, "timestamp" : timestamp, "message": "User cant be found on the database", "title": title, "options": None }
                     return not_allowed_user
             except Exception as e:
-                self.logger.error(f"WSM Router: Error when trying to set schedule for this uid:{user}")
+                self.logger.error(f"WSM Router - message_processor - Error when trying to set schedule for this uid:{user}")
                 return{"status": "error", "message": f"No schedule for user {user}"}
         except Exception as e :
-            self.logger.error(f"Missing key in user connection data: {str(e)}")
+            self.logger.error(f"WSM Router - message_processor - Missing key in user connection data: {str(e)}")
             return {"status": "error", "message": "Invalid logon format request"}
         return
     
+    def process_direct_message(self,message_data,hostname):
+        try:
+            message_data = message_data.get("RoutingClientMessage",{})
+
+            user = message_data.get("user")
+            title = message_data.get("title")
+            message = message_data.get("message")
+            action = message_data.get("action")
+            timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            timezone = str(datetime.datetime.now().astimezone().tzinfo)
+            unrestricted = False
+            enable = False
+            allowed_schedule = None
+            options = "yes_no"
+            user_json = {"action": action, "hostname": hostname, "user": user, "timezone": timezone, "unrestricted": unrestricted,"enable": enable, "allowed_schedule": allowed_schedule,"timestamp": timestamp,"message":message,"title":title,"options":options}
+            return(hostname, user_json)
+        except Exception as e:
+            self.logger.error(f"WSM Router: Error when trying to send message for this uid:{user}")
+            return{"status": "error", "message": f"No schedule for user {user}"}   
+
     def process_wsm_agent_updater_message(self, message_data, hostname):
         try:
             user = message_data["RoutingClientMessage"]["uid"]
@@ -271,7 +295,6 @@ class MessageProcessor:
         except Exception as e:
             self.logger.error(f"WSM Router - message_processor - Missing key in add_new_session data: {str(e)}")
         
-
-    
+ 
     def process_lock_or_unlock_user(self, message_data):
         return

@@ -1,0 +1,55 @@
+import logging
+import os
+from logging.handlers import TimedRotatingFileHandler
+
+class Logger:
+    def __init__(self, log_name='app', log_dir='logs', level=logging.INFO, retention_days=7):
+        """
+        Initializes the logger, configuring the log directory and handlers.
+
+        :param log_name: Base name for the log file.
+        :param log_dir: Directory where logs will be saved.
+        :param level: Log level (default: logging.INFO).
+        :param retention_days: Number of days to keep log files (default: 7).
+        """
+        self.logger = logging.getLogger(log_name)
+        self.logger.setLevel(level)
+
+        # Creates the log directory if it doesn't exist
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+
+        # Configures the TimedRotatingFileHandler for general logging
+        log_file = os.path.join(log_dir, f"{log_name}.log")
+        file_handler = TimedRotatingFileHandler(log_file, when="midnight", interval=1, backupCount=retention_days)
+        file_handler.setLevel(level)
+        file_handler.setFormatter(logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        ))
+
+        # Configures the TimedRotatingFileHandler for error logging
+        error_log_file = os.path.join(log_dir, "error.log")
+        error_handler = TimedRotatingFileHandler(error_log_file, when="midnight", interval=1, backupCount=retention_days)
+        error_handler.setLevel(logging.ERROR)
+        error_handler.setFormatter(logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        ))
+
+        # StreamHandler to display logs on the console
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(logging.Formatter(
+            '%(name)s - %(levelname)s - %(message)s'
+        ))
+
+        # Adds handlers to the logger
+        self.logger.addHandler(file_handler)
+        self.logger.addHandler(error_handler)
+        self.logger.addHandler(stream_handler)
+
+    def get_logger(self):
+        """
+        Returns the configured logger.
+        """
+        return self.logger

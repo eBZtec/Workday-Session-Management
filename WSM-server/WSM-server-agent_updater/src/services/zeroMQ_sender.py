@@ -24,11 +24,18 @@ class ZeroMQSender:
         :param message: Mensagem JSON a ser enviada.
         """
         try:
-            uid = message["RoutingClientMessage"]["uid"]
-            message = json.dumps(message, ensure_ascii=False)
-            self.socket.setsockopt(zmq.IDENTITY, self.socket.identity)
-            self.socket.send_string(message)
-            self.logger.info(f"Mensagem enviada para client_uid= {uid}: {message}")
+            if "uid" in message["RoutingClientMessage"]:
+                uid = message["RoutingClientMessage"]["uid"]
+                message = json.dumps(message, ensure_ascii=False)
+                self.socket.setsockopt(zmq.IDENTITY, self.socket.identity)
+                self.socket.send_string(message)
+                self.logger.info(f"Mensagem enviada para client_uid= {uid}: {message}")
+            elif "user" in message["RoutingClientMessage"]:
+                uid = message["RoutingClientMessage"]["user"]
+                message = json.dumps(message, ensure_ascii=False)
+                self.socket.setsockopt(zmq.IDENTITY, self.socket.identity)
+                self.socket.send_string(message)
+                self.logger.info(f"Mensagem enviada para client_uid= {uid}: {message}")
         except Exception as e:
             self.logger.error(f"Erro ao enviar mensagem via ZeroMQ: {str(e)}")
 
