@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.12.35417.141
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{B7DD6F7E-DEF8-4E67-B5B7-07EF123DB6F0}") = "Bundle", "Bundle.wixproj", "{E5586F8C-96FE-4B79-8878-D60B860E0FD7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{34D98E05-B9D4-4AF3-98B6-810612493FFD} = {34D98E05-B9D4-4AF3-98B6-810612493FFD}
+	EndProjectSection
 EndProject
 Project("{B7DD6F7E-DEF8-4E67-B5B7-07EF123DB6F0}") = "WSM-agent-windows-management_service_installer", "..\WSM-agent-windows-management_service_installer\WSM-agent-windows-management_service_installer.wixproj", "{79018E5A-CA94-4833-A2CA-A7BFCD3C642D}"
 	ProjectSection(ProjectDependencies) = postProject

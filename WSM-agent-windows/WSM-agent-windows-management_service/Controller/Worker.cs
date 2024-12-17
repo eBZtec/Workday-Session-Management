@@ -1,18 +1,14 @@
-using NetMQ;
-using NetMQ.Sockets;
 using SessionService.Model;
 using SessionService.Service;
-using System.Diagnostics;
-using System.Text.Json;
 
 public class Worker : BackgroundService
 {
     private readonly EventLog _eventLog;
+    private List<UserAllowed> usersAllowed;
     private List<UserSession> userSessions;
     private PublisherSocket publisher;
-    private DealerSocket dealer;
     private ClientInfo clientInfo;
-    private List<UserAllowed> usersAllowed;
+    private DealerSocket dealer;
 
     public Worker()
     {
@@ -29,6 +25,7 @@ public class Worker : BackgroundService
         clientInfo = new ClientInfo();
         StartupManager.Init();
         LogManager.LogClientInfo(clientInfo.ToString());
+
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -44,7 +41,7 @@ public class Worker : BackgroundService
             {
                 Console.WriteLine($"Worker encountered an exception: {ex.Message}. Retrying...");
                 LogManager.Log($"Worker -> Exception: {ex.Message}");
-                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken); // Backoff before retry
+                await Task.Delay(TimeSpan.FromSeconds(50), stoppingToken);
             }
         }
     }
