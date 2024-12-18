@@ -1,8 +1,15 @@
+using NetMQ;
+using NetMQ.Sockets;
 using SessionService.Model;
 using SessionService.Service;
+using System.Diagnostics;
+using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 
 public class Worker : BackgroundService
 {
+    private X509Certificate2? localCertificate;
+    private X509Certificate2? serverCertificate;
     private readonly EventLog _eventLog;
     private List<UserAllowed> usersAllowed;
     private List<UserSession> userSessions;
@@ -23,9 +30,13 @@ public class Worker : BackgroundService
         usersAllowed = new List<UserAllowed>();
 
         clientInfo = new ClientInfo();
-        StartupManager.Init();
-        LogManager.LogClientInfo(clientInfo.ToString());
 
+        StartupManager.Init();
+
+        localCertificate = StartupManager.LoadLocalCertificate();
+        serverCertificate = StartupManager.LoadServerCertificate();
+
+        LogManager.LogClientInfo(clientInfo.ToString());
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -53,15 +64,14 @@ public class Worker : BackgroundService
         {
             string pubUrl = "tcp://localhost:12345";
             string dealerUrl = "tcp://" + StartupManager.getServerURL();
-            //string dealerUrl = "tcp://localhost:5555";
 
             try
             {
                 InitializePublisher(publisher, pubUrl);
                 InitializeDealer(dealer, dealerUrl);
 
-                _ = Task.Run(() => WorkdayManager.Vigilance(userSessions, usersAllowed, publisher));
-                _ = Task.Run(() => StartupManager.HeartBeat(clientInfo, dealer));
+                _ = Task.Run(() => WorkdayManager.Vigilance(userSessions, usersAllowed, publisher, stoppingToken));
+                _ = Task.Run(() => StartupManager.HeartBeat(clientInfo, dealer, stoppingToken));
 
                 while (!stoppingToken.IsCancellationRequested)
                 {
