@@ -99,6 +99,10 @@ try:
     WSM_CERT_FILE = os.getenv("WSM_CERT_FILE")
     WSM_CERT_CN = os.getenv("WSM_CERT_CN")
 
+    AUDIT_QUEUE = os.getenv("AUDIT_QUEUE")
+    AUDIT_QUEUE_HOST = os.getenv("AUDIT_QUEUE_HOST")
+
+
     if not DATABASE_URL:
         logger.error("A variável de ambiente DATABASE_URL não está definida.")
         raise ValueError("DATABASE_URL não definida.")

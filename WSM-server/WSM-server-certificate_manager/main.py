@@ -154,7 +154,7 @@ class Server():
                   "message": f"CA certificate not found in database: {e}"
                })
 
-      def handle_request_midpoint_certificate():
+      def handle_request_server_certificate():
          try:
                data = self.load_server_certificate()
                self.logger.info(f"Connector certificate requested")
@@ -206,8 +206,8 @@ class Server():
                })
 
       action_map = {
-         'REQUEST_WSM-CA': handle_request_ca_certificate,
-         'REQUEST_WSM': handle_request_midpoint_certificate,
+         'REQUEST_CA_CERTIFICATE': handle_request_ca_certificate,
+         'REQUEST_SERVER_CERTIFICATE': handle_request_server_certificate,
          'REQUEST_USER_CERTIFICATE': handle_request_user_certificate,
          'REQUEST_SIGNED_CERTIFICATE': handle_request_signed_certificate
       }
