@@ -227,6 +227,7 @@ class DatabaseManager:
             else:
                 return None
 
+
     def get_hostname_by_uid(self, _uid):
         with self.session_scope() as session:
             result = session.query(Sessions.hostname).filter(Sessions.user == _uid).first()

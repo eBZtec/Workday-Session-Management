@@ -145,44 +145,44 @@ class Server():
          try:
                data = self.load_ca_certificate()
                self.logger.info(f"CA certificate requested")
-               return json.dumps({
+               return {
                   "status": "success",
                   "data": data
-               })
+               }
          except Exception as e:
-               return json.dumps({
+               return {
                   "status": "error",
                   "message": f"CA certificate not found in database: {e}"
-               })
+               }
 
       def handle_request_server_certificate():
          try:
                data = self.load_server_certificate()
                self.logger.info(f"Session server certificate requested")
 
-               return json.dumps({
+               return {
                   "status": "success",
                   "data": data
-               })
+               }
          except Exception as e:
-               return json.dumps({
+               return {
                   "status": "error",
                   "message": "Session server not found in database"
-               })
+               }
 
       def handle_request_user_certificate():
          try:
                certificate = self.load_user_certificate(client_id)
                self.logger.info(f"{client_id} certificate requested by connector")
-               return json.dumps({
+               return {
                   "status": "success",
                   "data": certificate
-               })
+               }
          except Exception as e:
-               return json.dumps({
+               return {
                   "status": "error",
                   "message": "User certificate not found in database"
-               })
+               }
 
       def handle_request_signed_certificate():
          try:
@@ -194,10 +194,10 @@ class Server():
                   "data": cert_string
                }))
 
-               return json.dumps({
+               return {
                   "status": "success",
                   "data": cert_string
-               })
+               }
          except Exception as e:
                self.logger.error(f"Cant response signed certificate: {e}")
                return json.dumps({
@@ -218,7 +218,7 @@ class Server():
          else:
                raise Exception("Action not found")
       except Exception as e:
-         return json.dumps({
+         return {
                "status": "error",
                "message": str(e)
-         })
+         }

@@ -1,10 +1,12 @@
 from src.models.models import Sessions, Client, StandardWorkHours
 from src.connections.database_manager import DatabaseManager
 from src.services.working_hours_service import WorkingHoursService
+from src.services.rabbitmq_session_audit_producer import RabbitMQSessionAuditProducer
 from src.logs.logger import Logger
 from src.config import config
 from sqlalchemy.inspection import inspect
 import datetime, json
+import re
 
 class MessageProcessor:
 
@@ -12,10 +14,21 @@ class MessageProcessor:
         self.logger = Logger().get_logger()
         self.dm = DatabaseManager()
         self.work_hours = WorkingHoursService()
+        self.send_audit = RabbitMQSessionAuditProducer()
 
 
-    def process_client_message(self, ZMQ_client_id, client_data):
-        client_data = json.loads(client_data["Heartbeat"])
+    def process_client_message(self, ZMQ_client_id, client_message):
+
+         # Remove caracteres não imprimíveis usando regex
+        cleaned_data = re.sub(r'[\x00-\x1F\x7F]+$', '', client_message)
+        
+        # Converte a string JSON em um dicionário Python
+        client_data = json.loads(cleaned_data)
+
+        # Acessa os dados dentro da chave "Heartbeat"
+        client_data = client_data.get("Heartbeat", {})
+        print("heartbeat_data: ", client_data)
+
         try:
             client = Client(
                 hostname = client_data.get("hostname"),
@@ -121,6 +134,7 @@ class MessageProcessor:
             self.logger.error(f"WSM - process_session_message - Error processing session message: {e}")
             return {"status": "error", "message": f"Error processing session message: {e}"}  
         
+
     def process_user_disconnection(self, disconnection_data):
         try:
             hostname = disconnection_data["DisconnectionRequest"].get("hostname")
@@ -138,7 +152,6 @@ class MessageProcessor:
                     "dc_datetime": dc_datetime
                 }
                 return message_data
-        
         except KeyError as e:
             self.logger.error(f"WSM - process_user_disconnection - Missing key in disconnection request data: {str(e)}")
             return {"status": "error", "message": "Invalid disconnection request format"}
@@ -158,7 +171,13 @@ class MessageProcessor:
                 return {"status": "error", "message": "Invalid disconnection request data"}
             else:
                 try:
-                    self.dm.delete_user_disconnected(Sessions,hostname,user)
+                    session_to_audit = self.dm.get_by_hostname_and_user(Sessions,hostname,user)
+                    session_to_audit = self.to_dict(session_to_audit)
+                    
+
+                    self.sent_to_session_audit(action_type="end",session_data=session_to_audit)#Sent do function to preprare to sent do audit_database, when user ENDS to use
+                    self.dm.delete_user_disconnected(Sessions,hostname,user) #remove from session_db
+
                     return {"status": "success", "message": "Disconnected user removed from database."}
                 except KeyError as e:
                     self.logger.error(f"WSM Router - process_user_already_disconnected - Missing key in disconnection request data: {str(e)}")
@@ -172,6 +191,12 @@ class MessageProcessor:
         except Exception as e:
             self.logger.error(f"WSM Router - process_user_already_disconnected - General error in process_user_disconnection: {str(e)}")
             return {"status": "error", "message": "Failed to process disconnection request"}
+        
+    # transform sqlAlchemy instance to dict
+    def to_dict(self,instance):
+        if instance is None:
+            return None
+        return {column.name: getattr(instance, column.name) for column in instance.__table__.columns}
 
 
     def process_connected_user(self,message_data):
@@ -205,7 +230,9 @@ class MessageProcessor:
                         "start_time": logon_time,
                         "end_time": None,
                     }
-                    self.add_new_session(session_data)
+                    self.add_new_session(session_data) #Send start session to session table
+
+                    self.sent_to_session_audit(action_type="start", session_data=session_data) #Sent do function to preprare to sent do audit_database, when user STARTS to use
                     user_json = {"action": action, "hostname": hostname, "user": user, "timezone": timezone,"unrestricted": unrestricted,"enable": enable, "allowed_schedule": allowed_schedule,"timestamp": timestamp,"message":message,"title":title,"options":options}
                     return user_json
                 else:
@@ -219,7 +246,51 @@ class MessageProcessor:
             self.logger.error(f"WSM Router - message_processor - Missing key in user connection data: {str(e)}")
             return {"status": "error", "message": "Invalid logon format request"}
         return
-    
+
+    def sent_to_session_audit(self,action_type,session_data):
+        
+        try:
+            hostname = session_data.get("hostname")
+            related_client = self.dm.get_by_hostname(model=Client,hostname=hostname)
+            
+            if related_client:
+                related_client = self.to_dict(related_client)
+            else:
+                raise ValueError(f"Client not found for hostname: {hostname}")
+            
+            end_time = None
+            if action_type == "end":
+                end_time = datetime.datetime.now(datetime.timezone.utc)
+            else:
+                end_time = session_data.get("end_time")
+            start_time = session_data.get("start_time") if session_data.get("start_time") else None
+            if isinstance(start_time, datetime.datetime):
+                start_time = start_time.isoformat()
+            data = {
+                "hostname":hostname,
+                "event_type":"logout" if action_type == "end" else "logon",
+                "login":session_data.get("user"),
+                "status":session_data.get("status") if action_type =="start" else "disconnected",
+                "start_time":start_time,
+                "end_time":end_time.isoformat() if end_time else None,
+                "os_version":related_client.get("os_version"),
+                "os_name":related_client.get("os_name"),
+                "ip_address":related_client.get("ip_address"),
+                "client_version":related_client.get("client_version"),
+                "agent_info":related_client.get("agent_info")
+            }
+
+            self.send_audit.send_message(table="SessionsAudit", data=data)
+
+        except KeyError as e:
+            self.logger.error(f"Missing required field in data: {e}")
+        except ValueError as e:
+            self.logger.error(f"Validation error: {e}")
+        except AttributeError as e:
+            self.logger.error(f"Unexpected attribute issue: {e}")
+        except Exception as e:
+            self.logger.error(f"An unexpected error occurred: {e}")
+ 
     def process_direct_message(self,message_data,hostname):
         try:
             message_data = message_data.get("RoutingClientMessage",{})
@@ -239,6 +310,7 @@ class MessageProcessor:
         except Exception as e:
             self.logger.error(f"WSM Router: Error when trying to send message for this uid:{user}")
             return{"status": "error", "message": f"No schedule for user {user}"}   
+
 
     def process_wsm_agent_updater_message(self, message_data, hostname):
         try:

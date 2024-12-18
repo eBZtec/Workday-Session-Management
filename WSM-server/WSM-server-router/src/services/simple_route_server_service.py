@@ -47,12 +47,24 @@ class FlexibleRouterServerService:
         try:
             message_data = json.loads(message)
             self.logger.info(f"Parsing message: {message_data}")
+            
+            """
+            private_key = self.cm.load_private_key()
+            encrypted_message = base64.b64decode(message_data["EncryptedMessage"])
+            decrypted_aes_key = self.cm.decrypt_rsa(base64.b64decode(message_data["EncryptedAESKey"]), private_key)
+            decrypted_aes_iv = self.cm.decrypt_rsa(base64.b64decode(message_data["EncryptedAESIV"]), private_key)
+            decrypted_message = self.cm.decrypt_message(encrypted_message, decrypted_aes_key, decrypted_aes_iv)
+            
+            self.logger.info(f"\n\nDecrypted_message: {decrypted_message}")
+            """
+            
+            
             response = self.route_message(client_id,message_data)
             if response:
                 self.send_message(client_id,response)
             else:
                 self.logger.warning("No response for message")
-        except json.JSONDecoderError:
+        except json.JSONDecodeError:
             self.logger.error("Failed to decode JSON message")
             self.send_message(client_id,{"status": "error","message":"Invalid JSON format"})
         except Exception as e:
@@ -64,13 +76,13 @@ class FlexibleRouterServerService:
             message_handlers = {
                 "Client": lambda: self.handle_client_message(client_id, message_data["Client"]),
                 "Session": lambda: self.handle_session_message(client_id, message_data["Session"]),
-                "SessionDisconnected": lambda: self.handle_session_disconnection(message_data),
+                "SessionDisconnected": lambda: self.handle_session_disconnection(message_data), # Client send user disconnection
                 "LockUnlock": lambda: self.handle_lock_unlock(message_data),
-                "DisconnectionRequest": lambda: self.handle_disconnection_request(message_data),
-                "RoutingClientMessage": lambda: self.handle_routing_client_message(message_data),
-                "Heartbeat": lambda: self.handle_heartbeat(client_id, message_data),
-                "LogonRequest": lambda: self.handle_logon_request(message_data),
-                "CARequest": lambda: self.handle_ca_request(message_data["CARequest"]),
+                "DisconnectionRequest": lambda: self.handle_disconnection_request(message_data), # when API sent a disconnection to a user
+                "RoutingClientMessage": lambda: self.handle_routing_client_message(message_data), # API Comunication to client, to update workhours or sent direct message
+                "Heartbeat": lambda: self.handle_heartbeat(client_id, message_data), #Cli sent heartbeatin and creation/update into client table
+                "LogonRequest": lambda: self.handle_logon_request(message_data), # Client sent a request to check if is allowed to login (check workhours )
+                "CARequest": lambda: self.handle_ca_request(message_data,client_id), #Requests from cli or AD to certificates.
             }
             # Find the appropriate handler
             for key, handler in message_handlers.items():
@@ -95,7 +107,7 @@ class FlexibleRouterServerService:
         self.logger.info("Processing session message")
         return self.message_processor.process_session_message(client_id, session_data)
 
-    def handle_session_disconnection(self, message_data):
+    def handle_session_disconnection(self, message_data): # Client send user disconnection
         self.logger.info("Processing session disconnection")
         return self.message_processor.process_user_already_disconnected(message_data)
 
@@ -103,7 +115,7 @@ class FlexibleRouterServerService:
         self.logger.info("Processing lock/unlock message")
         return self.message_processor.process_lock_or_unlock_user(message_data)
 
-    def handle_disconnection_request(self, message_data):
+    def handle_disconnection_request(self, message_data): # when API sent a disconnection to a user
         self.logger.info("Processing disconnection request")
         response = self.message_processor.process_user_disconnection(message_data)
         client_id = response.get("hostname")
@@ -118,9 +130,9 @@ class FlexibleRouterServerService:
             try:
                 hostname = session.hostname
                 if "user" in message_data["RoutingClientMessage"]:
-                    client_id, response = self.message_processor.process_direct_message(message_data, hostname)
+                    client_id, response = self.message_processor.process_direct_message(message_data, hostname) # Send direct message to session/client
                 else:
-                    client_id, response = self.message_processor.process_wsm_agent_updater_message(message_data, hostname)
+                    client_id, response = self.message_processor.process_wsm_agent_updater_message(message_data, hostname) #Update session/client workhours
                 self.send_message(client_id, response)
             except Exception as e:
                 self.logger.error(f"Could not send message to client: {e}")
@@ -134,9 +146,11 @@ class FlexibleRouterServerService:
         self.logger.info("Processing logon request")
         return self.message_processor.process_connected_user(message_data)
 
-    def handle_ca_request(self, ca_request):
+    def handle_ca_request(self, message_data, client_id):
         self.logger.info("Processing CA request")
-        return self.ca_srvr.processRequests(json.loads(ca_request))
+        var = self.ca_srvr.processRequests(message_data,client_id)
+        print("var: ", var)
+        return var
 
     #SEND ENCRYPTED MESSAGE TO CLIENT
     def encrypt_message(self,hostname,message):
@@ -180,9 +194,11 @@ class FlexibleRouterServerService:
         self.socket.send_multipart([client_id.encode(),"".encode(), message.encode()])
         self.logger.info(f" WSM - simple_route_server_service - Sent to {client_id}: {message}")
         """
+        
         json_message = json.dumps(message)
         self.socket.send_multipart([client_id.encode(),"".encode(), json_message.encode()])
         self.logger.info(f" WSM - simple_route_server_service - Sent to {client_id}: {json_message}")
+
 
     def stop(self):
         # Fecha o socket e termina o contexto
