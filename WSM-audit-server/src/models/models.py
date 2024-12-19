@@ -5,7 +5,6 @@ from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.sql import func
 from src.models.schema.request_models import SessionTerminationActionSchema
 from datetime import datetime
-
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()

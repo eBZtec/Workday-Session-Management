@@ -12,6 +12,8 @@ class ReportController:
             session = DatabaseManager()
             filter_expression = build_sqlalchemy_filter(filter, SessionsAudit)
             query = session.search_with_where_clause_paginated(SessionsAudit, filter_expression,page,page_size)
+            print("Full Query with Parameters:", query.statement.compile(compile_kwargs={"literal_binds": True}))
+
             print("Generated Query:", str(query))   
             def to_dict(obj):
                 return {column.key: getattr(obj, column.key) for column in inspect(obj).mapper.column_attrs}

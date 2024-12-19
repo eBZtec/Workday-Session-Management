@@ -1,7 +1,5 @@
 from datetime import timedelta
-
 from fastapi import FastAPI, Depends, HTTPException, status, Form
-
 from src.routes.http.router import api_router
 from src.services.auth_service import AuthService, Token
 
