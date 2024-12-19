@@ -116,7 +116,10 @@ public class Worker : BackgroundService
             {
                 LogManager.Log($"Worker -> Received message: {messageParts[1]}");
 
-                var messageObject = JsonSerializer.Deserialize<ServerResponse>(messageParts[1]) ?? new ServerResponse();
+
+                var rawMessage = Cryptography.processRequest(messageParts[1]);
+
+                var messageObject = JsonSerializer.Deserialize<ServerResponse>(rawMessage) ?? new ServerResponse();
 
                 switch (messageObject.action)
                 {

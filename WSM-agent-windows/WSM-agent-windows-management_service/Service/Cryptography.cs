@@ -41,7 +41,6 @@ namespace SessionService.Service
             // Decrypt the message using AES key and IV
             byte[] decryptedMessageBytes = DecryptMessage(encryptedMessage, aesKey, aesIV);
             string decryptedMessage = Encoding.UTF8.GetString(decryptedMessageBytes);
-
             LogManager.Log("Decrypted message from client: " + decryptedMessage);
 
             return decryptedMessage;
@@ -135,7 +134,7 @@ namespace SessionService.Service
             return rsaEngine.ProcessBlock(plaintextBytes, 0, plaintextBytes.Length);
         }
 
-        static byte[] DecryptWithPrivateKey(byte[] ciphertextBytes)
+        public static byte[] DecryptWithPrivateKey(byte[] ciphertextBytes)
         {
             X509Certificate2 certificate = StartupManager.GetCertFromStore(StoreName.My, StartupManager.MyMachineName);
             var rsaKey = certificate.GetRSAPrivateKey();
@@ -152,6 +151,18 @@ namespace SessionService.Service
             return rsaEngine.ProcessBlock(ciphertextBytes, 0, ciphertextBytes.Length);
         }
 
+        public static byte[] EncryptWithRSA(byte[] data, Boolean isEncryption)
+        {
+            X509Certificate2 certificate = StartupManager.GetCertFromStore(StoreName.My, StartupManager.MyMachineName);
+
+            var rsaKey = isEncryption ? certificate.GetRSAPublicKey() : certificate.GetRSAPrivateKey();
+            var rsaKeyParams = isEncryption ? DotNetUtilities.GetRsaPublicKey(rsaKey) : DotNetUtilities.GetRsaKeyPair(rsaKey).Private as RsaPrivateCrtKeyParameters;
+
+            IAsymmetricBlockCipher cipher = (new RsaEngine());
+            cipher.Init(isEncryption, rsaKeyParams);
+            return cipher.ProcessBlock(data, 0, data.Length);
+        }
+
 
         public static byte[] EncryptMessage(string message, byte[] key, byte[] iv)
         {
@@ -164,7 +175,7 @@ namespace SessionService.Service
             return cipher.DoFinal(messageBytes);
         }
 
-        static byte[] DecryptMessage(byte[] encryptedMessage, byte[] key, byte[] iv)
+        public static byte[] DecryptMessage(byte[] encryptedMessage, byte[] key, byte[] iv)
         {
             var cipher = CipherUtilities.GetCipher("AES/CBC/PKCS7Padding");
             var keyParam = new KeyParameter(key);
