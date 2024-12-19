@@ -99,6 +99,12 @@ namespace SessionService.Model
     }
 
     // ----- crypt -----
+    public class EncryptedServerResponse
+    {
+        public string EncryptedAESKey { get; set; }
+        public string EncryptedAESIV { get; set; }
+        public string EncryptedMessage { get; set; }
+    }
 
     public class Response
     {
