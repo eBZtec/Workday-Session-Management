@@ -1,4 +1,4 @@
-import zmq, json, base64
+import zmq, json, base64, re
 from src.logs.logger import Logger
 from src.connections.database_manager import DatabaseManager
 from src.config import config
@@ -63,8 +63,14 @@ class FlexibleRouterServerService:
             decrypted_aes_key = self.cm.decrypt_rsa(base64.b64decode(message["EncryptedAESKey"]), private_key)
             decrypted_aes_iv = self.cm.decrypt_rsa(base64.b64decode(message["EncryptedAESIV"]), private_key)
             decrypted_message = self.cm.decrypt_message(encrypted_message, decrypted_aes_key, decrypted_aes_iv)
+            
             self.logger.info(f"\n\nDecrypted_message: {decrypted_message}")
-            return decrypted_message
+            
+            # Remove caracteres não imprimíveis usando regex
+            cleaned_data = re.sub(r'[\x00-\x1F\x7F]+$', '', decrypted_message)
+            cleaned_data = json.loads(cleaned_data)
+            return cleaned_data
+        
         except Exception as e:
             self.logger.error(f"Error while decrypting the following message: {message}")
         
@@ -170,7 +176,7 @@ class FlexibleRouterServerService:
     def handle_ca_request(self, message_data, client_id):
         self.logger.info("Processing CA request")
         var = self.ca_srvr.processRequests(message_data,client_id)
-        print("var: ", var)
+        #print("var: ", var)
         return var
 
     #SEND ENCRYPTED MESSAGE TO CLIENT
@@ -220,13 +226,13 @@ class FlexibleRouterServerService:
         
         if to_encrypt:
             message = json.dumps(message)
-            json_message = self.encrypt_message(client_id,message)
-            self.socket.send_multipart([client_id.encode(),"".encode(), message.encode()])
-            self.logger.info(f" WSM - simple_route_server_service - Sent to {client_id}: {message}")
+            encrypted_message = self.encrypt_message(client_id,message)
+            self.socket.send_multipart([client_id.encode(),"".encode(), encrypted_message.encode()])
+            self.logger.info(f" WSM - simple_route_server_service - Sent ENCRYPTED to {client_id}: {encrypted_message}")
         else:
             json_message = json.dumps(message)
             self.socket.send_multipart([client_id.encode(),"".encode(), json_message.encode()])
-            self.logger.info(f" WSM - simple_route_server_service - Sent to {client_id}: {json_message}")
+            self.logger.info(f" WSM - simple_route_server_service - Sent NOT encrypted to {client_id}: {json_message}")
 
 
     def stop(self):

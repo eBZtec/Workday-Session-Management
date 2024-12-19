@@ -18,16 +18,17 @@ class MessageProcessor:
 
 
     def process_client_message(self, ZMQ_client_id, client_message):
-
-         # Remove caracteres não imprimíveis usando regex
-        cleaned_data = re.sub(r'[\x00-\x1F\x7F]+$', '', client_message)
-        
-        # Converte a string JSON em um dicionário Python
-        client_data = json.loads(cleaned_data)
-
-        # Acessa os dados dentro da chave "Heartbeat"
-        client_data = client_data.get("Heartbeat", {})
-        print("heartbeat_data: ", client_data)
+        try:
+            #heartbeat_data = json.loads(client_message)
+            client_data = client_message.get("Heartbeat")
+            if client_data:
+                client_data = json.loads(client_data)
+            else:
+                client_data = {}
+        except json.JSONDecodeError as e:
+            message = {"status": "error", "message": f"Error decoding JSON: {str(e)}"}
+            self.logger.error(message)
+            return message
 
         try:
             client = Client(
