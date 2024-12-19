@@ -2,6 +2,7 @@ from sqlalchemy import and_, or_, Column
 from sqlalchemy.orm import Session
 from typing import List, Any, Tuple
 from sqlalchemy.sql.expression import BinaryExpression
+from datetime import datetime, timedelta
 
 # SQLAlchemy operator mapping
 SQLA_OPERATORS = {
@@ -34,9 +35,9 @@ def build_sqlalchemy_filter(filters: List[dict], model) -> Any:
 
             nested_expression = build_sqlalchemy_filter(nested_conditions, model)
             if logical_op == "AND":
-                expressions.append(and_(nested_expression))
+                expressions.append(and_(*nested_expression))
             elif logical_op == "OR":
-                expressions.append(or_(nested_expression))
+                expressions.append(or_(*nested_expression))
             else:
                 raise InvalidFilterException(f"Unsupported logical operator: {logical_op}")
         else:
@@ -44,12 +45,19 @@ def build_sqlalchemy_filter(filters: List[dict], model) -> Any:
             operator = f.get("operator")
             value = f.get("value")
 
-            if not hasattr(model, field):
+            column = getattr(model, field, None)
+            if column is None:
                 raise InvalidFilterException(f"Invalid field: {field}")
-            if operator not in SQLA_OPERATORS:
-                raise InvalidFilterException(f"Unsupported operator: {operator}")
+            
+            if isinstance(value, str) and isinstance(column.type.python_type, datetime):
+                value = datetime.fromisoformat(value)
 
-            column: Column = getattr(model, field)
+                # Ajustar horários para "$lte" e "$gte"
+                if operator == "$lte" and value.time() == datetime.min.time():
+                    value += timedelta(days=1) - timedelta(seconds=1)
+                elif operator == "$gte" and value.time() == datetime.min.time():
+                    value = value  # Garante que seja o início do dia
+
             sql_expr = SQLA_OPERATORS[operator](column, value)
             expressions.append(sql_expr)
 

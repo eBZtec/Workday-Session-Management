@@ -1,5 +1,4 @@
 from datetime import datetime, date
-
 from sqlalchemy import create_engine, or_
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
@@ -9,7 +8,6 @@ from src.models.models import Base
 from src.config import config
 from src.models.models import SessionsAudit
 import os
-
 from src.utils.filter_transform import paginate_query
 
 # Carregar as variáveis do arquivo .env
@@ -155,7 +153,7 @@ class DatabaseManager:
         with self.session_scope() as session:
             query = session.query(model).filter(filter)
             paginated_query, pagination_info = paginate_query(query, page, page_size)
-            return paginated_query.all()
+            return paginated_query
 
 '''
 Exemplo de Uso da Classe DatabaseManager
