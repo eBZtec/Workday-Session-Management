@@ -18,7 +18,9 @@ namespace SessionService.Service
             var encapsulatedJson = new Dictionary<string, string> { { "LogonRequest", JsonSerializer.Serialize<EventInfoHandler>(info) } };
             var result = JsonSerializer.Serialize(encapsulatedJson);
 
-            dealer.SendFrame(result);
+            string encryptedMessage = Cryptography.processResponse(result);
+
+            dealer.SendFrame(encryptedMessage);
         }
 
         public static void HandleLockEvent(EventLogEntry entry, DealerSocket dealer)
@@ -30,7 +32,10 @@ namespace SessionService.Service
 
             var encapsulatedJson = new Dictionary<string, string> { { "LockUnlock", JsonSerializer.Serialize<EventInfoHandler>(info) } };
             var result = JsonSerializer.Serialize(encapsulatedJson);
-            //dealer.SendFrame(result);
+
+            string encryptedMessage = Cryptography.processResponse(result);
+
+            //dealer.SendFrame(encryptedMessage);
         }
 
         public static void HandleUnlockEvent(EventLogEntry entry, DealerSocket dealer)
@@ -42,7 +47,10 @@ namespace SessionService.Service
 
             var encapsulatedJson = new Dictionary<string, string> { { "LockUnlock", JsonSerializer.Serialize<EventInfoHandler>(info) } };
             var result = JsonSerializer.Serialize(encapsulatedJson);
-            // dealer.SendFrame(result);
+
+            string encryptedMessage = Cryptography.processResponse(result);
+
+            //dealer.SendFrame(encryptedMessage);
         }
 
         public static void HandleLogoffEvent(EventLogEntry entry, DealerSocket dealer)
@@ -54,7 +62,10 @@ namespace SessionService.Service
 
             var encapsulatedJson = new Dictionary<string, string> { { "SessionDisconnected", JsonSerializer.Serialize<EventInfoHandler>(info) } };
             var result = JsonSerializer.Serialize(encapsulatedJson);
-            dealer.SendFrame(result);
+
+            string encryptedMessage = Cryptography.processResponse(result);
+
+            dealer.SendFrame(encryptedMessage);
         }
     }
 }

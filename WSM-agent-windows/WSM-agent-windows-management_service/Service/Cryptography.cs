@@ -47,21 +47,12 @@ namespace SessionService.Service
             return decryptedMessage;
         }
 
-        public static string processResponse()
+        public static string processResponse(string messageToSend)
         {
-            var messageToSend = new
-            {
-                Status = "sucess",
-                Message = "AD sucessfully updated"
-            };
-
-            // Serialize the object to JSON
-            string jsonString = JsonSerializer.Serialize(messageToSend);
-
             byte[] aesKey = GenerateAesKey();
             byte[] aesIV = GenerateAesIV();
 
-            byte[] encryptedMessage = EncryptMessage(jsonString, aesKey, aesIV);
+            byte[] encryptedMessage = EncryptMessage(messageToSend, aesKey, aesIV);
             byte[] encryptedAesKey = EncryptWithPublicKey(aesKey);
             byte[] encryptedAesIv = EncryptWithPublicKey(aesIV);
 
@@ -73,9 +64,6 @@ namespace SessionService.Service
             };
 
             string jsonMessage = JsonSerializer.Serialize(jsonObject);
-
-            LogManager.Log("Sending JSON response to server: " + jsonString);
-
             return jsonMessage;
         }
 
@@ -132,15 +120,15 @@ namespace SessionService.Service
 
         static byte[] EncryptWithPublicKey(byte[] plaintextBytes)
         {
-            X509Certificate2 certificate = Setup.GetCertFromStore(StoreName.My, "WSM");
+            X509Certificate2 certificate = StartupManager.GetCertFromStore(StoreName.My, "WSM-SESSION-SERVER");
             var rsaKey = certificate.GetRSAPublicKey();
             AsymmetricKeyParameter rsaKeyParams = DotNetUtilities.GetRsaPublicKey(rsaKey);
 
             var rsaEngine = new OaepEncoding(
                 new RsaEngine(),
                 new Sha256Digest(),
-                new Sha256Digest(), // Optional: specify MGF1 digest
-                null                // Optional: use default OAEP parameters
+                new Sha256Digest(),
+                null
             );
 
             rsaEngine.Init(true, rsaKeyParams);
@@ -149,15 +137,15 @@ namespace SessionService.Service
 
         static byte[] DecryptWithPrivateKey(byte[] ciphertextBytes)
         {
-            X509Certificate2 certificate = Setup.GetCertFromStore(StoreName.My, Setup.MyMachineName);
+            X509Certificate2 certificate = StartupManager.GetCertFromStore(StoreName.My, StartupManager.MyMachineName);
             var rsaKey = certificate.GetRSAPrivateKey();
             var rsaKeyParams = DotNetUtilities.GetRsaKeyPair(rsaKey).Private as RsaPrivateCrtKeyParameters;
 
             var rsaEngine = new OaepEncoding(
                 new RsaEngine(),
                 new Sha256Digest(),
-                new Sha256Digest(), // Optional: specify MGF1 digest
-                null                // Optional: use default OAEP parameters
+                new Sha256Digest(),
+                null
             );
 
             rsaEngine.Init(false, rsaKeyParams);

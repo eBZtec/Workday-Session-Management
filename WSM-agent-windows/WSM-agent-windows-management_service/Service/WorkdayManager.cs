@@ -29,9 +29,9 @@ namespace SessionService.Service
             return;
         }
 
-        public static void Vigilance(List<UserSession> userSessions, List<UserAllowed> usersAllowed, PublisherSocket publisher)
+        public static async void Vigilance(List<UserSession> userSessions, List<UserAllowed> usersAllowed, PublisherSocket publisher, CancellationToken cancellationToken)
         {
-            while (true)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
@@ -151,7 +151,14 @@ namespace SessionService.Service
                     LogManager.Log($"Vigilance -> exception: {ex.Message}");
                 }
 
-                Thread.Sleep(TimeSpan.FromSeconds(20));
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(20), cancellationToken);
+                }
+                catch (TaskCanceledException)
+                {
+                    break;
+                }
             }
         }
 
