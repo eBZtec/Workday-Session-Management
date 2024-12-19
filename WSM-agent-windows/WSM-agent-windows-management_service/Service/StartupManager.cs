@@ -233,11 +233,11 @@ namespace SessionService.Service
             if (GetCertFromStore(StoreName.My, session_server_cn) == null)
             {
                 GetCertificate(session_server_host, "REQUEST_SERVER_CERTIFICATE", MyMachineName);
-                LogManager.Log("Server certificate requested.");
+                LogManager.LogClientInfo("\n\nServer certificate requested.");
             }
             else
             {
-                LogManager.Log("Server certificate already in Certificate Store.");
+                LogManager.LogClientInfo("\n\nServer certificate already in Certificate Store.");
             }
             if (GetCertFromStore(StoreName.My, session_server_CA_cn) == null)
             {
