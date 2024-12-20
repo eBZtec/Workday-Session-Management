@@ -22,7 +22,18 @@ class TimestampedBase(Base):
     create_timestamp = Column(DateTime(timezone=True), default=func.now(), nullable=False)
     update_timestamp = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=True)
 
-# Classe Client (tabela client)
+class Certificate_Authority(Base):
+    __tablename__ = 'certificate_authority'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    fqdn = Column(String(100), nullable=False)
+    certificate = Column(Text, nullable=False)
+    validity = Column(DateTime(timezone=True), nullable=False)
+
+    # Relacionamento com Client
+    client = relationship("Client", back_populates="certificate_authority", uselist=False, cascade="all, delete-orphan")
+
+
+# Classe Client
 class Client(TimestampedBase):
     __tablename__ = 'client'
     hostname = Column(String(100),primary_key=True, nullable=False)
@@ -30,12 +41,21 @@ class Client(TimestampedBase):
     client_version = Column(String(50), nullable=False)
     os_name = Column(String(50))
     os_version = Column(String(50), nullable=False)
+    uptime = Column(Integer, nullable=True)
     agent_info = Column(String(50))
     create_timestamp = Column(DateTime(timezone=True), default=func.now(), nullable=False)
     update_timestamp = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=True)
 
-    # Relacionamento com Sessions
+    # Relationship with Sessions
     sessions = relationship("Sessions", back_populates="client", cascade='all, delete')
+
+
+    # Foreign Key to Certificate_Authority
+    certificate_authority_id = Column(Integer, ForeignKey('certificate_authority.id'), unique=True, nullable=True)
+
+    # Relationship with Certificate_Authority
+    certificate_authority = relationship("Certificate_Authority", back_populates="client", uselist=False)
+
 
 
 class Sessions(TimestampedBase):
@@ -186,9 +206,4 @@ class Target(TimestampedBase):
     target_status_entries = relationship("TargetStatus", back_populates="target", cascade='all, delete')
 
 
-class Certificate_Authority(Base):
-    __tablename__ = 'certificate_authority'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    fqdn = Column(String(100), nullable=False)
-    certificate = Column(Text, nullable=False)
-    validity = Column(DateTime(timezone=True), nullable=False)
+

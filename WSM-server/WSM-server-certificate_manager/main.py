@@ -19,21 +19,22 @@ class Server():
       self.database_url = config.DATABASE_URL
       self.zmq_port = config.Z_MQ_PORT
       self.db = DatabaseManager()
-      self.ca_key_path = config.key_path
 
       with open(config.WSM_CERT_FILE, "rb") as cert_file:
          certificate_data = cert_file.read()
          self.parseCertificateAndInsert(certificate_data)
+         self.logger.info("Session server certificate updated in database.")
 
       with open(config.CA_CERT_FILE, "rb") as cert_file:
          certificate_data = cert_file.read()
          self.parseCertificateAndInsert(certificate_data)
+         self.logger.info("Certification authority certificate updated in database.")
 
    def load_server_certificate(self):
         """! Loads the server certificate from database.
         @return  server certificate.
         """
-        return self.db.get_cert_by_fqdn(Certificate_Authority,"WSM").certificate
+        return self.db.get_cert_by_fqdn(Certificate_Authority,config.WSM_CERT_CN).certificate
 
    def load_user_certificate(self, username):
       """! Loads a user's certificate from database by his Windows username.
@@ -49,7 +50,7 @@ class Server():
       @exception Logs an info message if the CA certificate was not found or another exception occurs. 
       """
       try:
-         CA_WSM = self.db.get_cert_by_fqdn(Certificate_Authority,"WSM-CA").certificate
+         CA_WSM = self.db.get_cert_by_fqdn(Certificate_Authority,config.CA_CERT_CN).certificate
          if args == 'pem':
                return x509.load_pem_x509_certificate(CA_WSM.encode(), backend=default_backend())
          else:
@@ -66,7 +67,7 @@ class Server():
       with open(config.CA_KEY_PATH, "rb") as key_file:
          ca_private_key = load_pem_private_key(
                key_file.read(),
-               password=config.CA_KEY_PASS.encode(),
+               password=config.CA_KEY_PASSWORD.encode(),
                backend=default_backend())
       return ca_private_key
 
@@ -140,7 +141,6 @@ class Server():
       """
       
       def handle_request_ca_certificate():
-
          try:
                data = self.load_ca_certificate()
                self.logger.info(f"CA certificate requested")
@@ -148,15 +148,13 @@ class Server():
                   "status": "success",
                   "data": data
                })
-
          except Exception as e:
                return json.dumps({
-                  "status": "erro",
+                  "status": "error",
                   "message": f"CA certificate not found in database: {e}"
                })
 
-      def handle_request_midpoint_certificate():
-         
+      def handle_request_server_certificate():
          try:
                data = self.load_server_certificate()
                self.logger.info(f"Connector certificate requested")
@@ -167,7 +165,7 @@ class Server():
                })
          except Exception as e:
                return json.dumps({
-                  "status": "erro",
+                  "status": "error",
                   "message": "Connector certificate not found in database"
                })
 
@@ -182,7 +180,7 @@ class Server():
                })
          except Exception as e:
                return json.dumps({
-                  "status": "erro",
+                  "status": "error",
                   "message": "User certificate not found in database"
                })
 
@@ -196,8 +194,6 @@ class Server():
                   "data": cert_string
                }))
 
-
-
                return json.dumps({
                   "status": "success",
                   "data": cert_string
@@ -205,13 +201,13 @@ class Server():
          except Exception as e:
                self.logger.error(f"Cant response signed certificate: {e}")
                return json.dumps({
-                  "status": "erro",
+                  "status": "error",
                   "message": "Invalid CSR: it's not possible to get signed certificate"
                })
 
       action_map = {
-         'REQUEST_WSM-CA': handle_request_ca_certificate,
-         'REQUEST_WSM': handle_request_midpoint_certificate,
+         'REQUEST_CA_CERTIFICATE': handle_request_ca_certificate,
+         'REQUEST_SERVER_CERTIFICATE': handle_request_server_certificate,
          'REQUEST_USER_CERTIFICATE': handle_request_user_certificate,
          'REQUEST_SIGNED_CERTIFICATE': handle_request_signed_certificate
       }
@@ -223,7 +219,7 @@ class Server():
                raise Exception("Action not found")
       except Exception as e:
          return json.dumps({
-               "status": "erro",
+               "status": "error",
                "message": str(e)
          })
 
@@ -251,25 +247,6 @@ class Server():
                   socket.send_string(json.dumps({"status":"erro","message":{e}}))
                except zmq.erro.ZMQerro as send_erro:
                   logging.info(f"Failed to send error response: {send_erro}")
-
-   # Load certificate as file, convert it to a X509
-   # certificate, extract it's public key and date,
-   # and insert it to a postgresql database table.
-   def insert_certificate_to_db(self, path, common_name):
-      try:
-         with open(path, "rb") as cert_file:
-               certificate_data = cert_file.read()
-
-         x509_certificate = x509.load_pem_x509_certificate(certificate_data, default_backend())
-         publicKey = x509_certificate.public_key().public_bytes(encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo).decode()
-         date = x509_certificate.not_valid_after_utc.date()
-
-         self.db.insert_row(common_name, certificate_data.decode(), publicKey, date)
-         logging.info(f"CN = {common_name} inserted successfully")
-
-      except Exception as e:
-         logging.info(f"An error occurred: {e}")
-
 
 if __name__ == "__main__":
    server = Server()

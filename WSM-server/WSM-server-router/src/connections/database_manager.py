@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, or_, select
 from sqlalchemy.orm import sessionmaker
-from src.models.models import StandardWorkHours, ExtendedWorkHours, Sessions
+from src.models.models import StandardWorkHours, ExtendedWorkHours, Sessions, Certificate_Authority
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from contextlib import contextmanager
@@ -176,6 +176,10 @@ class DatabaseManager:
                 return True
             return False
 
+    def get_cert_by_fqdn(self,model,fqdn_):
+        with self.session_scope() as session:
+            return session.query(model).filter_by(fqdn=fqdn_).first()
+
 
     """
     PONTUAL QUERIES
@@ -223,6 +227,7 @@ class DatabaseManager:
             else:
                 return None
 
+
     def get_hostname_by_uid(self, _uid):
         with self.session_scope() as session:
             result = session.query(Sessions.hostname).filter(Sessions.user == _uid).first()
@@ -231,6 +236,10 @@ class DatabaseManager:
     def get_sessions_by_uid(self,_uid):
         with self.session_scope() as session:
             return session.query(Sessions).filter(Sessions.user == _uid).all()
+
+    def get_cert_by_hostname(self,_hostname):
+        with self.session_scope() as session:
+            return session.query(Certificate_Authority.certificate).filter(Certificate_Authority.fqdn == _hostname).first()
 
     def get_user_schedule(self,_uid):
         with self.session_scope() as session:
