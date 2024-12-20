@@ -27,41 +27,46 @@ def build_sqlalchemy_filter(filters: List[dict], model) -> Any:
     :return: SQLAlchemy filter clause
     """
     expressions = []
+    try:
+        for f in filters:
+            if "logical" in f:  # Handle nested logical operators
+                logical_op = f["logical"].upper()
+                nested_conditions = f["conditions"]
 
-    for f in filters:
-        if "logical" in f:  # Handle nested logical operators
-            logical_op = f["logical"].upper()
-            nested_conditions = f["conditions"]
-
-            nested_expression = build_sqlalchemy_filter(nested_conditions, model)
-            if logical_op == "AND":
-                expressions.append(and_(*nested_expression))
-            elif logical_op == "OR":
-                expressions.append(or_(*nested_expression))
+                nested_expression = build_sqlalchemy_filter(nested_conditions, model)
+                if logical_op == "AND":
+                    expressions.append(and_(*nested_expression))
+                elif logical_op == "OR":
+                    expressions.append(or_(*nested_expression))
+                else:
+                    raise InvalidFilterException(f"Unsupported logical operator: {logical_op}")
             else:
-                raise InvalidFilterException(f"Unsupported logical operator: {logical_op}")
-        else:
-            field = f.get("field")
-            operator = f.get("operator")
-            value = f.get("value")
+                field = f.get("field")
+                operator = f.get("operator")
+                value = f.get("value")
 
-            column = getattr(model, field, None)
-            if column is None:
-                raise InvalidFilterException(f"Invalid field: {field}")
-            
-            if isinstance(value, str) and isinstance(column.type.python_type, datetime):
-                value = datetime.fromisoformat(value)
+                column = getattr(model, field, None)
+                if column is None:
+                    raise InvalidFilterException(f"Invalid field: {field}")
+                
+                if isinstance(value, str) and isinstance(column.type.python_type, datetime):
+                    value = datetime.fromisoformat(value)
 
-                # Ajustar horários para "$lte" e "$gte"
-                if operator == "$lte" and value.time() == datetime.min.time():
-                    value += timedelta(days=1) - timedelta(seconds=1)
-                elif operator == "$gte" and value.time() == datetime.min.time():
-                    value = value  # Garante que seja o início do dia
+                    # Ajustar horários para "$lte" e "$gte"
+                    if operator == "$lte" and value.time() == datetime.min.time():
+                        value += timedelta(days=1) - timedelta(seconds=1)
+                    elif operator == "$gte" and value.time() == datetime.min.time():
+                        value = value  # Garante que seja o início do dia
 
-            sql_expr = SQLA_OPERATORS[operator](column, value)
-            expressions.append(sql_expr)
-
-    return and_(*expressions)
+                sql_expr = SQLA_OPERATORS[operator](column, value)
+                expressions.append(sql_expr)
+        return and_(*expressions)
+    except AttributeError as e:
+        raise InvalidFilterException(f"Model attribute error: {str(e)}")
+    except InvalidFilterException as e:
+        raise e  # Re-raise the custom exception for invalid filters
+    except Exception as e:
+        raise InvalidFilterException(f"An unexpected error occurred: {str(e)}")
 
 def paginate_query(query, page: int, page_size: int) -> Tuple:
     """
@@ -71,9 +76,22 @@ def paginate_query(query, page: int, page_size: int) -> Tuple:
     :param page_size: Number of items per page
     :return: Tuple containing paginated query and pagination info
     """
-    offset = (page - 1) * page_size
-    paginated_query = query.limit(page_size).offset(offset)
-    return paginated_query, {"page": page, "page_size": page_size}
+    try:
+        if page <1:
+            raise ValueError("Page number must be greater than or equal to 1.")
+        if page_size < 1:
+            raise ValueError("Page size must be greater than or equal to 1.")
+        
+        offset = (page - 1) * page_size
+        paginated_query = query.limit(page_size).offset(offset)
+        return paginated_query, {"page": page, "page_size": page_size}
+    except AttributeError as e:
+        raise ValueError(f"Invalid query object: {str(e)}")
+    except ValueError as e:
+        raise ValueError(f"Invalid pagination parameters: {str(e)}")
+    except Exception as e:
+        raise RuntimeError(f"An unexpected error occurred during pagination: {str(e)}")
+
 
 """
 # Example Usage

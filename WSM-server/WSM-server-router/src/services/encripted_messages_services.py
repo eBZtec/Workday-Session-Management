@@ -26,7 +26,7 @@ class CryptoMessages:
         cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
         encryptor = cipher.encryptor()
 
-        message = json.dumps(message)
+        #message = json.dumps(message)
 
         # Pad message to multiple of block size (16 bytes)
         padded_message = message + (16 - len(message) % 16) * chr(16 - len(message) % 16)
@@ -70,7 +70,7 @@ class CryptoMessages:
 
     # Windows client public key
     def load_public_key(self,_hostname):
-        row = self.dm.get_cert_by_hostname("wsm:"+_hostname.lower())
+        row = self.dm.get_cert_by_hostname(_hostname)#"wsm:"+_hostname.lower())
         certificate_data = row[0].encode("utf-8")
 
         # Parse the certificate

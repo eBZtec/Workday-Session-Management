@@ -181,8 +181,10 @@ class FlexibleRouterServerService:
 
     #SEND ENCRYPTED MESSAGE TO CLIENT
     def encrypt_message(self,hostname,message):
+        
+        print("Message without encryption: ", message)
+        
         public_key = self.cm.load_public_key(hostname)
-
         aes_key, aes_iv = self.cm.generate_aes_key_iv()
         encrypted_message = self.cm.encrypt_message_aes(message, aes_key, aes_iv)
 
