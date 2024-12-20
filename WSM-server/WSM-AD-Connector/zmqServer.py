@@ -12,10 +12,16 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import serialization, hashes
+from cryptography import x509
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from dotenv import load_dotenv
+import os
 
 
 logger = logging.getLogger('zmqServer_logger')
 logger.setLevel(logging.DEBUG)
+load_dotenv()
 
 handler = TimedRotatingFileHandler(
     'zmqServer.log',  # Nome do arquivo
@@ -98,11 +104,19 @@ def load_private_key():
 
 # Windows client public key
 def load_public_key():
-    with open("public_key.pem", "rb") as key_file:
+    certificate_pem = get_certs(str(os.getenv("DATABASE_URL")))
+    if not certificate_pem:
+        raise ValueError("Can't find certificate")
+
+    certificate = x509.load_pem_x509_certificate(certificate_pem.encode('utf-8'))
+    public_key = certificate.public_key()
+
+    """with open("public_key.pem", "rb") as key_file:
         public_key = serialization.load_pem_public_key(
             key_file.read(),
             backend=default_backend()
-        )
+        )"""
+    print(f"PUBLIC KEY:{str(public_key)}")
     return public_key
 
 # Decrypt AES key and IV using RSA
@@ -124,9 +138,9 @@ def decrypt_message(encrypted_message, key, iv):
     return decrypted_message.decode('utf-8').strip()
 
 def main():
-    parser = argparse.ArgumentParser(description="Script that get rabbitMQ messages and sent to AD Connector")
-    parser.add_argument("host", type=str, help="tcp://host:port")
-    args = parser.parse_args()
+    #parser = argparse.ArgumentParser(description="Script that get rabbitMQ messages and sent to AD Connector")
+    #parser.add_argument("host", type=str, help="tcp://host:port")
+    #args = parser.parse_args()
 
     # RabbitMq Reader
     rabbit_reader = RabbitMQReader(queue_name="AD", host="localhost")
@@ -134,7 +148,7 @@ def main():
 
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
-    socket.connect(args.host)
+    socket.connect("tcp://"+ str(os.getenv("ZERO_MQ_URL")))
     logger.info("Client is running and sending JSON messages...")
 
     """
@@ -159,10 +173,12 @@ def main():
     }
     
     """
+    #get_certs(os.getenv("DATABASE_URL"))
+    #load_public_key()
 
+    print("Starting to read RabbitMQ messages...")
     while True:
         data = rabbit_reader.consume_message()
-
         if data:
             if data.get('status') == 'error' and data.get('message') == 'Action not found':
                 print("RabbitMQ message with no processable json")
@@ -235,6 +251,38 @@ def process_response(response):
     }
 
     logger.info("\nDecrypted JSON response:\n", json.dumps(decrypted_response, indent=4))
+
+def get_certs(database_url:str ):
+    """
+    Faz um SELECT * em todos os registros de uma tabela no PostgreSQL.
+
+    Args:
+        connection_params (dict): Parâmetros de conexão com o banco (host, dbname, user, password).
+        table_name (str): Nome da tabela no banco de dados.
+
+    Returns:
+        List[dict]: Lista de registros como dicionários.
+    """
+    try:
+        table_name = "certificate_authority"
+        # Conectar ao banco de dados
+        connection = psycopg2.connect(database_url)
+        cursor = connection.cursor(cursor_factory=RealDictCursor)
+
+        # Query para buscar todos os registros
+        hostname = str(os.getenv("AD_HOSTNAME"))
+        query = f"SELECT certificate FROM {table_name} WHERE fqdn=%s"
+        cursor.execute(query, (hostname,))
+        results = cursor.fetchone()
+        print (f"Results: {results} ")
+        result = results["certificate"]
+        return result
+    except psycopg2.Error as e:
+        print(f"Erro ao acessar o banco de dados: {e}")
+        return []
+    finally:
+        if connection:
+            connection.close()
 
 
 if __name__ == "__main__":
