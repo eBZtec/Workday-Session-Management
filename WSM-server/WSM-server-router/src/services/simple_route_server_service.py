@@ -1,4 +1,4 @@
-import zmq, json, base64
+import zmq, json, base64, re
 from src.logs.logger import Logger
 from src.connections.database_manager import DatabaseManager
 from src.config import config
@@ -43,34 +43,73 @@ class FlexibleRouterServerService:
             except Exception as e:
                 self.logger.error(f"WSM - simple_route_server_service - Unexpected error: {e}")
 
+    def message_is_encrypted(self, data):
+        try:
+            #data = json.loads(message)
+            required_keys = {"EncryptedMessage", "EncryptedAESKey", "EncryptedAESIV" }
+            if required_keys.issubset(data.keys()):
+                return True
+            else:
+                self.logger.info("JSON is not encrypted - CA request")
+                return False
+        except Exception as e:
+            self.logger.error("Failed to check if message is encrypted or not")
+            return False
+            
+    def decrypt_json_message(self, message):
+        try:
+            private_key = self.cm.load_private_key()
+            encrypted_message = base64.b64decode(message["EncryptedMessage"])
+            decrypted_aes_key = self.cm.decrypt_rsa(base64.b64decode(message["EncryptedAESKey"]), private_key)
+            decrypted_aes_iv = self.cm.decrypt_rsa(base64.b64decode(message["EncryptedAESIV"]), private_key)
+            decrypted_message = self.cm.decrypt_message(encrypted_message, decrypted_aes_key, decrypted_aes_iv)
+            
+            self.logger.info(f"\n\nDecrypted_message: {decrypted_message}")
+            
+            # Remove caracteres não imprimíveis usando regex
+            cleaned_data = re.sub(r'[\x00-\x1F\x7F]+$', '', decrypted_message)
+            cleaned_data = json.loads(cleaned_data)
+            return cleaned_data
+        
+        except Exception as e:
+            self.logger.error(f"Error while decrypting the following message: {message}")
+        
     def handle_message(self, client_id, message):
         try:
             message_data = json.loads(message)
             self.logger.info(f"Parsing message: {message_data}")
-            response = self.route_message(client_id,message_data)
-            if response:
-                self.send_message(client_id,response)
+
+            if self.message_is_encrypted(message_data) == False:
+                response = self.route_message(client_id,message_data)
+            else:
+                decrypted_message = self.decrypt_json_message(message_data)
+                response = self.route_message(client_id,decrypted_message)
+    
+            if response and ('CARequest') in message_data:
+                self.send_message(client_id,response, False)
+            elif response and ('CARequest') not in message_data:
+                self.send_message(client_id,response, True)
             else:
                 self.logger.warning("No response for message")
-        except json.JSONDecoderError:
+        except json.JSONDecodeError:
             self.logger.error("Failed to decode JSON message")
-            self.send_message(client_id,{"status": "error","message":"Invalid JSON format"})
+            self.send_message(client_id,{"status": "error","message":"Invalid JSON format"}, False)
         except Exception as e:
             self.logger.error(f"Unable to process the request: {e}")
-            self.send_message(client_id, {"status": "error", "message": "An unexpected error occurred"})
+            self.send_message(client_id, {"status": "error", "message": "An unexpected error occurred"}, False)
 
     def route_message(self, client_id, message_data):
         try:
             message_handlers = {
                 "Client": lambda: self.handle_client_message(client_id, message_data["Client"]),
                 "Session": lambda: self.handle_session_message(client_id, message_data["Session"]),
-                "SessionDisconnected": lambda: self.handle_session_disconnection(message_data),
+                "SessionDisconnected": lambda: self.handle_session_disconnection(message_data), # Client send user disconnection
                 "LockUnlock": lambda: self.handle_lock_unlock(message_data),
-                "DisconnectionRequest": lambda: self.handle_disconnection_request(message_data),
-                "RoutingClientMessage": lambda: self.handle_routing_client_message(message_data),
-                "Heartbeat": lambda: self.handle_heartbeat(client_id, message_data),
-                "LogonRequest": lambda: self.handle_logon_request(message_data),
-                "CARequest": lambda: self.handle_ca_request(message_data["CARequest"]),
+                "DisconnectionRequest": lambda: self.handle_disconnection_request(message_data), # when API sent a disconnection to a user
+                "RoutingClientMessage": lambda: self.handle_routing_client_message(message_data), # API Comunication to client, to update workhours or sent direct message
+                "Heartbeat": lambda: self.handle_heartbeat(client_id, message_data), #Cli sent heartbeatin and creation/update into client table
+                "LogonRequest": lambda: self.handle_logon_request(message_data), # Client sent a request to check if is allowed to login (check workhours )
+                "CARequest": lambda: self.handle_ca_request(message_data,client_id), #Requests from cli or AD to certificates.
             }
             # Find the appropriate handler
             for key, handler in message_handlers.items():
@@ -95,7 +134,7 @@ class FlexibleRouterServerService:
         self.logger.info("Processing session message")
         return self.message_processor.process_session_message(client_id, session_data)
 
-    def handle_session_disconnection(self, message_data):
+    def handle_session_disconnection(self, message_data): # Client send user disconnection
         self.logger.info("Processing session disconnection")
         return self.message_processor.process_user_already_disconnected(message_data)
 
@@ -103,11 +142,11 @@ class FlexibleRouterServerService:
         self.logger.info("Processing lock/unlock message")
         return self.message_processor.process_lock_or_unlock_user(message_data)
 
-    def handle_disconnection_request(self, message_data):
+    def handle_disconnection_request(self, message_data): # when API sent a disconnection to a user
         self.logger.info("Processing disconnection request")
         response = self.message_processor.process_user_disconnection(message_data)
         client_id = response.get("hostname")
-        self.send_message(client_id, response)
+        self.send_message(client_id, response, True)
 
     def handle_routing_client_message(self, message_data):
         self.logger.info("Processing routing client message")
@@ -118,10 +157,10 @@ class FlexibleRouterServerService:
             try:
                 hostname = session.hostname
                 if "user" in message_data["RoutingClientMessage"]:
-                    client_id, response = self.message_processor.process_direct_message(message_data, hostname)
+                    client_id, response = self.message_processor.process_direct_message(message_data, hostname) # Send direct message to session/client
                 else:
-                    client_id, response = self.message_processor.process_wsm_agent_updater_message(message_data, hostname)
-                self.send_message(client_id, response)
+                    client_id, response = self.message_processor.process_wsm_agent_updater_message(message_data, hostname) #Update session/client workhours
+                self.send_message(client_id, response, True)
             except Exception as e:
                 self.logger.error(f"Could not send message to client: {e}")
                 continue
@@ -134,14 +173,18 @@ class FlexibleRouterServerService:
         self.logger.info("Processing logon request")
         return self.message_processor.process_connected_user(message_data)
 
-    def handle_ca_request(self, ca_request):
+    def handle_ca_request(self, message_data, client_id):
         self.logger.info("Processing CA request")
-        return self.ca_srvr.processRequests(json.loads(ca_request))
+        var = self.ca_srvr.processRequests(message_data,client_id)
+        #print("var: ", var)
+        return var
 
     #SEND ENCRYPTED MESSAGE TO CLIENT
     def encrypt_message(self,hostname,message):
+        
+        print("Message without encryption: ", message)
+        
         public_key = self.cm.load_public_key(hostname)
-
         aes_key, aes_iv = self.cm.generate_aes_key_iv()
         encrypted_message = self.cm.encrypt_message_aes(message, aes_key, aes_iv)
 
@@ -156,12 +199,13 @@ class FlexibleRouterServerService:
         }
         # message = json.dumps(payload, indent=4)
         message = json.dumps(payload)
-        # print(message)
+        print(message)
         return message
     
+    '''
     # PROCESS ENCRYPTD MESSAGE FROM CLIENT
+    # Load private RSA key for decrypting AES key and IV
     def process_encrypted_message(self,message):
-        # Load private RSA key for decrypting AES key and IV
         private_key = self.cm.load_private_key()
         data = json.loads(message)
         self.logger.info("\nResponse JSON message:\n", json.dumps(data, indent=4))
@@ -170,8 +214,9 @@ class FlexibleRouterServerService:
         decrypted_aes_iv = self.cm.decrypt_rsa(base64.b64decode(data["EncryptedAESIV"]), private_key)
         decrypted_message = self.cm.decrypt_message(encrypted_message, decrypted_aes_key, decrypted_aes_iv)
         return decrypted_message
+    '''
 
-    def send_message(self, client_id, message):
+    def send_message(self, client_id, message, to_encrypt):
         """
         Envia uma mensagem arbitrária para um cliente específico.
         """
@@ -180,9 +225,17 @@ class FlexibleRouterServerService:
         self.socket.send_multipart([client_id.encode(),"".encode(), message.encode()])
         self.logger.info(f" WSM - simple_route_server_service - Sent to {client_id}: {message}")
         """
-        json_message = json.dumps(message)
-        self.socket.send_multipart([client_id.encode(),"".encode(), json_message.encode()])
-        self.logger.info(f" WSM - simple_route_server_service - Sent to {client_id}: {json_message}")
+        
+        if to_encrypt:
+            message = json.dumps(message)
+            encrypted_message = self.encrypt_message(client_id,message)
+            self.socket.send_multipart([client_id.encode(),"".encode(), encrypted_message.encode()])
+            self.logger.info(f" WSM - simple_route_server_service - Sent ENCRYPTED to {client_id}: {encrypted_message}")
+        else:
+            json_message = json.dumps(message)
+            self.socket.send_multipart([client_id.encode(),"".encode(), json_message.encode()])
+            self.logger.info(f" WSM - simple_route_server_service - Sent NOT encrypted to {client_id}: {json_message}")
+
 
     def stop(self):
         # Fecha o socket e termina o contexto

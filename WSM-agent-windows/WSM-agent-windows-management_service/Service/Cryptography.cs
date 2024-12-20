@@ -41,27 +41,17 @@ namespace SessionService.Service
             // Decrypt the message using AES key and IV
             byte[] decryptedMessageBytes = DecryptMessage(encryptedMessage, aesKey, aesIV);
             string decryptedMessage = Encoding.UTF8.GetString(decryptedMessageBytes);
-
             LogManager.Log("Decrypted message from client: " + decryptedMessage);
 
             return decryptedMessage;
         }
 
-        public static string processResponse()
+        public static string processResponse(string messageToSend)
         {
-            var messageToSend = new
-            {
-                Status = "sucess",
-                Message = "AD sucessfully updated"
-            };
-
-            // Serialize the object to JSON
-            string jsonString = JsonSerializer.Serialize(messageToSend);
-
             byte[] aesKey = GenerateAesKey();
             byte[] aesIV = GenerateAesIV();
 
-            byte[] encryptedMessage = EncryptMessage(jsonString, aesKey, aesIV);
+            byte[] encryptedMessage = EncryptMessage(messageToSend, aesKey, aesIV);
             byte[] encryptedAesKey = EncryptWithPublicKey(aesKey);
             byte[] encryptedAesIv = EncryptWithPublicKey(aesIV);
 
@@ -73,9 +63,6 @@ namespace SessionService.Service
             };
 
             string jsonMessage = JsonSerializer.Serialize(jsonObject);
-
-            LogManager.Log("Sending JSON response to server: " + jsonString);
-
             return jsonMessage;
         }
 
@@ -132,36 +119,48 @@ namespace SessionService.Service
 
         static byte[] EncryptWithPublicKey(byte[] plaintextBytes)
         {
-            X509Certificate2 certificate = Setup.GetCertFromStore(StoreName.My, "WSM");
+            X509Certificate2 certificate = StartupManager.GetCertFromStore(StoreName.My, "WSM-SESSION-SERVER");
             var rsaKey = certificate.GetRSAPublicKey();
             AsymmetricKeyParameter rsaKeyParams = DotNetUtilities.GetRsaPublicKey(rsaKey);
 
             var rsaEngine = new OaepEncoding(
                 new RsaEngine(),
                 new Sha256Digest(),
-                new Sha256Digest(), // Optional: specify MGF1 digest
-                null                // Optional: use default OAEP parameters
+                new Sha256Digest(),
+                null
             );
 
             rsaEngine.Init(true, rsaKeyParams);
             return rsaEngine.ProcessBlock(plaintextBytes, 0, plaintextBytes.Length);
         }
 
-        static byte[] DecryptWithPrivateKey(byte[] ciphertextBytes)
+        public static byte[] DecryptWithPrivateKey(byte[] ciphertextBytes)
         {
-            X509Certificate2 certificate = Setup.GetCertFromStore(StoreName.My, Setup.MyMachineName);
+            X509Certificate2 certificate = StartupManager.GetCertFromStore(StoreName.My, StartupManager.MyMachineName);
             var rsaKey = certificate.GetRSAPrivateKey();
             var rsaKeyParams = DotNetUtilities.GetRsaKeyPair(rsaKey).Private as RsaPrivateCrtKeyParameters;
 
             var rsaEngine = new OaepEncoding(
                 new RsaEngine(),
                 new Sha256Digest(),
-                new Sha256Digest(), // Optional: specify MGF1 digest
-                null                // Optional: use default OAEP parameters
+                new Sha256Digest(),
+                null
             );
 
             rsaEngine.Init(false, rsaKeyParams);
             return rsaEngine.ProcessBlock(ciphertextBytes, 0, ciphertextBytes.Length);
+        }
+
+        public static byte[] EncryptWithRSA(byte[] data, Boolean isEncryption)
+        {
+            X509Certificate2 certificate = StartupManager.GetCertFromStore(StoreName.My, StartupManager.MyMachineName);
+
+            var rsaKey = isEncryption ? certificate.GetRSAPublicKey() : certificate.GetRSAPrivateKey();
+            var rsaKeyParams = isEncryption ? DotNetUtilities.GetRsaPublicKey(rsaKey) : DotNetUtilities.GetRsaKeyPair(rsaKey).Private as RsaPrivateCrtKeyParameters;
+
+            IAsymmetricBlockCipher cipher = (new RsaEngine());
+            cipher.Init(isEncryption, rsaKeyParams);
+            return cipher.ProcessBlock(data, 0, data.Length);
         }
 
 
@@ -176,7 +175,7 @@ namespace SessionService.Service
             return cipher.DoFinal(messageBytes);
         }
 
-        static byte[] DecryptMessage(byte[] encryptedMessage, byte[] key, byte[] iv)
+        public static byte[] DecryptMessage(byte[] encryptedMessage, byte[] key, byte[] iv)
         {
             var cipher = CipherUtilities.GetCipher("AES/CBC/PKCS7Padding");
             var keyParam = new KeyParameter(key);

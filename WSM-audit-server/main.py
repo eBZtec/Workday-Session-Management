@@ -1,4 +1,5 @@
 from datetime import timedelta
+import uvicorn
 from fastapi import FastAPI, Depends, HTTPException, status, Form
 from src.routes.http.router import api_router
 from src.services.auth_service import AuthService, Token
@@ -36,6 +37,6 @@ def main():
     pass
 
 if __name__ == "__main__":
-   main()
+   uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
 
 

@@ -1,15 +1,19 @@
-public class Program
+namespace SessionService.Controller
 {
-    public static void Main(string[] args)
+    public class Program
     {
-        CreateHostBuilder(args).Build().Run();
-    }
-
-    public static IHostBuilder CreateHostBuilder(string[] args) =>
-    Host.CreateDefaultBuilder(args)
-        .UseWindowsService()
-        .ConfigureServices((hostContext, services) =>
+        public static void Main(string[] args)
         {
-            services.AddHostedService<Worker>();
-        });
+            CreateHostBuilder(args).Build().Run();
+        }
+
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+        Host.CreateDefaultBuilder(args)
+            .UseWindowsService()
+            .ConfigureServices((hostContext, services) =>
+            {
+                services.AddHostedService<Worker>();
+            });
+
+    }
 }
