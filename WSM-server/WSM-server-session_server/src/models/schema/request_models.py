@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator, AwareDatetime
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Union
 from datetime import datetime, time
 from enum import Enum
 
@@ -31,12 +31,6 @@ class StandardWorkHoursSchema(BaseModel):
     enable: bool = True
     unrestricted: bool = False
     deactivation_date: Optional[datetime] = None
-
-
-class StandardWorkHoursResponse(StandardWorkHoursSchema):
-    id: int
-    create_timestamp: datetime
-    update_timestamp: datetime
 
 class EventsSchema(BaseModel):
     event_type: str
@@ -89,5 +83,18 @@ class DisconnectRequestSchema(BaseModel):
 class TimeRange(BaseModel):
     start: time
     end: time
+
+class AccountTargetStatusResponse(BaseModel):
+    target: str = None
+    update_timestamp: datetime
+
+class StandardWorkHoursResponse(StandardWorkHoursSchema):
+    id: int
+    overtimes: List[ExtendedWorkHoursSchema] = None
+    target_status: List[AccountTargetStatusResponse] = None
+    create_timestamp: datetime
+    update_timestamp: datetime
+
+
 
 

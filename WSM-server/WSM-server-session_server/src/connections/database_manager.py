@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from contextlib import contextmanager
-from src.models.models import Base
+from src.models.models import Base, TargetStatus
 from src.config import config
 from src.models.models import Holidays, ExtendedWorkHours, Target
 import os
@@ -168,7 +168,10 @@ class DatabaseManager:
     def get_targets(self):
         with self.session_scope() as session:
             return session.query(Target).filter(or_(Target.enabled ==1, Target.enabled==2)).all()
-            
+
+    def get_target_status_by_account_id(self, account_id: int):
+        with self.session_scope() as session:
+            return session.query(Target, TargetStatus).join(Target, TargetStatus.id_target == Target.id).filter(TargetStatus.std_wrk_id == account_id).all()
 '''
 Exemplo de Uso da Classe DatabaseManager
 
