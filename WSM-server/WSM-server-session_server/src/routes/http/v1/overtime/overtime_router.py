@@ -30,10 +30,3 @@ async def update(background_task: BackgroundTasks, overtime_id: int, overtime: E
 async def get_account_overtimes(account_id: str) -> list[ExtendedWorkHoursResponse] | None:
     return SearchOvertimeController.execute(account_id)
 
-
-@router.delete(
-    "/{overtime_id}",
-    status_code=status.HTTP_204_NO_CONTENT
-)
-async def delete(background_task: BackgroundTasks, overtime_id: str):
-    ...
