@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+	<UserSecretsId>dotnet-WsmConnectorAdService-07b11f50-5ffb-4631-9f14-5e86f4f447aa</UserSecretsId>
+	<StartupObject>WsmConnectorAdService.Controller.Program</StartupObject>
+	<ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+	
+
+  <ItemGroup>
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.4.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.1" />
+	<PackageReference Include="NetMQ" Version="4.0.1.13" />
+	<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.DirectoryServices" Version="9.0.0" />
+    <PackageReference Include="System.DirectoryServices.Protocols" Version="9.0.0" />
+    <PackageReference Include="System.Drawing.Common" Version="9.0.0" />
+    <PackageReference Include="System.Formats.Asn1" Version="9.0.0" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.0" />
+  </ItemGroup>
+</Project>
