@@ -1,0 +1,11 @@
+﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+	<Package Name="WsmAgentWindowsService" Manufacturer="eBZ Tecnologia" Version="1.0.0.0" UpgradeCode="3c23f0ce-3e6b-4538-83d9-6c2dc2d3d549">
+		<MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="!(loc.DowngradeError)" />
+		<Property Id="DISABLEADVTSHORTCUTS" Value="1" />
+		<MediaTemplate EmbedCab="yes" CompressionLevel="high"/>
+	
+		<Feature Id="Main" Title="MainFeature" Level="1">
+			<ComponentGroupRef Id="AppComponents" />
+		</Feature>
+	</Package>
+</Wix>

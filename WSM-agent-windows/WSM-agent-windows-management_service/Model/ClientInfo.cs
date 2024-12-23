@@ -14,7 +14,7 @@ namespace SessionService.Model
         public string os_name { get; set; }
         public string os_version { get; set; }
         public string agent_info { get; set; }
-        public TimeSpan uptime { get; set; }
+        public int uptime { get; set; }
         public string timezone { get; set; }
 
         public ClientInfo()
@@ -50,19 +50,19 @@ namespace SessionService.Model
             return version;
         }
 
-        public TimeSpan GetUptime()
+        public int GetUptime()
         {
             DateTime startTime = Process.GetCurrentProcess().StartTime;
             TimeSpan uptime = DateTime.UtcNow.ToLocalTime() - startTime;
 
-            return uptime;
+            return (int)uptime.TotalMinutes;
         }
 
         public override string ToString()
         {
             return "-------------------------\n" + "hostname: " + hostname + " - ip: " + ip_address + " - clientVersion: " + client_version +
                 "\nOS: " + os_name + " - Agent Info: " + agent_info +
-                "\nUptime: " + uptime + " - Timezone: " + timezone +
+                "\nUptime: " + uptime + "minutes - Timezone: " + timezone +
                 "\n-------------------------";
         }
     }
