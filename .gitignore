@@ -2,6 +2,7 @@
 *.zip
 *.pem
 *.key
+*.nsi
 .vscode
 .vs
 .env*

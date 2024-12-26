@@ -1,13 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
+	<AssemblyName>WorkdaySessionManagementConnectorAd</AssemblyName>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 	<UserSecretsId>dotnet-WsmConnectorAdService-07b11f50-5ffb-4631-9f14-5e86f4f447aa</UserSecretsId>
 	<StartupObject>WsmConnectorAdService.Controller.Program</StartupObject>
 	<ApplicationManifest>app.manifest</ApplicationManifest>
+	<ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="icon.ico" />
+  </ItemGroup>
 	
 
   <ItemGroup>
