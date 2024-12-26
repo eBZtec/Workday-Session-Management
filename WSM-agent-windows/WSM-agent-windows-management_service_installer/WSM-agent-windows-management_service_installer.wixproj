@@ -1,8 +1,0 @@
-﻿<Project Sdk="WixToolset.Sdk/5.0.2">
-  <ItemGroup>
-    <ProjectReference Include="..\WSM-agent-windows-management_service\SessionService.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="WixToolset.Heat" Version="5.0.2" />
-  </ItemGroup>
-</Project>
