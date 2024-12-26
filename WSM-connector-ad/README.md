@@ -64,20 +64,6 @@ dotnet publish -c Release
   - If you do not want to create a new installer, you can directly run the `.exe` file generated in the project.
 
 
-## Configuration
-- **Log Levels**:
-  Configure log levels in `appsettings.json`:
-  ```json
-  {
-    "Logging": {
-      "LogLevel": {
-        "Default": "Information",
-        "Microsoft.Hosting.Lifetime": "Information"
-      }
-    }
-  }
-  ```
-
 - **Active Directory Host**:
   Ensure the `ACTIVE_DIRECTORY_HOST` registry value is set correctly. The application uses this value to connect to the AD domain.
 
