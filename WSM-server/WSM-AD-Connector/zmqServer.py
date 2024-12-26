@@ -59,8 +59,6 @@ class RabbitMQReader:
             self.data = json.loads(body.decode('utf-8'))
             self.data.pop('_sa_instance_state', None)
             logger.info(f"Message consumed from RabbitMQ: {self.data}")
-        else:
-            logger.warning("No messages in the queue.")
         return self.data
 
 # Generate a random AES key and IV
