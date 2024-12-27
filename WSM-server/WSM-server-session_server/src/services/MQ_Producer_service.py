@@ -8,6 +8,7 @@ from src.config.wsm_logger import logger
 
 load_dotenv()
 
+
 class RabbitMQProducer:
     def __init__(self, queue_name: str, ):
         self.queue_name = queue_name
@@ -18,20 +19,21 @@ class RabbitMQProducer:
         self._connect()
 
     def _connect(self):
-        params = pika.ConnectionParameters(host=self.host, port=self.port)
+        credentials = pika.PlainCredentials(config.MQ_USER, config.MQ_PASSWORD)
+        params = pika.ConnectionParameters(host=self.host, port=self.port, credentials=credentials)
         self.connection = pika.BlockingConnection(params)
         self.channel = self.connection.channel()
 
         # Declare queue
         self.channel.queue_declare(queue=self.queue_name, durable=True)
-    
+
     def send_message(self, message: dict):
         if self.channel is None:
             logger.error("Could not establish RabbitMQ connection")
             raise ConnectionError("Could not establish RabbitMQ connection")
 
         message_body = json.dumps(message, default=str)
-        
+
         # Publish in the queue
         self.channel.basic_publish(
             exchange='',
