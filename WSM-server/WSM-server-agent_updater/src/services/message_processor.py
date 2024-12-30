@@ -8,7 +8,7 @@ class MessageProcessor:
     """
 
     def __init__(self, zmq_sender):
-        self.logger = Logger(log_name=self.__class__.__name__).get_logger()
+        self.logger = Logger(log_name='WSM-Server-Agent-Updater').get_logger()
         self.zmq_sender = zmq_sender
 
     def process_message(self, message):

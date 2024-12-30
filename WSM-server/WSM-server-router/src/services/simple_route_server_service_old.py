@@ -9,7 +9,7 @@ from src.ca_services.ca_server import Server
 class FlexibleRouterServerService:
     
     def __init__(self, bind_address="tcp://*:"+config.Z_MQ_PORT):
-        self.logger = Logger().get_logger()
+        self.logger = Logger(log_name='WSM-Router').get_logger()
         self.context = zmq.Context()
         self.bind_address = bind_address
         self.message_processor = MessageProcessor()
@@ -151,7 +151,7 @@ class FlexibleRouterServerService:
         """
         json_message = json.dumps(message)
         self.socket.send_multipart([client_id.encode(),"".encode(), json_message.encode()])
-        self.logger.info(f" WSM - simple_route_server_service - Sent to {client_id}: {json_message}")
+        self.logger.info(f" WSM - simple_route_server_service - Sent to {client_id}")
 
     def stop(self):
         # Fecha o socket e termina o contexto
