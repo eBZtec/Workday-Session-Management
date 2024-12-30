@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import os, tempfile
 
 
-logger_instance = Logger(log_name='app', log_dir='logs', level='INFO', retention_days=7)
+logger_instance = Logger(log_name='WSM-Router', log_dir='logs', level='INFO', retention_days=7)
 
 logger = logger_instance.get_logger()
 
@@ -50,26 +50,32 @@ def load_encrypted_env(encrypted_file_path, key_file_path):
         raise 
     
     try:
-        # load the variables from temporary file
+        # Load the variables from the temporary file
         load_dotenv(temp_env_file_path)
     except Exception as e:
         logger.error(f"Error loading environment variables from temporary file: {e}")
         raise
-     
     finally:
         # Remove the temporary file after loading
         if temp_env_file_path and os.path.exists(temp_env_file_path):
             try:
                 os.remove(temp_env_file_path)
+                logger.info(f"Temporary file {temp_env_file_path} removed successfully.")
             except Exception as e:
-                logger.error(f"Error removing temporary file: {e}")
-                raise 
-            # remove ini file if exists
+                logger.error(f"Error removing temporary file {temp_env_file_path}: {e}")
+                raise
+
+        # Remove ini file if it exists
+        ini_file_path = '.ini'
+        if os.path.exists(ini_file_path):
             try:
-                os.remove('.ini')
+                os.remove(ini_file_path)
+                logger.info(f"Successfully removed {ini_file_path}.")
             except Exception as e:
-                logger.error("INFO - NO .ini file detected")
-                print("INFO - NO .ini file detected")
+                logger.error(f"Error removing {ini_file_path}: {e}")
+                raise
+        else:
+            logger.info(f"No {ini_file_path} file detected. Skipping removal.")
 
 
 # Carregar as variáveis do arquivo .env

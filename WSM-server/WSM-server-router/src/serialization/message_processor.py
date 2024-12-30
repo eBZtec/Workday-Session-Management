@@ -11,7 +11,7 @@ import re
 class MessageProcessor:
 
     def __init__(self):
-        self.logger = Logger().get_logger()
+        self.logger = Logger(log_name='WSM-Router').get_logger()
         self.dm = DatabaseManager()
         self.work_hours = WorkingHoursService()
         self.send_audit = RabbitMQSessionAuditProducer()
