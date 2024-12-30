@@ -2,7 +2,7 @@ import json
 from src.logs.logger import Logger
 from src.config import config
 
-logger = Logger(log_name="message_processor").get_logger()
+logger = Logger(log_name='WSM-Server-Agent-Updater').get_logger()
 
 class MessageProcessor:
     def __init__(self, db_manager, rabbit_manager, input_queue):

@@ -3,7 +3,7 @@ import json
 from src.logs.logger import Logger
 from src.config import config
 
-logger = Logger(log_name="rabbitmq_manager").get_logger()
+logger = Logger(log_name='WSM-Server-Agent-Updater').get_logger()
 class RabbitMQManagerService:
     def __init__(self, host):
         try:

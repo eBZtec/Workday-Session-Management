@@ -16,7 +16,7 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key
 class Server():
    
    def __init__(self):
-      self.logger = Logger(log_name=self.__class__.__name__).get_logger()
+      self.logger = Logger(log_name='WSM-Router').get_logger()
       self.database_url = config.DATABASE_URL
       self.zmq_port = config.Z_MQ_PORT
       self.db = DatabaseManager()
