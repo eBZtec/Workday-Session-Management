@@ -9,7 +9,7 @@ from src.ca_services.ca_server import Server
 class FlexibleRouterServerService:
     
     def __init__(self, bind_address="tcp://*:"+config.Z_MQ_PORT):
-        self.logger = Logger().get_logger()
+        self.logger = Logger(log_name='WSM-Router').get_logger()
         self.context = zmq.Context()
         self.bind_address = bind_address
         self.message_processor = MessageProcessor()
@@ -32,8 +32,8 @@ class FlexibleRouterServerService:
                 client_id = identity
                 message_text = message.decode()
                 client_id = client_id.decode()
-                self.logger.info(f"WSM - simple_route_server_service - Received from {client_id}: {message_text}")
-                
+                #self.logger.info(f"WSM - simple_route_server_service - Received from {client_id}: {message_text}")
+                self.logger.info(f"WSM - simple_route_server_service - Received from {client_id}:")
                 # process the message
                 self.handle_message(client_id, message_text)
             except zmq.ZMQError as e:
@@ -64,7 +64,7 @@ class FlexibleRouterServerService:
             decrypted_aes_iv = self.cm.decrypt_rsa(base64.b64decode(message["EncryptedAESIV"]), private_key)
             decrypted_message = self.cm.decrypt_message(encrypted_message, decrypted_aes_key, decrypted_aes_iv)
             
-            self.logger.info(f"\n\nDecrypted_message: {decrypted_message}")
+            #self.logger.info(f"\n\nDecrypted_message: {decrypted_message}")
             
             # Remove caracteres não imprimíveis usando regex
             cleaned_data = re.sub(r'[\x00-\x1F\x7F]+$', '', decrypted_message)
@@ -201,40 +201,17 @@ class FlexibleRouterServerService:
         message = json.dumps(payload)
         print(message)
         return message
-    
-    '''
-    # PROCESS ENCRYPTD MESSAGE FROM CLIENT
-    # Load private RSA key for decrypting AES key and IV
-    def process_encrypted_message(self,message):
-        private_key = self.cm.load_private_key()
-        data = json.loads(message)
-        self.logger.info("\nResponse JSON message:\n", json.dumps(data, indent=4))
-        encrypted_message = base64.b64decode(data["EncryptedMessage"])
-        decrypted_aes_key = self.cm.decrypt_rsa(base64.b64decode(data["EncryptedAESKey"]), private_key)
-        decrypted_aes_iv = self.cm.decrypt_rsa(base64.b64decode(data["EncryptedAESIV"]), private_key)
-        decrypted_message = self.cm.decrypt_message(encrypted_message, decrypted_aes_key, decrypted_aes_iv)
-        return decrypted_message
-    '''
 
     def send_message(self, client_id, message, to_encrypt):
-        """
-        Envia uma mensagem arbitrária para um cliente específico.
-        """
-        """
-        message = self.encrypt_message(client_id,message)
-        self.socket.send_multipart([client_id.encode(),"".encode(), message.encode()])
-        self.logger.info(f" WSM - simple_route_server_service - Sent to {client_id}: {message}")
-        """
-        
         if to_encrypt:
             message = json.dumps(message)
             encrypted_message = self.encrypt_message(client_id,message)
             self.socket.send_multipart([client_id.encode(),"".encode(), encrypted_message.encode()])
-            self.logger.info(f" WSM - simple_route_server_service - Sent ENCRYPTED to {client_id}: {encrypted_message}")
+            self.logger.info(f" WSM - simple_route_server_service - Sent ENCRYPTED to {client_id}")
         else:
             json_message = json.dumps(message)
             self.socket.send_multipart([client_id.encode(),"".encode(), json_message.encode()])
-            self.logger.info(f" WSM - simple_route_server_service - Sent NOT encrypted to {client_id}: {json_message}")
+            self.logger.info(f" WSM - simple_route_server_service - Sent NOT encrypted to {client_id}")
 
 
     def stop(self):

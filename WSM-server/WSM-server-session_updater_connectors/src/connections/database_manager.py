@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker
 from src.models.models import Target, TargetStatus, StandardWorkHours
 from src.logs.logger import Logger
 
-logger = Logger(log_name="database_manager").get_logger()
+logger = Logger(log_name='WSM-Server-Agent-Updater').get_logger()
 
 class DatabaseManager:
 

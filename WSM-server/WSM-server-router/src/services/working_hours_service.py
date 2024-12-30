@@ -8,7 +8,7 @@ from datetime import datetime
 class WorkingHoursService:
     
     def __init__(self):
-        self.logger = Logger().get_logger()
+        self.logger = Logger(log_name='WSM-Router').get_logger()
         self.dm = DatabaseManager()
 
     def get_allowed_schedule(self, uid):
