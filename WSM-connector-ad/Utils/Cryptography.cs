@@ -7,14 +7,8 @@ using Org.BouncyCastle.Security;
 using System.Text;
 using Org.BouncyCastle.OpenSsl;
 using JsonSerializer = System.Text.Json.JsonSerializer;
-using Org.BouncyCastle.Tls;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using WsmConnectorAdService.Controller;
-using static WsmConnectorAdService.Utils.Utils;
-using System.Text.RegularExpressions;
-using Newtonsoft.Json;
-using System.Text.Json;
 
 namespace WsmConnectorAdService.Utils
 {
