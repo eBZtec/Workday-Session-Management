@@ -162,7 +162,7 @@ namespace WsmConnectorAdService.Controller
 
         public static string GetFromRegistry(string valueName)
         {
-            string keyPath = @"Software\eBZ Tecnologia\WsmConnectorAd";
+            string keyPath = @"Software\eBZ Tecnologia\WsmConnectorAdService";
             using (RegistryKey key = Registry.LocalMachine.OpenSubKey(keyPath))
             {
                 if (key != null)
