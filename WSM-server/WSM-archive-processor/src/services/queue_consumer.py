@@ -1,5 +1,6 @@
 import pika
 from src.config import config
+from src.config.wsm_logger import logger
 
 class QueueConsumer:
     def __init__(self, queue_name, host=config.QUEUE_HOST):
@@ -11,6 +12,8 @@ class QueueConsumer:
 
     def start_consuming(self, callback):
         print(f"[*] Waiting for messages into queue: '{self.queue_name}'. Push CTRL+C to exit.")
+        logger.info(f"[*] Waiting for messages into queue: '{self.queue_name}'. Push CTRL+C to exit.")
+        
         self.channel.basic_consume(queue=self.queue_name, on_message_callback=callback, auto_ack=False)
         self.channel.start_consuming()
 

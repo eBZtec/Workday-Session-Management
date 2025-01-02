@@ -5,7 +5,7 @@ Creating the wsm_session_updater_connectors Service
     touch .env
 
 ```
-DB_URI=postgresql://wsm:password@localhost:5432/wsm_session_db
+DB_URI=postgresql://<user>:<password>@host:<port>/<session_database_name>
 RABBITMQ_HOST=localhost
 RABBITMQ_QUEUE_IN=pooling
 RABBITMQ_SESSION_AGENT_QUEUE_NAME=session_agent

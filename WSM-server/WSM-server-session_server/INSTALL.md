@@ -36,7 +36,7 @@ WantedBy=multi-user.target
 10 - Insert the connection information into .env located at: /opt/wsm/Workday_Session_Management/WSM-server/WSM-server-session_server
 
 ```
-DATABASE_URL=postgresql://wsm:smartway@localhost:15432/wsm
+DATABASE_URL=postgresql://<user>:<password>@host:<port>/<session_database_name>
 MQ_ADDRESS_HOST=localhost
 MQ_HOST_PORT=5672
 MQ_USER=guest
