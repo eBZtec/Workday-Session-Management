@@ -5,7 +5,7 @@ Creating the wsm_agent_updater Service
     touch .env
 
 ```
-DEV_DATABASE_URL=postgresql://wsm:password@localhost:5432/wsm_session_db
+DEV_DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/<session_database>
 DEV_MQ_ADDRESS_HOST=localhost
 DEV_MQ_HOST_PORT=5672
 DEV_WORK_HOURS_QUEUE=work_hours_queue

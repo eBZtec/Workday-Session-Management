@@ -6,8 +6,8 @@ Creating the AD Connector Service
 
 ```
 ZERO_MQ_URL=DC1.smb.tribanco.lab:44901
-AD_HOSTNAME=DC1.smb.tribanco.lab
-DATABASE_URL=postgresql://wsm:password@localhost:5432/wsm_session_db
+AD_HOSTNAME=DC1.smb.tribanco.la
+DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/<session_database_name>
 ```
 
 2 - Create the .service file:
@@ -35,3 +35,7 @@ WantedBy=multi-user.target
     systemctl daemon-reload
     systemctl start wsm_ad_connector.service
     systemctl enable wsm_ad_connector.service
+
+4 - To execute:
+
+    ``` python3 zmqServer.py ```
