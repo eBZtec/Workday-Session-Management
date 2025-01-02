@@ -3,13 +3,13 @@ Creating the Audit Server Service
 1 - In the project root directory, include the .env file:
 
 ```
-DEV_DATABASE_URL=postgresql://wsm:password@localhost:5432/wsm_session_db
+DEV_DATABASE_URL=postgresql://<user>:<password>@<host>:5432/<session_database_name>
 DEV_MQ_ADDRESS_HOST=localhost
 DEV_MQ_HOST_PORT=5672
 DEV_WORK_HOURS_QUEUE=pooling
 WSM_AGENT_NOTIFICATION_QUEUE=pooling
 DEV_ZEROMQ_URL=tcp://localhost:5555
-OAUTH_VALID_SECRET_KEY=F/J6@kGDmugfE4Mn
+OAUTH_VALID_SECRET_KEY=<APIKEy>
 ```
 
 2 - Create the .service file:
