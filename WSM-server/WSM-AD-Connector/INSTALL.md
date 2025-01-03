@@ -5,8 +5,8 @@ Creating the AD Connector Service
     touch .env
 
 ```
-ZERO_MQ_URL=DC1.smb.tribanco.lab:44901
-AD_HOSTNAME=DC1.smb.tribanco.la
+ZERO_MQ_URL=
+AD_HOSTNAME=
 DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/<session_database_name>
 ```
 
