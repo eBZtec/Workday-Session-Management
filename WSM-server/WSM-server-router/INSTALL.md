@@ -9,7 +9,7 @@ Creating the Router Service
 CA_COUNTRY_NAME=BR
 CA_STATE_OR_PROVINCE_NAME=SP
 CA_LOCALITY_NAME=Sao Paulo
-CA_ORGANIZATION_NAME=Banco Safra
+CA_ORGANIZATION_NAME=Organization Name
 CA_ORGANIZATIONAL_UNIT_NAME=Workday Session Management Certification Authority
 CA_COMMON_NAME=WSM-CA
 

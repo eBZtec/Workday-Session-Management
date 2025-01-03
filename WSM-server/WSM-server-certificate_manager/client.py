@@ -50,7 +50,7 @@ if __name__ == "__main__":
         """
         client.send_message(
             {"Client":{
-                "hostname":"client_safra_host",
+                "hostname":"client_host",
                  "ip_address":"192.168.4.6",
                  "client_version":"1.5.1",
                  "os_name":"GNU/Linux",
@@ -63,7 +63,7 @@ if __name__ == "__main__":
         """
         client.send_message(
             {"Session":{
-                "hostname":"client_safra_host",
+                "hostname":"client_host",
                 "event_type": "4624",
                 "user": "Outro cara logo ali",
                 "status":"opened",
