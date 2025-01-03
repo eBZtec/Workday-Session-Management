@@ -1,6 +1,7 @@
 import json
 from src.logs.logger import Logger
 from src.config import config
+import time
 
 logger = Logger(log_name='WSM-Server-Agent-Updater').get_logger()
 
@@ -27,6 +28,8 @@ class MessageProcessor:
                 body = self.rabbit_manager.consume_message(self.input_queue)
                 if body:
                     self.process_message(body)
+                time.sleep(50)
+                
         except KeyboardInterrupt:
             logger.info("WSM - Session Updater COnnectors - Message processing interrupted by user.")
         except Exception as e:
