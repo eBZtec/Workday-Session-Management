@@ -55,8 +55,8 @@ python3 scripts/generate-ca/generate-ca.py
     # Client Certificate Information
     CLIENT_COUNTRY_NAME=BR
     CLIENT_STATE_OR_PROVINCE_NAME=SP
-    CLIENT_LOCALITY_NAME=Sao Paulo
-    CLIENT_ORGANIZATION_NAME=Banco Safra
+    CLIENT_LOCALITY_NAME=Locality
+    CLIENT_ORGANIZATION_NAME=Organization
     CLIENT_ORGANIZATIONAL_UNIT_NAME=Workday Session Management
     CLIENT_COMMON_NAME=WSM-SESSION-SERVER
 
