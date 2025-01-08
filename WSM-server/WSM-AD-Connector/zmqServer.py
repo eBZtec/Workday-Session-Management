@@ -6,6 +6,7 @@ import argparse
 import pika
 import datetime
 import logging
+import time
 
 from logging.handlers import TimedRotatingFileHandler
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -195,6 +196,8 @@ def main():
                 except Exception as e:
                     logger.error("ZmqServer- Can't process rabbitMQ data")
                     continue
+        else:
+            time.sleep(0.1)      
 
 def process_message(message):
     processed_message = None
