@@ -43,9 +43,9 @@ MQ_USER=guest
 MQ_PASSWORD=guest1
 WORK_HOURS_QUEUE=pooling
 SQLALCHEMY_ECHO=false
-WSM_LOG_PATH=./logs/wsm.log
-WSM_AGENT_NOTIFICATION_QUEUE=session
-OAUTH_VALID_SECRET_KEY=F/J6@kGDmugfE4Mn
+WSM_LOG_PATH=/opt/wsm/Workday_Session_Management/WSM-server/WSM-server-session_server/logs/wsm.log
+WSM_AGENT_NOTIFICATION_QUEUE=pooling
+OAUTH_VALID_SECRET_KEY=<API-KEY>
 ```
 
 11 - Start and enable the Session service:

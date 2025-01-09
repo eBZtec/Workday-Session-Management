@@ -53,6 +53,17 @@ class RabbitMQReader:
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue=self.queue_name, durable=True)
 
+    def start_consuming(self, callback):
+        """
+        Basic consume make it blocked until a message comes to
+        """
+        self.channel.basic_consume(
+            queue=self.queue_name,
+            on_message_callback=callback,
+            auto_ack=True
+        )
+        self.channel.start_consuming()
+
     def consume_message(self):
         """Consume a single message from the queue."""
         method_frame, _, body = self.channel.basic_get(queue=self.queue_name, auto_ack=True)
@@ -137,9 +148,6 @@ def decrypt_message(encrypted_message, key, iv):
     return decrypted_message.decode('utf-8').strip()
 
 def main():
-    #parser = argparse.ArgumentParser(description="Script that get rabbitMQ messages and sent to AD Connector")
-    #parser.add_argument("host", type=str, help="tcp://host:port")
-    #args = parser.parse_args()
 
     # RabbitMq Reader
     rabbit_reader = RabbitMQReader(queue_name="AD", host="localhost")
@@ -150,54 +158,36 @@ def main():
     socket.connect("tcp://"+ str(os.getenv("ZERO_MQ_URL")))
     logger.info("Client is running and sending JSON messages...")
 
-    """
-    data = {
-        "action": "notify",
-        "hostname": "server01.example.com",
-        "user": "test_user",
-        "timezone": "UTC-03:00",
-        "allowed_schedule": {
-            "sunday": [{"start": 0, "end": 0}],
-            "monday": [{"start": 0, "end": 0}],
-            "tuesday": [{"start": 540, "end": 1080}],
-            "wednesday": [{"start": 540, "end": 1080}],
-            "thursday": [{"start": 540, "end": 1080}],
-            "friday": [{"start": 540, "end": 1080}],
-            "saturday": [{"start": 540, "end": 1080}]
-        },
-        "timestamp": "2024-11-21T15:30:00Z",
-        "message": "Scheduled maintenance will occur this weekend.",
-        "title": "System Notification",
-        "options": "Dismiss, Snooze"
-    }
-    
-    """
-    #get_certs(os.getenv("DATABASE_URL"))
-    #load_public_key()
+
+
+    def process_rabbit_message(ch, method, properties, body):
+        """
+        Callback to process RabbitMQ messages.
+        This function is called automatically to each message that comes in to queue Rabbit
+        """
+        try:
+            data = json.loads(body.decode('utf-8'))
+            logger.info(f"Message consumed from RabbitMQ: {data}")
+
+            if data.get('status') == 'error' and data.get('message') == 'Action not found':
+                logger.warning("RabbitMQ message with no processable JSON")
+                return
+
+            message = process_message(data)
+            if message:
+                try:
+                    message_json = json.dumps(message)
+                    request = process_request(message_json)
+                    socket.send_string(request)
+                    response = socket.recv_string()
+                    process_response(response)
+                except Exception as e:
+                    logger.error(f"Error processing ZeroMQ message: {e}")
+        except Exception as e:
+            logger.error(f"Error processing RabbitMQ message: {e}")
 
     print("Starting to read RabbitMQ messages...")
-    while True:
-        data = rabbit_reader.consume_message()
-        if data:
-            if data.get('status') == 'error' and data.get('message') == 'Action not found':
-                print("RabbitMQ message with no processable json")
-            else:
-                try:
-                    message=process_message(data)
-                    try:
-                        message=json.dumps(data)
-                        request = process_request(message)
-                        socket.send_string(request)
-                        response = socket.recv_string()
-                        process_response(response)
-                    except Exception as e :
-                        logger.error(f"ZmqServer - Can't process Zmq message, because error: {e} ")
-                        continue
-                except Exception as e:
-                    logger.error("ZmqServer- Can't process rabbitMQ data")
-                    continue
-        else:
-            time.sleep(0.1)      
+    rabbit_reader.start_consuming(process_rabbit_message)
 
 def process_message(message):
     processed_message = None
