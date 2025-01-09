@@ -4,6 +4,27 @@ Creating the Router Service
 
     /opt/wsm/Workday_Session_Management/WSM-server/WSM-server-router/certificates/
 
+
+    Define .env variables of entire project into "/opt/wsm/Workday_Session_Management/WSM-server/WSM-server-router/.env" file like:
+
+#DEV
+DEV_DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/<session_database_name>
+DEV_MQ_ADDRESS_HOST=<host>
+DEV_MQ_HOST_PORT=5672
+DEV_WORK_HOURS_QUEUE=work_hours_queue
+
+DEV_ZEROMQ_URL=tcp://localhost:51555
+Z_MQ_PORT=51555
+
+CA_CERT_CN=WSM-CA
+CA_KEY_PASSWORD=<ca-key-pass>
+CA_CERT_FILE=/opt/wsm/Workday_Session_Management/WSM-server/WSM-server-router/certificates/ca_files/ca_certificate.pem
+CA_KEY_PATH=/opt/wsm/Workday_Session_Management/WSM-server/WSM-server-router/certificates/ca_files/ca_private_key.pem
+
+WSM_CERT_CN=WSM-SESSION-SERVER
+
+
+
 ```
 # CA Certificate Information
 CA_COUNTRY_NAME=BR
