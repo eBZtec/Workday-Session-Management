@@ -1,5 +1,8 @@
 Creating the AD Connector Service
 
+
+
+
 1 - In the root directory of wsm_ad_connector, include the .env file:
 
     touch .env
@@ -8,7 +11,11 @@ Creating the AD Connector Service
 ZERO_MQ_URL=
 AD_HOSTNAME=
 DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/<session_database_name>
+PRIVATE_KEY_LOCATION=<CLIENT_FILE private_key generated into router instalation>
 ```
+    
+Before the install the "private_key.pem" must be generated in WSM_router instalation must be into .env variable "PRIVATE_KEY_LOCATION" for criptography works properly.
+
 
 2 - Create the .service file:
 

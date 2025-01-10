@@ -97,7 +97,7 @@ Após o processamento, a saída será como o exemplo abaixo:
 ## Implementação
 
 ### Instalação do Módulo
-Antes de iniciar a instalação o arquivo "private_key.pem" já deve estar gerado na instalação do WSM Router e deve estar neste diretório para que a criptografia funcione corretamente ou o apontamento para esse diretório na função load_key no zmqServer.py para o caminho do arquivo, para que seja feita a leitura.
+Antes de iniciar a instalação o arquivo "private_key.pem" já deve estar gerado na instalação do WSM Router e  sua localização deve estar no .env na variável "PRIVATE_KEY_LOCATION" para que a criptografia funcione corretamente.
 #### Passos:
 1. Copie o diretório contendo o módulo para o diretório do projeto:
    ```bash
