@@ -98,7 +98,7 @@ After processing, the output will look like the example below:
 
 ### Module Installation
 
-Before the install the "private_key.pem" must be generated in WSM_router instalation must be into this directory for criptography works properly or point to the path into load_key function into zmqServer.py script to router filepath, to read the file.
+Before the install the "private_key.pem" must be generated in WSM_router instalation must be into .env variable "PRIVATE_KEY_LOCATION" for criptography works properly.
 
 #### Steps:
 1. Copy the module directory to the project directory:

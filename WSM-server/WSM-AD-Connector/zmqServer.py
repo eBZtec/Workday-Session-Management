@@ -104,7 +104,8 @@ def encrypt_rsa(data, public_key):
 
 # Load private RSA key
 def load_private_key():
-    with open("private_key.pem", "rb") as key_file:
+    with open(str(os.getenv("PRIVATE_KEY_LOCATION")), "rb") as key_file:
+    #with open("private_key.pem", "rb") as key_file:
         private_key = serialization.load_pem_private_key(
             key_file.read(),
             password=None,
