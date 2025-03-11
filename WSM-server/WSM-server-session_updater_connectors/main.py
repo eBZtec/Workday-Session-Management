@@ -15,7 +15,7 @@ RABBITMQ_QUEUE_IN = config.RABBITMQ_QUEUE_IN
 
 # DB Configs
 DB_URI = config.DB_URI
-logger = Logger(log_name="main").get_logger()
+logger = Logger(log_name='WSM-Server-Agent-Updater').get_logger()
 
 def main():
     db_manager= None

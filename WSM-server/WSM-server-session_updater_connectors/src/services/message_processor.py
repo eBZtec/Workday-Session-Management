@@ -1,8 +1,9 @@
 import json
 from src.logs.logger import Logger
 from src.config import config
+import time
 
-logger = Logger(log_name="message_processor").get_logger()
+logger = Logger(log_name='WSM-Server-Agent-Updater').get_logger()
 
 class MessageProcessor:
     def __init__(self, db_manager, rabbit_manager, input_queue):
@@ -10,8 +11,8 @@ class MessageProcessor:
             self.db_manager = db_manager
             self.rabbit_manager = rabbit_manager
             self.input_queue = input_queue
-            if not hasattr(rabbit_manager, "consume_message"):
-                raise AttributeError("rabbit_manager não possui o método consume_message.")
+            if not hasattr(rabbit_manager, "consume_messages"):
+                raise AttributeError("rabbit_manager não possui o método consume_messages.")
             logger.info("WSM - Session Updater Connectors - MessageProcessor initialized successfully.")
         except Exception as e:
             logger.error(f"WSM - Session Updater Connectors - Message Processor Service - Error initializing MessageProcessor: {e}")
@@ -19,20 +20,42 @@ class MessageProcessor:
 
     def process_messages(self):
         """
-        Processa mensagens da fila de entrada e as reenviam para a fila correspondente.
+        Reprocess messages of entry queue and resent to correspondent queue
         """
         logger.info(f"WSM - Session Updater COnnectors - Listening for messages in queue: {self.input_queue}")
+
+        try:
+            # Define the callback that will be called for each received message
+            def callback(ch, method, properties, body):
+                try:
+                    self.process_message(body)
+                except Exception as e:
+                    logger.error(f"Error processing mensage: {e}")
+            
+            self.rabbit_manager.consume_messages(self.input_queue,callback)
+
+        except KeyboardInterrupt:
+            logger.info("WSM - Session Updater Connectors - Message processing interrupted by user.")
+        except Exception as e:
+            logger.error(f"WSM - Session Updater Connectors - Error in process_messages: {e}")
+            raise
+
+        """
         try:
             while True:
                 body = self.rabbit_manager.consume_message(self.input_queue)
                 if body:
                     self.process_message(body)
+                time.sleep(0.1)
+                
         except KeyboardInterrupt:
             logger.info("WSM - Session Updater COnnectors - Message processing interrupted by user.")
         except Exception as e:
             logger.error(f"WSM - Session Updater COnnectors - Error in process_messages: {e}")
             raise
+        """
 
+            
     def process_message(self, body):
         """
         Processa uma única mensagem.

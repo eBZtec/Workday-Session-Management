@@ -1,5 +1,8 @@
 # WSM Connector AD
 
+## Full documentaion
+[Check full documentation](WSM-Connector-AD-v1.0.0.pdf)
+
 ## Overview
 The **WSM Connector AD** is a .NET-based project designed to manage and update user permissions and schedules in an Active Directory (AD) environment. It provides capabilities to interact with Active Directory and update logon hours for users.
 

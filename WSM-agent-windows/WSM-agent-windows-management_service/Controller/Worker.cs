@@ -8,14 +8,13 @@ using System.Text.Json;
 
 public class Worker : BackgroundService
 {
-    private X509Certificate2? localCertificate;
-    private X509Certificate2? serverCertificate;
     private readonly EventLog _eventLog;
     private List<UserAllowed> usersAllowed;
     private List<UserSession> userSessions;
     private PublisherSocket publisher;
     private ClientInfo clientInfo;
     private DealerSocket dealer;
+    private string lastUsrLogon = "";
 
     public Worker()
     {
@@ -32,9 +31,6 @@ public class Worker : BackgroundService
         clientInfo = new ClientInfo();
 
         StartupManager.Init();
-
-        localCertificate = StartupManager.LoadLocalCertificate();
-        serverCertificate = StartupManager.LoadServerCertificate();
 
         LogManager.LogClientInfo(clientInfo.ToString());
     }
@@ -181,30 +177,33 @@ public class Worker : BackgroundService
         switch (e.Entry.InstanceId)
         {
             case 4624: // Logon
-                userSessions = SessionManager.EnumerateSessions();
-                if (e.Entry.ReplacementStrings[6].Equals(Environment.MachineName) && e.Entry.ReplacementStrings[0].Equals("S-1-0-0"))
+                if ((e.Entry.ReplacementStrings[8].Equals("2") || e.Entry.ReplacementStrings[8].Equals("10")) 
+                    && !e.Entry.ReplacementStrings[11].Equals("-")
+                    && !e.Entry.ReplacementStrings[5].Equals(lastUsrLogon))
                 {
                     EventManager.HandleLogonEvent(e.Entry, dealer);
+                    lastUsrLogon = e.Entry.ReplacementStrings[5];
                 }
                 userSessions = SessionManager.EnumerateSessions();
                 break;
 
             case 4800: // Lock
-                userSessions = SessionManager.EnumerateSessions();
                 EventManager.HandleLockEvent(e.Entry, dealer);
                 userSessions = SessionManager.EnumerateSessions();
                 break;
 
             case 4801: // Unlock
-                userSessions = SessionManager.EnumerateSessions();
                 EventManager.HandleUnlockEvent(e.Entry, dealer);
                 userSessions = SessionManager.EnumerateSessions();
                 break;
 
             case 4647: // Logoff
-                userSessions = SessionManager.EnumerateSessions();
                 EventManager.HandleLogoffEvent(e.Entry, dealer);
                 userSessions = SessionManager.EnumerateSessions();
+                if(e.Entry.ReplacementStrings[1].Equals(lastUsrLogon))
+                {
+                    lastUsrLogon = "";
+                }
                 break;
 
             default:

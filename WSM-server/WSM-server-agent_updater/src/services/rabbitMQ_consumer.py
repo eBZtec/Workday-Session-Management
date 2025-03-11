@@ -8,7 +8,7 @@ class RabbitMQConsumer:
     """
 
     def __init__(self, host, queue, callback):
-        self.logger = Logger(log_name=self.__class__.__name__).get_logger()
+        self.logger = Logger(log_name='WSM Server Agent Updater').get_logger()
         self.host = host
         self.queue = queue
         self.callback = callback

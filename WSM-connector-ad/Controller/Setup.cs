@@ -30,8 +30,7 @@ namespace WsmConnectorAdService.Controller
     {
         public static string session_server_CA_cn = "WSM-CA";
         public static string session_server_cn = "WSM-SESSION-SERVER";
-        //public static string session_server_host = "tcp://" + GetFromRegistry("SESSION_SERVER_HOST");
-        public static string session_server_host = "tcp://wsm.safra.lab:51555";
+        public static string session_server_host = "tcp://" + GetFromRegistry("SESSION_SERVER_HOST");
 
         public static string MyMachineName = GetMachineFQDN();
         
@@ -163,7 +162,7 @@ namespace WsmConnectorAdService.Controller
 
         public static string GetFromRegistry(string valueName)
         {
-            string keyPath = @"Software\eBZ Tecnologia\WsmConnectorAd";
+            string keyPath = @"Software\eBZ Tecnologia\WsmConnectorAdService";
             using (RegistryKey key = Registry.LocalMachine.OpenSubKey(keyPath))
             {
                 if (key != null)
@@ -339,10 +338,10 @@ namespace WsmConnectorAdService.Controller
             // Create the CSR
             // Convert BouncyCastle CSR to PEM format
             var subject = new X509Name(
-                $"C={"BR"}, " +
-                $"ST={"SP"}, " +
-                $"L={"São Paulo"}, " +
-                $"O={"Banco Safra"}, " +
+                $"C={"Country"}, " +
+                $"ST={"State"}, " +
+                $"L={"Location"}, " +
+                $"O={"Organization"}, " +
                 $"OU={"Workday Session Management Connector AD Certificate"}, " +
                 $"CN={MyMachineName}");
 

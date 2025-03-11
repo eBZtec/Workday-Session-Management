@@ -7,11 +7,11 @@
         <OutputType>WinExe</OutputType>
 	    <UseWindowsForms>true</UseWindowsForms>
 	    <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
-	    <ApplicationIcon>hourglass.ico</ApplicationIcon>
+	    <ApplicationIcon>wsm-agent.ico</ApplicationIcon>
     </PropertyGroup>
     
 	<ItemGroup>
-        <Content Include="hourglass.ico" />
+        <Content Include="wsm-agent.ico" />
     </ItemGroup>
 
 	<ItemGroup>

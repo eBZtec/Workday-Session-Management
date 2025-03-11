@@ -495,10 +495,10 @@ namespace SessionService.Service
             // Create the CSR
             // Convert BouncyCastle CSR to PEM format
             var subject = new X509Name(
-                $"C={"BR"}, " +
-                $"ST={"SP"}, " +
-                $"L={"São Paulo"}, " +
-                $"O={"Banco Safra"}, " +
+                $"C={"Country"}, " +
+                $"ST={"State"}, " +
+                $"L={"Location"}, " +
+                $"O={"Organization"}, " +
                 $"OU={"Workday Session Management - Session Service Certificate"}, " +
                 $"CN={MyMachineName}");
 

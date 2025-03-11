@@ -3,7 +3,8 @@ import json
 from src.logs.logger import Logger
 from src.config import config
 
-logger = Logger(log_name="rabbitmq_manager").get_logger()
+logger = Logger(log_name='WSM-Server-Agent-Updater').get_logger()
+
 class RabbitMQManagerService:
     def __init__(self, host):
         try:
@@ -15,32 +16,33 @@ class RabbitMQManagerService:
 
     def declare_queue(self, queue_name):
         """
-        Declara uma fila no RabbitMQ.
+        Declare queue into RabbitMQ.
         """
         try:
             self.channel.queue_declare(queue=queue_name, durable=True)
-            logger.info(f"WSM - Session Updater COnnectors - RabbitMQ Manager Service - Queue declared: {queue_name}")
+            logger.info(f"WSM - Session Updater Connectors - RabbitMQ Manager Service - Queue declared: {queue_name}")
         except Exception as e:
-            logger.error(f"WSM - Session Updater COnnectors - RabbitMQ Manager Service -Error declaring queue {queue_name}: {e}")
+            logger.error(f"WSM - Session Updater Connectors - RabbitMQ Manager Service -Error declaring queue {queue_name}: {e}")
             raise
 
-    def consume_message(self, queue_name):
+    def consume_messages(self, queue_name, callback):
         """
-        Consome uma única mensagem da fila.
+        Consume messages continuously (block mode).
         """
+
         try:
-            method_frame, header_frame, body = self.channel.basic_get(queue=queue_name, auto_ack=True)
-            if body:
-                logger.info(f"Message consumed from queue {queue_name}: {body}")
-                return body
+            self.channel.basic_consume(queue=queue_name, on_message_callback= callback, auto_ack= True)
+            logger.info(f"Started consuming messages from queue: {queue_name}")
+            #start block consume
+            self.channel.start_consuming()
         except Exception as e:
-            logger.error(f"WSM - Session Updater COnnectors - RabbitMQ Manager Service - Error consuming message from queue {queue_name}: {e}")
+            logger.error(f"Error consuming messages from queue {queue_name}: {e}")
             raise
 
 
     def send_message(self, queue_names, message):
         """
-        Envia uma mensagem para a fila especificada.
+        Send messages to queue
         """
         
         #add the session agent updater queue into queues list do send message

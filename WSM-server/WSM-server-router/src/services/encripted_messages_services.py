@@ -12,7 +12,7 @@ class CryptoMessages:
 
     def __init__(self):
         self.dm = DatabaseManager()
-        self.logger = Logger().get_logger()
+        self.logger = Logger(log_name='WSM-Router').get_logger()
 
     # Generate a random AES key and IV
     def generate_aes_key_iv(self):
@@ -84,17 +84,6 @@ class CryptoMessages:
             encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo
         )
-
-        # Print the public key
-        print(public_key_pem.decode("utf-8"))
-
-        """
-        with open("public_key.pem", "rb") as key_file:
-            public_key = serialization.load_pem_public_key(
-                key_file.read(),
-                backend=default_backend()
-            )
-        """
         return public_key
 
     # Decrypt AES key and IV using RSA

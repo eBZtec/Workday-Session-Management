@@ -8,7 +8,7 @@ class ZeroMQSender:
     """
 
     def __init__(self,router_queue, client_id ="wsm-agent-updater",):
-        self.logger = Logger(log_name=self.__class__.__name__).get_logger()
+        self.logger = Logger(log_name='WSM Server Agent Updater').get_logger()
         self.router_queue = router_queue
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.DEALER)
