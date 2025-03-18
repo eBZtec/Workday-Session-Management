@@ -500,7 +500,7 @@ namespace SessionService.Service
                 $"L={"Location"}, " +
                 $"O={"Organization"}, " +
                 $"OU={"Workday Session Management - Session Service Certificate"}, " +
-                $"CN={MyMachineName}");
+                $"CN=WSM-{MyMachineName}");
 
             var publicKeyInfo = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(publicKey);
             var attributes = new DerSet();
