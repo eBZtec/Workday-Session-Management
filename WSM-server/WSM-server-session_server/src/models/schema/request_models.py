@@ -17,7 +17,6 @@ class DeactivationSchema(BaseModel):
 
 class StandardWorkHoursSchema(BaseModel):
     uid: str
-    # employee_id: str
     start_time: str
     end_time: str
     allowed_work_hours: Optional[str] = None
@@ -25,7 +24,7 @@ class StandardWorkHoursSchema(BaseModel):
     st: str
     c: int
     weekdays: str
-    session_termination_action: SessionTerminationActionSchema
+    session_termination_action: SessionTerminationActionSchema = SessionTerminationActionSchema.LOGOFF
     cn: str
     l: str
     enable: bool = True
