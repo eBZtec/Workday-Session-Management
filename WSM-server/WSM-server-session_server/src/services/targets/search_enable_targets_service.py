@@ -8,4 +8,4 @@ class SearchEnableTargetsService:
     async def execute() -> list[Target] | None:
         database_manager = DatabaseManager()
 
-        return database_manager.get_targets()
+        return database_manager.get_enable_targets()

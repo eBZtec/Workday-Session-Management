@@ -136,7 +136,7 @@ namespace SessionService.Service
 
         public static byte[] DecryptWithPrivateKey(byte[] ciphertextBytes)
         {
-            X509Certificate2 certificate = StartupManager.GetCertFromStore(StoreName.My, "WSM-"+StartupManager.MyMachineName);
+            X509Certificate2 certificate = StartupManager.GetCertFromStore(StoreName.My, StartupManager.MyMachineName);
             var rsaKey = certificate.GetRSAPrivateKey();
             var rsaKeyParams = DotNetUtilities.GetRsaKeyPair(rsaKey).Private as RsaPrivateCrtKeyParameters;
 
