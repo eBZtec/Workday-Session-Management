@@ -216,8 +216,8 @@ chmod +x %{buildroot}/etc/systemd/system/*.service
 
 %post
 
-echo "Extraindo bibliotecas do wsmvenv3.12..tar.gz..."
-tar -xzf /opt/wsm/wsmvenv3.12.tar.gz -C /opt/wsm/
+# echo "Extraindo bibliotecas do wsmvenv3.12..tar.gz..."
+# tar -xzf /opt/wsm/wsmvenv3.12.tar.gz -C /opt/wsm/
 
 # Criar o ambiente virtual Python 3.12 no diretório /opt/wsm/wsmenv
 #echo "Criando o ambiente virtual Python 3.12 em /opt/wsm/wsmenv..."
