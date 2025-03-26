@@ -5,8 +5,6 @@ from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from contextlib import contextmanager
-
-from src.enums.target_status_type import TargetStatusType
 from src.models.models import Base, TargetStatus
 from src.config import config
 from src.models.models import Holidays, ExtendedWorkHours, Target
@@ -167,13 +165,9 @@ class DatabaseManager:
                     ExtendedWorkHours.extension_active == 0
                 ).all()
         
-    def get_enable_targets(self):
+    def get_targets(self):
         with self.session_scope() as session:
-            return session.query(Target).filter(Target.enabled==TargetStatusType.ENABLE).all()
-
-    def get_all_targets(self):
-        with self.session_scope() as session:
-            return session.query(Target).all()
+            return session.query(Target).filter(or_(Target.enabled ==1, Target.enabled==2)).all()
 
     def get_target_status_by_account_id(self, account_id: int):
         with self.session_scope() as session:

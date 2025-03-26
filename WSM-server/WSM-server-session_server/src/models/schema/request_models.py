@@ -3,9 +3,6 @@ from typing import Optional, List, Dict, Union
 from datetime import datetime, time
 from enum import Enum
 
-from src.enums.target_status_type import TargetStatusType
-
-
 class AllowedWorkSchema(str, Enum):
     YES = "Y"
     NO = "N"
@@ -45,12 +42,12 @@ class ExtendedWorkHoursSchema(BaseModel):
     uid : str
     extension_start_time: datetime
     extension_end_time: datetime
-    extended_workhours_type: str = "ex"
-    uf : str = "BR"
-    c : int = 0
-    week_days_count: str = ""
-    extension_active: int = 0
-    ou: int = 0
+    extended_workhours_type: str
+    uf : str
+    c : int
+    week_days_count: str
+    extension_active: int
+    ou: int
 
 class ExtendedWorkHoursResponse(ExtendedWorkHoursSchema):
     id: int
@@ -73,7 +70,7 @@ class TargetStatusSchema(BaseModel):
 class TargetSchema(BaseModel):
     target: str
     service: str
-    enabled: TargetStatusType = TargetStatusType.ENABLE
+    enabled: int
 
 class DisconnectRequestSchema(BaseModel):
     user:str

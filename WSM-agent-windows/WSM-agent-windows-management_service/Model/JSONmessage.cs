@@ -81,7 +81,7 @@ namespace SessionService.Model
         {
             this.status = status;
             this.user = user;
-            this.hostname = StartupManager.getFqdn() ?? "Unknown";
+            this.hostname = Dns.GetHostName() ?? "Unknown";
             this.timestamp = DateTimeOffset.UtcNow;
 
             switch (status)
