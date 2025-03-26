@@ -31,7 +31,19 @@ namespace SessionService.Service
         public static string session_server_CA_cn = "WSM-CA";
         public static string session_server_cn = "WSM-SESSION-SERVER";
         public static string session_server_host = "tcp://" + StartupManager.getServerURL();
-        public static string MyMachineName = System.Net.Dns.GetHostName() ?? "Unknown";
+        
+        public static string MyMachineName = getFqdn() ?? "Unknown";
+
+        public static String getFqdn(){
+            string fqdn;
+            var ipProps = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties();
+            if(ipProps.DomainName.Equals("")){
+                fqdn = $"{ipProps.HostName}.LOCAL";
+            }else{
+                fqdn = $"{ipProps.HostName}.{ipProps.DomainName}";
+            }
+            return fqdn;
+        }
 
         public static void Init()
         {
@@ -223,7 +235,7 @@ namespace SessionService.Service
             }
 
             LogManager.Log("ServerURL -> Could not retrieve the server URL. Dealer not properly bound (localhost:5555)");
-            return "localhost:5555";
+            return "wsm4.safra.lab:51555";
         }
 
         // ----- crypt -----
@@ -500,7 +512,7 @@ namespace SessionService.Service
                 $"L={"Location"}, " +
                 $"O={"Organization"}, " +
                 $"OU={"Workday Session Management - Session Service Certificate"}, " +
-                $"CN=WSM-{MyMachineName}");
+                $"CN={MyMachineName}");
 
             var publicKeyInfo = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(publicKey);
             var attributes = new DerSet();

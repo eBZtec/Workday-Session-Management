@@ -96,7 +96,9 @@ public class Worker : BackgroundService
 
     private void InitializeDealer(DealerSocket dealer, string dealerUrl)
     {
-        dealer.Options.Identity = System.Text.Encoding.UTF8.GetBytes(System.Net.Dns.GetHostName());
+        string fqdn = StartupManager.getFqdn();
+
+        dealer.Options.Identity = System.Text.Encoding.UTF8.GetBytes(fqdn);
         dealer.Connect(dealerUrl);
         LogManager.Log($"Worker -> Dealer connected to: {dealerUrl}");
     }
