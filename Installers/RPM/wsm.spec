@@ -78,7 +78,7 @@ mkdir -p %{buildroot}/etc/systemd/system/
 
 echo 'Serviços Systemd:'
 echo 'Serviço: WSM Session Updater Connectors'
-cat << EOF > %{buildroot}/etc/systemd/system/wsm_session_updater_connectors.service
+cat << EOF > %{buildroot}/etc/systemd/system/wsm-session_updater_connectors.service
 [Unit]
 Description=WSM Session Updater Connectors Service - This service consumes the queue named pooling
 After=network.target
@@ -96,7 +96,7 @@ WantedBy=multi-user.target
 EOF
 
 echo 'Serviço: WSM Agent Updater'
-cat << EOF > %{buildroot}/etc/systemd/system/wsm_agent_updater.service
+cat << EOF > %{buildroot}/etc/systemd/system/wsm-agent_updater.service
 [Unit]
 Description=WSM Agent Updater Service - This service consumes the rabbitMQ queue called session_agent and sent to Rouver via 0MQ
 After=network.target
@@ -114,7 +114,7 @@ WantedBy=multi-user.target
 EOF
 
 echo 'Serviço: WSM Archive Processor'
-cat << EOF > %{buildroot}/etc/systemd/system/wsm_archive_processor.service
+cat << EOF > %{buildroot}/etc/systemd/system/wsm-archive_processor.service
 [Unit]
 Description=WSM - Archive Processor Service - This service gets entries from rabbitMQ, it was sent from router to session_archive_queue
 After=network.target
@@ -134,7 +134,7 @@ WantedBy=multi-user.target
 EOF
 
 echo 'Serviço: WSM Audit Server'
-cat << EOF > %{buildroot}/etc/systemd/system/wsm_audit_server.service
+cat << EOF > %{buildroot}/etc/systemd/system/wsm-audit_server.service
 [Unit]
 Description=WSM - Session Audit Server API Service
 After=network.target
@@ -153,7 +153,7 @@ WantedBy=multi-user.target
 EOF
 
 echo 'Serviço: WSM Router'
-cat << EOF > %{buildroot}/etc/systemd/system/wsm_router.service
+cat << EOF > %{buildroot}/etc/systemd/system/wsm-router.service
 [Unit]
 Description=WSM - Router Service
 After=network.target
@@ -173,7 +173,7 @@ WantedBy=multi-user.target
 EOF
 
 echo 'Serviço: WSM Session Server'
-cat << EOF > %{buildroot}/etc/systemd/system/wsm_session_server.service
+cat << EOF > %{buildroot}/etc/systemd/system/wsm-session_server.service
 [Unit]
 Description=WSM - Session Server API Service
 After=network.target
@@ -236,10 +236,10 @@ chown -R wsm:wsm /opt/wsm/
 
 %files
 /opt/wsm
-/etc/systemd/system/wsm_session_updater_connectors.service
-/etc/systemd/system/wsm_agent_updater.service
-/etc/systemd/system/wsm_archive_processor.service
-/etc/systemd/system/wsm_audit_server.service
-/etc/systemd/system/wsm_router.service
-/etc/systemd/system/wsm_session_server.service
+/etc/systemd/system/wsm-session_updater_connectors.service
+/etc/systemd/system/wsm-agent_updater.service
+/etc/systemd/system/wsm-archive_processor.service
+/etc/systemd/system/wsm-audit_server.service
+/etc/systemd/system/wsm-router.service
+/etc/systemd/system/wsm-session_server.service
 /etc/systemd/system/wsm-ad-connector.service
