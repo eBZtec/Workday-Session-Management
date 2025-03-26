@@ -3,6 +3,9 @@ from typing import Optional, List, Dict, Union
 from datetime import datetime, time
 from enum import Enum
 
+from src.enums.target_status_type import TargetStatusType
+
+
 class AllowedWorkSchema(str, Enum):
     YES = "Y"
     NO = "N"
@@ -70,7 +73,7 @@ class TargetStatusSchema(BaseModel):
 class TargetSchema(BaseModel):
     target: str
     service: str
-    enabled: int
+    enabled: TargetStatusType = TargetStatusType.ENABLE
 
 class DisconnectRequestSchema(BaseModel):
     user:str
