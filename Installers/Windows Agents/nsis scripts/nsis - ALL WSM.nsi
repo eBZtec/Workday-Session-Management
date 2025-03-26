@@ -15,7 +15,7 @@ RequestExecutionLevel admin
 
 ; Set installer name and output
 Name "Workday Session Management - Windows Agent"
-OutFile "WSM Setup.exe"
+OutFile "WSM Setup1.exe"
 
 ; Define installation directory
 InstallDir "$PROGRAMFILES32\eBZ Tecnologia\Workday Session Management"

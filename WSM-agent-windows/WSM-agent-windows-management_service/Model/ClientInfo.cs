@@ -3,6 +3,7 @@ using System.Net;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using SessionService.Service;
 
 namespace SessionService.Model
 {
@@ -19,7 +20,7 @@ namespace SessionService.Model
 
         public ClientInfo()
         {
-            hostname = System.Net.Dns.GetHostName() ?? "Unknown";
+            hostname = StartupManager.getFqdn() ?? "Unknown"; //System.Net.Dns.GetHostName()
             ip_address = Get_ip();
             client_version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0.0";
             os_name = RuntimeInformation.OSDescription ?? "Unknown";
@@ -31,7 +32,7 @@ namespace SessionService.Model
 
         public string Get_ip()
         {
-            IPAddress[] addresses = Dns.GetHostAddresses(hostname);
+            IPAddress[] addresses = Dns.GetHostAddresses(System.Net.Dns.GetHostName());
 
             foreach (IPAddress address in addresses)
             {
