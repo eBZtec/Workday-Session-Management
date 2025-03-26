@@ -45,12 +45,12 @@ class ExtendedWorkHoursSchema(BaseModel):
     uid : str
     extension_start_time: datetime
     extension_end_time: datetime
-    extended_workhours_type: str
-    uf : str
-    c : int
-    week_days_count: str
-    extension_active: int
-    ou: int
+    extended_workhours_type: str = "ex"
+    uf : str = "BR"
+    c : int = 0
+    week_days_count: str = ""
+    extension_active: int = 0
+    ou: int = 0
 
 class ExtendedWorkHoursResponse(ExtendedWorkHoursSchema):
     id: int
