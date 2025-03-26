@@ -73,6 +73,12 @@ echo "Ajustar permissões para o usuário 'wsm'"
 chown -R wsm:wsm %{buildroot}/opt/wsm
 chmod -R 750 %{buildroot}/opt/wsm
 
+echo "Criar diretórios de logs"
+mkdir -p %{buildroot}/opt/wsm/WSM-audit-server/logs
+mkdir -p %{buildroot}/opt/wsm/WSM-server/WSM-server-session_server/logs
+mkdir -p %{buildroot}/opt/wsm/WSM-server/WSM-archive-processor/logs
+
+
 echo "Criar diretório para arquivos de serviço"
 mkdir -p %{buildroot}/etc/systemd/system/
 
