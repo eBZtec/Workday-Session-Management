@@ -107,6 +107,8 @@ namespace SessionService.Service
             {
                 LogManager.Log("Could not find the Curve key-pair, generating new pair...");
                 StoreCurveKeys();
+            }else{
+                LogManager.Log("Curve key-pair successfully loaded...");
             }
         }
 

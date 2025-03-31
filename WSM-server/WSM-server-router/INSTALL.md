@@ -2,10 +2,10 @@ Creating the Router Service
 
 1 - Define the CA certificate parameters in a .env file located in:
 
-    /opt/wsm/Workday_Session_Management/WSM-server/WSM-server-router/certificates/
+    /opt/wsm/WSM-server/WSM-server-router/certificates/
 
 
-    Define .env variables of entire project into "/opt/wsm/Workday_Session_Management/WSM-server/WSM-server-router/.env" file like:
+    Define .env variables of entire project into "/opt/wsm/WSM-server/WSM-server-router/.env" file like:
 
 #DEV
 DEV_DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/<session_database_name>
@@ -18,8 +18,8 @@ Z_MQ_PORT=51555
 
 CA_CERT_CN=WSM-CA
 CA_KEY_PASSWORD=<ca-key-pass>
-CA_CERT_FILE=/opt/wsm/Workday_Session_Management/WSM-server/WSM-server-router/certificates/ca_files/ca_certificate.pem
-CA_KEY_PATH=/opt/wsm/Workday_Session_Management/WSM-server/WSM-server-router/certificates/ca_files/ca_private_key.pem
+CA_CERT_FILE=/opt/wsm/WSM-server/WSM-server-router/certificates/ca_files/ca_certificate.pem
+CA_KEY_PATH=/opt/wsm/WSM-server/WSM-server-router/certificates/ca_files/ca_private_key.pem
 
 WSM_CERT_CN=WSM-SESSION-SERVER
 
@@ -58,7 +58,7 @@ CA_PRIVATE_KEY_PASSWORD=<password>
 
     chmod 600 ca_private_key.pem
 
-6 - Copy the `secret.key` to `/opt/wsm/Workday_Session_Management/WSM-server/WSM-server-router/src/config/`.
+6 - Copy the `secret.key` to `/opt/wsm/WSM-server/WSM-server-router/src/config/`.
 
 7 - Create the Router Service:
 
@@ -69,7 +69,7 @@ After=network.target
 
 [Service]
 User=wsm
-WorkingDirectory=/opt/wsm/Workday_Session_Management/WSM-server/WSM-server-router
+WorkingDirectory=/opt/wsm/WSM-server/WSM-server-router
 LimitNOFILE=4096
 ExecStart=/opt/wsm/wsmvenv3.12/bin/python3.12 main.py
 Restart=on-failure
