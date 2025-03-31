@@ -27,7 +27,7 @@ Section "Install"
     SetOutPath "$INSTDIR"
     
     ; Copy the service executable
-    File /r "${__FILEDIR__}\..\..\..\WSM-agent-windows\WSM-agent-windows-management_service\bin\Release\net8.0-windows\*"
+    File /r "${__FILEDIR__}\..\..\..\WSM-agent-windows\WSM-agent-windows-management_service\publish\*"
 
     ; Install the service using the 'sc create' command
     nsExec::ExecToLog 'sc create "${ServiceName}" binPath= "$INSTDIR\${ServiceExeName}" start= auto'
