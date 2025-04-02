@@ -237,7 +237,7 @@ namespace SessionService.Service
             }
 
             LogManager.Log("ServerURL -> Could not retrieve the server URL. Dealer not properly bound (localhost:5555)");
-            return "wsm4.safra.lab:51555";
+            return "localhost:5555";
         }
 
         // ----- crypt -----

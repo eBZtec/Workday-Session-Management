@@ -1,6 +1,6 @@
 Name:           wsm
 Version:        1.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Workday Session Management Installation Package
 
 License:        GPL-3.0
@@ -8,82 +8,73 @@ URL:            https://github.com/Workday_Session_Management
 Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  git, python3.12, gcc, tar, rsync
-Requires:       tar, postgresql, rabbitmq-server, brotli, libbrotli, python3.12, python3.12-pip
+Requires:       tar, postgresql, postgresql-contrib, rabbitmq-server, brotli, libbrotli, python3.12, python3.12-pip
 
 %description
-Este pacote instala e configura o Workday Session Management (WSM), incluindo módulos de auditoria, conectores e agentes.
+Workday Session Management (WSM) full installation - server, audit, connectors and agents daemons.
 
 %pre
-# Criar o diretório /opt/wsm, se não existir
+# '/opt/wsm' creation
 if [ ! -d /opt/wsm ]; then
     mkdir -p /opt/wsm
     chmod 755 /opt/wsm
 fi
 
-# Criar o usuário 'wsm' se não existir
+# 'wsm' user creation
 getent passwd wsm > /dev/null || useradd -m -d /opt/wsm -s /bin/bash wsm
 
 %prep
-echo 'Criar o diretório de build e clonar o repositório'
-mkdir -p %{_builddir}/wsm-1.0/Workday_Session_Management/
-cd %{_builddir}/wsm-1.0/Workday_Session_Management/
+echo 'git clone for rpmbuild'
+mkdir -p %{_builddir}/wsm-main/Workday_Session_Management/
+cd %{_builddir}/wsm-main/Workday_Session_Management/
 # git clone https://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@github.com/eBZtec/Workday_Session_Management.git tmp_repo
 git clone http://gitea.ebz:3000/eBZ/Workday_Session_Management.git tmp_repo
 
-echo 'Mover os arquivos ignorando os diretórios indesejados'
-rsync -av --exclude='WSM-connector-ad/' --exclude='WSM-agent-windows/' --exclude='Installers/' tmp_repo/ ./
+echo 'move and exclude what is not needed'
+rsync -a --exclude='WSM-connector-ad/' --exclude='WSM-agent-windows/' --exclude='Installers/' tmp_repo/ ./
 
-echo 'Remover o repositório clonado'
+echo 'bye bye tmp_repo'
 rm -rf tmp_repo
 
-# Prepara python packages
-# for f in `find %{_builddir}/wsm-1.0/Workday_Session_Management/ -name requirements.txt`; do cat $f | awk -F '==' '{print $1}' | awk -F '~=' '{print $1}' >>  %{_builddir}/wsm-1.0/Workday_Session_Management/requirements.in; done; cat %{_builddir}/wsm-1.0/Workday_Session_Management/requirements.in | sort -u >  %{_builddir}/wsm-1.0/Workday_Session_Management/requirements.txt
-# pip download -r %{_builddir}/wsm-1.0/Workday_Session_Management/requirements.txt -d %{_builddir}/wsm-1.0/Workday_Session_Management/python-packages/
+if [ -d WSM-server/WSM-server-router/src/config/encrypted.env ]; then
+    rm WSM-server/WSM-server-router/src/config/encrypted.env
+fi
 
-echo 'Criar o ambiente virtual Python 3.12 no diretório %{_builddir}/wsm-1.0/wsmenv'
-echo "Criando o ambiente virtual Python 3.12 em %{_builddir}/wsm-1.0/Workday_Session_Management/wsmenv..."
-python3.12 -m venv %{_builddir}/wsm-1.0/Workday_Session_Management/wsmvenv3.12
-
-echo 'Ativar o ambiente virtual'
-source %{_builddir}/wsm-1.0/Workday_Session_Management/wsmvenv3.12/bin/activate
-
-echo 'Atualizar pip e instalar pacotes do requirements.txt'
-pip install --upgrade pip
-pip install -r %{_builddir}/wsm-1.0/Workday_Session_Management/requirements.txt
-
-echo 'Preparando o tar.gz dos pacotes python'
-tar -czf %{_builddir}/wsm-1.0/Workday_Session_Management/wsmvenv3.12.tar.gz -C %{_builddir}/wsm-1.0/Workday_Session_Management/ wsmvenv3.12
-#tar -czf /root/rpmbuild/BUILD/wsm-1.0/Workday_Session_Management/wsmvenv3.12.tar.gz -C /root/rpmbuild/BUILD/wsm-1.0/Workday_Session_Management/ wsmvenv3.12
-rm -fR %{_builddir}/wsm-1.0/Workday_Session_Management/wsmvenv3.12
-
-echo 'Criar o tar.gz atualizado com os arquivos do Git'
-tar -czf %{_sourcedir}/wsm-1.0.tar.gz .
+echo 'creating the needed tar.gz from git files'
+tar -czf %{_sourcedir}/wsm-main.tar.gz .
 
 %build
-# Nenhuma etapa de compilação necessária para este projeto
+# no build is needed
 
 %install
-echo 'Criar o diretório de instalação'
+echo 'wsm directory is /opt/wsm'
 mkdir -p %{buildroot}/opt/wsm
 
-echo 'Copiar os arquivos do projeto para /opt/wsm'
-cp -r %{_builddir}/wsm-1.0/Workday_Session_Management/* %{buildroot}/opt/wsm
+echo 'copying files to /opt/wsm'
+cp -r %{_builddir}/wsm-main/Workday_Session_Management/* %{buildroot}/opt/wsm
 
-echo "Ajustar permissões para o usuário 'wsm'"
-chown -R wsm:wsm %{buildroot}/opt/wsm
-chmod -R 750 %{buildroot}/opt/wsm
-
-echo "Criar diretórios de logs"
+echo "log dir creation"
 mkdir -p %{buildroot}/opt/wsm/WSM-audit-server/logs
 mkdir -p %{buildroot}/opt/wsm/WSM-server/WSM-server-session_server/logs
 mkdir -p %{buildroot}/opt/wsm/WSM-server/WSM-archive-processor/logs
+mkdir -p %{buildroot}/opt/wsm/WSM-server/WSM-server-session_updater_connectors/logs
+mkdir -p %{buildroot}/opt/wsm/WSM-server/WSM-server-session_updater_connectors/src/logs
+mkdir -p %{buildroot}/opt/wsm/WSM-server/WSM-server-agent_updater/logs
+mkdir -p %{buildroot}/opt/wsm/WSM-server/WSM-server-agent_updater/src/logs
+mkdir -p %{buildroot}/opt/wsm/WSM-server/WSM-server-router/logs
+mkdir -p %{buildroot}/opt/wsm/WSM-server/WSM-server-router/src/logs
+
+echo "fixing permissions for wsm files"
+chown -R wsm:wsm %{buildroot}/opt/wsm
+for f in `find %{buildroot}/opt/wsm -type f`; do chmod 640 $f; done
+for d in `find %{buildroot}/opt/wsm -type d`; do chmod 750 $d; done
 
 
-echo "Criar diretório para arquivos de serviço"
+echo "creating systemd buildroot dir."
 mkdir -p %{buildroot}/etc/systemd/system/
 
-echo 'Serviços Systemd:'
-echo 'Serviço: WSM Session Updater Connectors'
+echo 'creating systemd files...'
+echo '  system unit for: WSM Session Updater Connectors'
 cat << EOF > %{buildroot}/etc/systemd/system/wsm-session_updater_connectors.service
 [Unit]
 Description=WSM Session Updater Connectors Service - This service consumes the queue named pooling
@@ -101,7 +92,7 @@ EnvironmentFile=/opt/wsm/WSM-server/WSM-server-session_updater_connectors/.env
 WantedBy=multi-user.target
 EOF
 
-echo 'Serviço: WSM Agent Updater'
+echo '  system unit for: WSM Agent Updater'
 cat << EOF > %{buildroot}/etc/systemd/system/wsm-agent_updater.service
 [Unit]
 Description=WSM Agent Updater Service - This service consumes the rabbitMQ queue called session_agent and sent to Rouver via 0MQ
@@ -119,7 +110,7 @@ EnvironmentFile=/opt/wsm/WSM-server/WSM-server-agent_updater/.env
 WantedBy=multi-user.target
 EOF
 
-echo 'Serviço: WSM Archive Processor'
+echo '  system unit for: WSM Archive Processor'
 cat << EOF > %{buildroot}/etc/systemd/system/wsm-archive_processor.service
 [Unit]
 Description=WSM - Archive Processor Service - This service gets entries from rabbitMQ, it was sent from router to session_archive_queue
@@ -139,7 +130,7 @@ EnvironmentFile=/opt/wsm/WSM-server/WSM-archive-processor/.env
 WantedBy=multi-user.target
 EOF
 
-echo 'Serviço: WSM Audit Server'
+echo '  system unit for: WSM Audit Server'
 cat << EOF > %{buildroot}/etc/systemd/system/wsm-audit_server.service
 [Unit]
 Description=WSM - Session Audit Server API Service
@@ -158,7 +149,7 @@ EnvironmentFile=/opt/wsm/WSM-audit-server/.env
 WantedBy=multi-user.target
 EOF
 
-echo 'Serviço: WSM Router'
+echo '  system unit for: WSM Router'
 cat << EOF > %{buildroot}/etc/systemd/system/wsm-router.service
 [Unit]
 Description=WSM - Router Service
@@ -178,7 +169,7 @@ EnvironmentFile=/opt/wsm/WSM-server/WSM-server-router/.env
 WantedBy=multi-user.target
 EOF
 
-echo 'Serviço: WSM Session Server'
+echo '  system unit for: WSM Session Server'
 cat << EOF > %{buildroot}/etc/systemd/system/wsm-session_server.service
 [Unit]
 Description=WSM - Session Server API Service
@@ -198,7 +189,7 @@ EnvironmentFile=/opt/wsm/WSM-server/WSM-server-session_server/.env
 WantedBy=multi-user.target
 EOF
 
-echo 'Serviço: WSM AD-Connector'
+echo '  system unit for: WSM AD-Connector'
 cat << EOF > %{buildroot}/etc/systemd/system/wsm-ad-connector.service
 [Unit]
 Description=WSM AD Updater Service
@@ -216,28 +207,11 @@ EnvironmentFile=/opt/wsm/WSM-server/WSM-AD-Connector/.env
 WantedBy=multi-user.target
 EOF
 
-echo 'Ajustando permissões para os serviços systemd'
-chmod 644 %{buildroot}/etc/systemd/system/*.service
-chmod +x %{buildroot}/etc/systemd/system/*.service
+echo 'setting wsm systemd permissions'
+chmod 755 %{buildroot}/etc/systemd/system/wsm-*.service
 
 %post
-
-# echo "Extraindo bibliotecas do wsmvenv3.12..tar.gz..."
-# tar -xzf /opt/wsm/wsmvenv3.12.tar.gz -C /opt/wsm/
-
-# Criar o ambiente virtual Python 3.12 no diretório /opt/wsm/wsmenv
-#echo "Criando o ambiente virtual Python 3.12 em /opt/wsm/wsmenv..."
-#python3.12 -m venv /opt/wsm/wsmvenv3.12
-
-# Ativar o ambiente virtual
-#source /opt/wsm/wsmvenv3.12/bin/activate
-
-# Atualizar pip e instalar pacotes do requirements.txt
-#pip install --no-index --find-links=/opt/wsm/python-packages -r /opt/wsm/requirements.txt
-
-echo 'Ajustar proprietário e grupo do ambiente virtual e pacotes instalados'
-echo "Ajustando proprietário e grupo do ambiente em /opt/wsm para o usuario wsm"
-
+echo "Setting wsm:wsm owner for /opt/wsm"
 chown -R wsm:wsm /opt/wsm/
 
 %files
@@ -249,3 +223,26 @@ chown -R wsm:wsm /opt/wsm/
 /etc/systemd/system/wsm-router.service
 /etc/systemd/system/wsm-session_server.service
 /etc/systemd/system/wsm-ad-connector.service
+%ghost /opt/wsm/WSM-audit-server/.env
+%ghost /opt/wsm/WSM-server/WSM-server-session_server/.env
+%ghost /opt/wsm/WSM-server/WSM-archive-processor/.env
+%ghost /opt/wsm/WSM-server/WSM-server-session_updater_connectors/.env
+%ghost /opt/wsm/WSM-server/WSM-server-agent_updater/.env
+%ghost /opt/wsm/WSM-server/WSM-server-router/.env
+%ghost /opt/wsm/WSM-server/WSM-server-router/certificates/scripts/generate-client/.env
+%ghost /opt/wsm/WSM-server/WSM-server-router/certificates/scripts/generate-ca/.env
+%ghost /opt/wsm/WSM-server/WSM-server-router/certificates/.env
+%ghost /opt/wsm/WSM-server/WSM-server-router/src/config/.env
+%ghost /opt/wsm/WSM-server/WSM-AD-Connector/.env
+%ghost /opt/wsm/WSM-server/WSM-server-router/secret.key
+%ghost /opt/wsm/WSM-server/WSM-server-router/src/config/secret.key
+%ghost /opt/wsm/WSM-server/WSM-server-router/src/connections/secret.key
+%ghost /opt/wsm/WSM-server/WSM-server-router/certificates/client_files/WSM-SESSION-SERVER_csr.pem
+%ghost /opt/wsm/WSM-server/WSM-server-router/certificates/client_files/WSM-SESSION-SERVER_private_key.pem
+%ghost /opt/wsm/WSM-server/WSM-server-router/certificates/client_files/WSM-SESSION-SERVER_certificate.pem
+%ghost /opt/wsm/WSM-server/WSM-server-router/certificates/ca_files/ca_certificate.pem
+%ghost /opt/wsm/WSM-server/WSM-server-router/certificates/ca_files/ca_private_key.pem
+%ghost /opt/wsm/wsmvenv3.12
+%ghost /opt/wsm/WSM-server/WSM-server-router/src/config/encrypted.env
+%ghost /opt/wsm/WSM-server/WSM-server-router/encrypted.env
+
