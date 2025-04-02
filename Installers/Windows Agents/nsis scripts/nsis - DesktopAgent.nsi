@@ -37,7 +37,7 @@ Section "Install"
     SetOutPath "$INSTDIR"
 
     # Copy files
-    File /r "${__FILEDIR__}\..\..\..\WSM-agent-windows\WSM-agent-windows-desktop_agent\bin\Release\net8.0-windows10.0.17763.0\*.*"
+    File /r "${__FILEDIR__}\..\..\..\WSM-agent-windows\WSM-agent-windows-desktop_agent\publish\*.*"
 
     # Create a startup shortcut
     CreateShortCut "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\${APP_NAME}.lnk" "$INSTDIR\DesktopAgent.exe" ""

@@ -18,19 +18,19 @@ public class Worker : BackgroundService
 
     public Worker()
     {
-        _eventLog = new EventLog("Security")
-        {
-            Log = "Security"
-        };
-        _eventLog.EntryWritten += OnEntryWritten;
-        _eventLog.EnableRaisingEvents = true;
-
         userSessions = new List<UserSession>();
         usersAllowed = new List<UserAllowed>();
 
         clientInfo = new ClientInfo();
 
         StartupManager.Init();
+
+        _eventLog = new EventLog("Security")
+        {
+            Log = "Security"
+        };
+        _eventLog.EntryWritten += OnEntryWritten;
+        _eventLog.EnableRaisingEvents = true;
 
         LogManager.LogClientInfo(clientInfo.ToString());
     }
@@ -179,7 +179,8 @@ public class Worker : BackgroundService
         switch (e.Entry.InstanceId)
         {
             case 4624: // Logon
-                if ((e.Entry.ReplacementStrings[8].Equals("2") || e.Entry.ReplacementStrings[8].Equals("10")) 
+                if ((e.Entry.ReplacementStrings[8].Equals("2") || e.Entry.ReplacementStrings[8].Equals("10") 
+                || e.Entry.ReplacementStrings[8].Equals("11")) 
                     && !e.Entry.ReplacementStrings[11].Equals("-")
                     && !e.Entry.ReplacementStrings[5].Equals(lastUsrLogon))
                 {

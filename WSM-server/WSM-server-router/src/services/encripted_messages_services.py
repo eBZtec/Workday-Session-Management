@@ -5,6 +5,8 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import serialization, hashes
+
+from src.config import config
 from src.connections.database_manager import DatabaseManager
 from src.logs.logger import Logger
 
@@ -46,24 +48,12 @@ class CryptoMessages:
 
     # Load private RSA key
     def load_private_key(self):
-        with open("/root/wsm_certificate_manager/certificates/client_files/WSM-SESSION-SERVER_private_key.pem", "rb") as key_file:
+        with open(config.WSM_CERT_FILE, "rb") as key_file:
             private_key = serialization.load_pem_private_key(
                 key_file.read(),
                 password=None,
                 backend=default_backend()
             )
-        '''
-        # Serialize the private key to PEM format as bytes
-        private_key_pem = private_key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.TraditionalOpenSSL,
-            encryption_algorithm=serialization.NoEncryption()  # No password protection
-        )
-
-        # Convert bytes to string
-        private_key_str = private_key_pem.decode("utf-8")
-        print(private_key_str)  # Print the private key as a string
-        '''
 
         return private_key
 

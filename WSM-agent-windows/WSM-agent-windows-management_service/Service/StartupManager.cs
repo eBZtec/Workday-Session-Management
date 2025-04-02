@@ -107,6 +107,8 @@ namespace SessionService.Service
             {
                 LogManager.Log("Could not find the Curve key-pair, generating new pair...");
                 StoreCurveKeys();
+            }else{
+                LogManager.Log("Curve key-pair successfully loaded...");
             }
         }
 
@@ -235,7 +237,7 @@ namespace SessionService.Service
             }
 
             LogManager.Log("ServerURL -> Could not retrieve the server URL. Dealer not properly bound (localhost:5555)");
-            return "wsm4.safra.lab:51555";
+            return "localhost:5555";
         }
 
         // ----- crypt -----
