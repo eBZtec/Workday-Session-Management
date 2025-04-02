@@ -36,7 +36,9 @@ rsync -a --exclude='WSM-connector-ad/' --exclude='WSM-agent-windows/' --exclude=
 echo 'bye bye tmp_repo'
 rm -rf tmp_repo
 
-rm WSM-server/WSM-server-router/src/config/encrypted.env
+if [ -d WSM-server/WSM-server-router/src/config/encrypted.env ]; then
+    rm WSM-server/WSM-server-router/src/config/encrypted.env
+fi
 
 echo 'creating the needed tar.gz from git files'
 tar -czf %{_sourcedir}/wsm-main.tar.gz .
@@ -64,8 +66,9 @@ mkdir -p %{buildroot}/opt/wsm/WSM-server/WSM-server-router/src/logs
 
 echo "fixing permissions for wsm files"
 chown -R wsm:wsm %{buildroot}/opt/wsm
+for f in `find %{buildroot}/opt/wsm -type f`; do chmod 640 $f; done
 for d in `find %{buildroot}/opt/wsm -type d`; do chmod 750 $d; done
-for f in `find %{buildroot}/opt/wsm -type f`; do chmod 640 $d; done
+
 
 echo "creating systemd buildroot dir."
 mkdir -p %{buildroot}/etc/systemd/system/
@@ -220,3 +223,26 @@ chown -R wsm:wsm /opt/wsm/
 /etc/systemd/system/wsm-router.service
 /etc/systemd/system/wsm-session_server.service
 /etc/systemd/system/wsm-ad-connector.service
+%ghost /opt/wsm/WSM-audit-server/.env
+%ghost /opt/wsm/WSM-server/WSM-server-session_server/.env
+%ghost /opt/wsm/WSM-server/WSM-archive-processor/.env
+%ghost /opt/wsm/WSM-server/WSM-server-session_updater_connectors/.env
+%ghost /opt/wsm/WSM-server/WSM-server-agent_updater/.env
+%ghost /opt/wsm/WSM-server/WSM-server-router/.env
+%ghost /opt/wsm/WSM-server/WSM-server-router/certificates/scripts/generate-client/.env
+%ghost /opt/wsm/WSM-server/WSM-server-router/certificates/scripts/generate-ca/.env
+%ghost /opt/wsm/WSM-server/WSM-server-router/certificates/.env
+%ghost /opt/wsm/WSM-server/WSM-server-router/src/config/.env
+%ghost /opt/wsm/WSM-server/WSM-AD-Connector/.env
+%ghost /opt/wsm/WSM-server/WSM-server-router/secret.key
+%ghost /opt/wsm/WSM-server/WSM-server-router/src/config/secret.key
+%ghost /opt/wsm/WSM-server/WSM-server-router/src/connections/secret.key
+%ghost /opt/wsm/WSM-server/WSM-server-router/certificates/client_files/WSM-SESSION-SERVER_csr.pem
+%ghost /opt/wsm/WSM-server/WSM-server-router/certificates/client_files/WSM-SESSION-SERVER_private_key.pem
+%ghost /opt/wsm/WSM-server/WSM-server-router/certificates/client_files/WSM-SESSION-SERVER_certificate.pem
+%ghost /opt/wsm/WSM-server/WSM-server-router/certificates/ca_files/ca_certificate.pem
+%ghost /opt/wsm/WSM-server/WSM-server-router/certificates/ca_files/ca_private_key.pem
+%ghost /opt/wsm/wsmvenv3.12
+%ghost /opt/wsm/WSM-server/WSM-server-router/src/config/encrypted.env
+%ghost /opt/wsm/WSM-server/WSM-server-router/encrypted.env
+
