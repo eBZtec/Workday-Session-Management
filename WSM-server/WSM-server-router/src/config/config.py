@@ -103,6 +103,7 @@ try:
     CA_KEY_PATH = os.getenv("CA_KEY_PATH")
     CA_CERT_FILE = os.getenv("CA_CERT_FILE")
     WSM_CERT_FILE = os.getenv("WSM_CERT_FILE")
+    WSM_CERT_PRIVATE_KEY = os.getenv("WSM_CERT_PRIVATE_KEY")
     WSM_CERT_CN = os.getenv("WSM_CERT_CN")
 
     AUDIT_QUEUE = os.getenv("AUDIT_QUEUE")
@@ -132,6 +133,10 @@ try:
     if not WSM_CERT_FILE:
         logger.error("A variável de ambiente WSM_CERT_FILE não está definida.")
         raise ValueError("WSM_CERT_FILE não definida.")
+
+    if not WSM_CERT_PRIVATE_KEY:
+        logger.error("A variável de ambiente WSM_CERT_PRIVATE_KEY não está definida.")
+        raise ValueError("WSM_CERT_PRIVATE_KEY não definida.")
 
     if not WSM_CERT_CN:
         logger.error("A variável de ambiente WSM_CERT_CN não está definida.")

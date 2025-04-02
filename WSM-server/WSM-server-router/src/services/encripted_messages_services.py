@@ -48,7 +48,7 @@ class CryptoMessages:
 
     # Load private RSA key
     def load_private_key(self):
-        with open(config.WSM_CERT_FILE, "rb") as key_file:
+        with open(config.WSM_CERT_PRIVATE_KEY, "rb") as key_file:
             private_key = serialization.load_pem_private_key(
                 key_file.read(),
                 password=None,
