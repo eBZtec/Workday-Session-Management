@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field, field_validator, AwareDatetime
+from pydantic_extra_types.timezone_name import TimeZoneName
 from typing import Optional, List, Dict, Union
 from datetime import datetime, time
 from enum import Enum
@@ -97,6 +98,20 @@ class StandardWorkHoursResponse(StandardWorkHoursSchema):
     create_timestamp: datetime
     update_timestamp: datetime
 
+### NTP Server
+
+class NTP_response(BaseModel):
+    uid : str
+    ntp : str
+    timezone: str
+    tz_name: TimeZoneName
+
+
+class TargetResponse(BaseModel):
+    id: int
+    target: str
+    service: str
+    enabled: int
 
 
 

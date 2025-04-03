@@ -1,5 +1,5 @@
 from datetime import datetime, date
-
+from typing import Optional
 from sqlalchemy import create_engine, or_
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
@@ -9,7 +9,7 @@ from contextlib import contextmanager
 from src.enums.target_status_type import TargetStatusType
 from src.models.models import Base, TargetStatus
 from src.config import config
-from src.models.models import Holidays, ExtendedWorkHours, Target
+from src.models.models import Holidays, ExtendedWorkHours, Target, Sessions
 import os
 
 # Carregar as variáveis do arquivo .env
@@ -178,41 +178,14 @@ class DatabaseManager:
     def get_target_status_by_account_id(self, account_id: int):
         with self.session_scope() as session:
             return session.query(Target, TargetStatus).join(Target, TargetStatus.id_target == Target.id).filter(TargetStatus.std_wrk_id == account_id).all()
-'''
-Exemplo de Uso da Classe DatabaseManager
 
-Suponha que você queira trabalhar com a tabela Client. Você pode usar a classe DatabaseManager da seguinte forma:
+    def get_user_session_timezone(self, user_: str):
+        with self.session_scope() as session:
+            return session.query(Sessions).filter(Sessions.user == user_).all()
 
-python
-
-from database_manager import DatabaseManager
-from models.client import Client
-
-# Configuração do banco de dados PostgreSQL
-DATABASE_URL = 'postgresql://username:password@localhost:5432/mydatabase'
-
-# Inicializar o gerenciador do banco de dados
-db_manager = DatabaseManager(DATABASE_URL)
-
-# Exemplo: Adicionar um novo cliente
-new_client = Client(
-    hostname='client2',
-    ip_address='192.168.1.2',
-    client_version='v1.2',
-    os_version='Linux'
-)
-db_manager.add_entry(new_client)
-
-# Exemplo: Consultar todos os clientes
-clients = db_manager.get_all(Client)
-for client in clients:
-    print(f"ID: {client.get_id()}, Hostname: {client.get_hostname()}")
-
-# Exemplo: Atualizar um cliente pelo ID
-update_data = {'hostname': 'client2-updated'}
-db_manager.update_entry(Client, id_=1, update_data=update_data)
-
-# Exemplo: Deletar um cliente pelo ID
-db_manager.delete_entry(Client, id_=1)
- 
-'''
+    def get_target_by_name(self, name_: Optional [str] = None):
+        with self.session_scope() as session:
+            query = session.query(Target)
+            if name_:
+                query = query.filter(Target.target == name_)
+            return query.all()
