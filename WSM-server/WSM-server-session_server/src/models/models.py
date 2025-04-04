@@ -129,7 +129,8 @@ class StandardWorkHours(TimestampedBase):
 class FlexTime(TimestampedBase):
     __tablename__ = 'flex_time'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    std_wrk_id = Column(Integer, ForeignKey('standard_workhours.id'), nullable=True) # antigo num_reg
+    std_wrk_id = Column(Integer, ForeignKey('standard_workhours.id'), nullable=True)
+    work_time_type = Column(String(10), nullable=False)
     work_time = Column(DateTime(timezone=True), nullable=False)
     create_timestamp = Column(DateTime(timezone=True), default=func.now(), nullable=False)
     update_timestamp = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False)
