@@ -11,25 +11,26 @@ class CreateAccountController:
 
     @staticmethod
     async def execute(account: AccountDTO):
-        standard_work_hours = {}
+        uid = account.uid
 
         try:
+            logger.info(f"Starting process to create user {account.uid} ")
+            logger.debug(f"Data received from account create endpoint {account}")
+
             create_account_factory = WorkTimeManagerFactory()
             create_account_service = create_account_factory.create(account)
 
             if account.journey != JourneyType.FLEX_TIME:
-                logger.debug(f"Transforming {account} for standard work hour default")
+                logger.debug(f"Transforming {uid} for standard work hour default")
                 standard_work_hours = account_dto_to_standard_work_hours_schema(account)
             else:
-                logger.debug(f"Transforming {account} for standard work hour flex")
+                logger.debug(f"Transforming {uid} for standard work hour flex")
                 standard_work_hours = account_dto_to_flex_time_schema(account)
-
-            logger.debug(f"Account data to added {standard_work_hours.model_dump()} to the creation endpoint")
 
             uid = await create_account_service.insert(standard_work_hours)
             logger.info(f"Account {uid} added successfully to the database")
         except Exception as e:
-            logger.error(f"Could not insert entry {standard_work_hours.model_dump()} on database, reason: {e} ")
+            logger.error(f"Could not insert entry {uid} on database, reason: {e} ")
         else:
             try:
                 logger.info(f"Starting process account pooling to update account {uid}")
