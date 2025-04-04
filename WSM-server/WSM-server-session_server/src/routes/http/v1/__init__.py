@@ -5,6 +5,7 @@ from src.routes.http.v1.account import account_router
 from src.routes.http.v1.overtime import overtime_router
 from src.routes.http.v1.agent import agent_router
 from src.routes.http.v1.targets import targets_router
+from src.routes.http.v1.ntp import ntp
 
 
 router = APIRouter()
@@ -37,5 +38,11 @@ router.include_router(
     targets_router.router,
     prefix="/target",
     tags=["WSM Target"]
+)
+
+router.include_router(
+    ntp.router,
+    prefix="/ntp",
+    tags=["WSM NTP server"]
 )
 
