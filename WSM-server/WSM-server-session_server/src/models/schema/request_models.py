@@ -5,6 +5,7 @@ from datetime import datetime, time
 from enum import Enum
 
 from src.enums.target_status_type import TargetStatusType
+from src.enums.types import JourneyType
 
 
 class AllowedWorkSchema(str, Enum):
@@ -24,6 +25,7 @@ class StandardWorkHoursSchema(BaseModel):
     start_time: str
     end_time: str
     allowed_work_hours: Optional[str] = None
+    journey: JourneyType = JourneyType.FLEX_TIME
     uf:str
     st: str
     c: int
