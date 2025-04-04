@@ -1,9 +1,10 @@
 from src.config.wsm_logger import logger
+from src.enums.types import JourneyType
 from src.factories.accounts.work_time_manager_factory import WorkTimeManagerFactory
 from src.models.dto.account_dto import AccountDTO
 from src.services.account.presenter.search_account_by_uid_service import SearchAccountByUIDService
 from src.services.pooling.accounts_pooling_service import AccountsPoolingService
-from src.utils.transform_models import account_dto_to_standard_work_hours_schema
+from src.utils.transform_models import account_dto_to_standard_work_hours_schema, account_dto_to_flex_time_schema
 
 
 class UpdateAccountController:
@@ -21,10 +22,12 @@ class UpdateAccountController:
             account_manager_factory = WorkTimeManagerFactory()
             account_manager_factory = account_manager_factory.create(account)
 
-            standard_work_hours = account_dto_to_standard_work_hours_schema(account)
-
-            logger.debug(f"Entry {standard_work_hours} for create/update into database")
-
+            if account.journey != JourneyType.FLEX_TIME:
+                logger.debug(f"Transforming {account} for standard work hour default")
+                standard_work_hours = account_dto_to_standard_work_hours_schema(account)
+            else:
+                logger.debug(f"Transforming {account} for standard work hour flex")
+                standard_work_hours = account_dto_to_flex_time_schema(account)
 
             account_found = await SearchAccountByUIDService.execute(uid)
 
