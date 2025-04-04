@@ -11,28 +11,26 @@ class UpdateAccountController:
 
     @staticmethod
     async def execute(account: AccountDTO):
-        standard_work_hours = {}
+        uid = account.uid
 
         try:
             logger.info(f"Starting process to update user {account.uid} ")
             logger.debug(f"Data received from account update endpoint {account}")
 
-            uid = account.uid
-
             account_manager_factory = WorkTimeManagerFactory()
             account_manager_factory = account_manager_factory.create(account)
 
             if account.journey != JourneyType.FLEX_TIME:
-                logger.debug(f"Transforming {account} for standard work hour default")
+                logger.info(f"Transforming {account} for standard work hour default")
                 standard_work_hours = account_dto_to_standard_work_hours_schema(account)
             else:
-                logger.debug(f"Transforming {account} for standard work hour flex")
+                logger.info(f"Transforming {account} for standard work hour flex")
                 standard_work_hours = account_dto_to_flex_time_schema(account)
 
             account_found = await SearchAccountByUIDService.execute(uid)
 
             if account_found:
-                logger.info(f"Entry {account_found.uid} found")
+                logger.info(f"Entry {uid} found")
                 logger.info(f"Updating user {uid} into the database")
                 await account_manager_factory.update(standard_work_hours)
                 logger.debug(f"Entry {standard_work_hours} updated successfully in the database")
@@ -40,14 +38,14 @@ class UpdateAccountController:
                 logger.warning(f"Account \"{uid} not found.")
                 logger.info(f"Inserting user {uid} into the database")
                 await account_manager_factory.insert(standard_work_hours)
-                logger.debug(f"Entry {standard_work_hours} added to the database")
+                logger.info(f"User {uid} added to the database")
 
         except Exception as e:
-            logger.error(f"Could not update entry {standard_work_hours}, reason: {e}")
+            logger.error(f"Could not update entry {uid}, reason: {e}")
         else:
             try:
-                logger.info(f"Starting process account pooling to update account {standard_work_hours.uid}")
+                logger.info(f"Starting process account pooling to update account {uid}")
                 await AccountsPoolingService.execute(uid)
             except Exception as e:
                 logger.error(
-                    f"Could not process entry {standard_work_hours} on account pooling, reason: {e} ")
+                    f"Could not process user {uid} on account pooling, reason: {e} ")
