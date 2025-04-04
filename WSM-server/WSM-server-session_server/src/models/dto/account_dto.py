@@ -1,0 +1,26 @@
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Optional, Union
+
+from src.enums.types import JourneyType
+from src.models.schema.request_models import SessionTerminationActionSchema
+
+
+@dataclass
+class AccountDTO:
+    uid: str
+    start_time: str
+    end_time: str
+    uf: str
+    st: str
+    c: int
+    weekdays: str
+    cn: str
+    l: str
+    enable = True
+    unrestricted = False
+    journey: JourneyType = JourneyType.FIXED_TIME
+    deactivation_date: Union[datetime, None] = None
+    allowed_work_hours: Union[str, None] = None
+    session_termination_action: SessionTerminationActionSchema = SessionTerminationActionSchema.LOGOFF
+    work_time: Union[datetime, None] = None

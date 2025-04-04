@@ -25,7 +25,7 @@ class StandardWorkHoursSchema(BaseModel):
     start_time: str
     end_time: str
     allowed_work_hours: Optional[str] = None
-    journey: JourneyType = JourneyType.FLEX_TIME
+    journey: JourneyType = JourneyType.FIXED_TIME
     uf:str
     st: str
     c: int
@@ -36,6 +36,11 @@ class StandardWorkHoursSchema(BaseModel):
     enable: bool = True
     unrestricted: bool = False
     deactivation_date: Optional[datetime] = None
+
+
+class FlexTimeSchema(StandardWorkHoursSchema):
+    work_time: datetime
+
 
 class EventsSchema(BaseModel):
     event_type: str

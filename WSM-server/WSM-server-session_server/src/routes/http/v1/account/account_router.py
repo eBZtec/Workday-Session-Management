@@ -2,6 +2,7 @@ from fastapi import APIRouter, status, Depends, BackgroundTasks, HTTPException
 from starlette.status import HTTP_200_OK
 
 from src.controllers.account.search_account_by_uid_controller import SearchAccountByUidController
+from src.models.dto.account_dto import AccountDTO
 from src.services.auth_service import AuthService
 from src.models.schema.request_models import StandardWorkHoursSchema, StandardWorkHoursResponse
 from src.controllers.account.disable_account_controller import DisableAccountController
@@ -21,9 +22,9 @@ auth_service = AuthService()
 )
 async def create(
         background_task: BackgroundTasks,
-        standard_work_hours: StandardWorkHoursSchema
+        account: AccountDTO
 ):
-    background_task.add_task(CreateAccountController.execute, standard_work_hours)
+    background_task.add_task(CreateAccountController.execute, account)
 
 
 @router.put(
@@ -32,9 +33,9 @@ async def create(
 )
 async def update(
         background_task: BackgroundTasks,
-        standard_work_hours: StandardWorkHoursSchema
+        account: AccountDTO
 ):
-    background_task.add_task(UpdateAccountController.execute, standard_work_hours)
+    background_task.add_task(UpdateAccountController.execute, account)
 
 
 @router.post(

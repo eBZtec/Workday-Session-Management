@@ -1,7 +1,7 @@
 from src.config.wsm_logger import logger
-from src.services.account.calculate_account_workhours_service import CalculateWorkhoursService
-from src.services.account.search_account_by_uid_service import SearchAccountByUIDService
-from src.services.account.update_account_attribute_service import UpdateAccountAttributeService
+from src.services.account.utils.calculate_account_workhours_service import CalculateWorkhoursService
+from src.services.account.presenter.search_account_by_uid_service import SearchAccountByUIDService
+from src.services.account.database.update_account_attribute_service import UpdateAccountAttributeService
 from src.utils.work_hours_helper import string_to_time
 
 
