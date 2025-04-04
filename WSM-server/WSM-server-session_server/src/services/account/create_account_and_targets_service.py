@@ -1,14 +1,14 @@
 from src.config.wsm_logger import logger
+from src.interfaces.account.icreate_account_and_targets import ICreateAccountAndTargets
 from src.models.schema.request_models import StandardWorkHoursSchema
 from src.services.account.insert_account_database_service import InsertAccountDatabaseService
 from src.services.account.search_account_by_uid_service import SearchAccountByUIDService
 from src.services.targets.configure_account_targets_status import ConfigureAccountTargets
 
 
-class CreateAccountAndTargetsService:
+class CreateAccountAndTargetsService(ICreateAccountAndTargets):
 
-    @staticmethod
-    async def execute(standard_work_hours: StandardWorkHoursSchema) -> str:
+    async def execute(cls, standard_work_hours: StandardWorkHoursSchema) -> str:
         uid = standard_work_hours.uid
         account_data = standard_work_hours.model_dump()
         await InsertAccountDatabaseService.execute(standard_work_hours)
