@@ -11,6 +11,8 @@ from src.services.targets.configure_account_targets_status import ConfigureAccou
 class FixedWorkTimeManager(WorkTimeManager):
     async def insert(self, standard_work_hours: StandardWorkHoursSchema) -> str:
         uid = standard_work_hours.uid
+        standard_work_hours.unrestricted = False
+
         account_data = standard_work_hours.model_dump()
         await InsertAccountDatabaseService.execute(standard_work_hours)
 
@@ -26,6 +28,7 @@ class FixedWorkTimeManager(WorkTimeManager):
 
     async def update(self, standard_work_hours: StandardWorkHoursSchema):
         uid = standard_work_hours.uid
+        standard_work_hours.unrestricted = False
 
         dm = DatabaseManager()
         account: StandardWorkHours | None = dm.get_by_uid(StandardWorkHours, uid)
