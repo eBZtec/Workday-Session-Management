@@ -1,4 +1,5 @@
 from src.config.wsm_logger import logger
+from src.enums.types import JourneyType
 from src.services.account.utils.calculate_account_workhours_service import CalculateWorkhoursService
 from src.services.account.presenter.search_account_by_uid_service import SearchAccountByUIDService
 from src.services.account.database.update_account_attribute_service import UpdateAccountAttributeService
@@ -10,6 +11,10 @@ class UpdateAllowedLogonHoursAccountService:
     @staticmethod
     async def execute(uid: str):
         account = await SearchAccountByUIDService.execute(uid)
+
+        if account.journey == JourneyType.FLEX_TIME:
+            logger.debug(f"Allowed Logon Hours update is not triggered by account {uid} with journey type {account.journey}")
+            return
 
         if account:
             logger.info(f"Found account {account.__dict__} for uid \"{account.uid}\"")
