@@ -45,3 +45,25 @@ def account_dto_to_flex_time_schema(account_dto: AccountDTO) -> StandardWorkHour
     )
 
     return standard_work_hours
+
+
+def flex_time_schema_standard_work_hours(standard: StandardWorkHoursSchema) -> StandardWorkHoursSchema:
+    standard_work_hours = StandardWorkHoursSchema(
+        uid=standard.uid,
+        start_time=standard.start_time,
+        end_time=standard.end_time,
+        allowed_work_hours=standard.allowed_work_hours,
+        journey=standard.journey,
+        uf=standard.uf,
+        st=standard.st,
+        c=standard.c,
+        weekdays=standard.weekdays,
+        session_termination_action=standard.session_termination_action,
+        cn=standard.cn,
+        l=standard.l,
+        enable=standard.enable,
+        unrestricted=standard.unrestricted,
+        deactivation_date=standard.deactivation_date
+    )
+
+    return standard_work_hours
