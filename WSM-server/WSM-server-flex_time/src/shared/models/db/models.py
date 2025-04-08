@@ -1,14 +1,12 @@
-from pygments.lexer import default
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, Boolean, Text, PrimaryKeyConstraint, event, Date
-from sqlalchemy.dialects.postgresql import CITEXT
-from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy.sql import func
-
-from src.enums.types import JourneyType
-from src.models.schema.request_models import SessionTerminationActionSchema
 from datetime import datetime
 
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Text, event
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 from sqlalchemy.ext.declarative import declarative_base
+
+from src.shared.enums.types import JourneyType
+from src.shared.models.schemas.request_models import SessionTerminationActionSchema
 
 Base = declarative_base()
 
