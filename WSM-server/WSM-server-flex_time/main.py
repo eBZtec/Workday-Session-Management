@@ -6,9 +6,16 @@ from src.config.wsm_logger import wsm_logger
 
 
 def main():
-    parser = argparse.ArgumentParser(description="WSM Flex time server for agent/connector update", usage="main.py --updater agents | main.py --updater connectors")
+    parser = argparse.ArgumentParser(
+        description="WSM Flex time server for agent/connector update",
+        usage="main.py --updater agents | main.py --updater connectors")
 
-    parser.add_argument("--updater", choices=["agents", "connectors"], default="agents", help="The name of updater who will be executed by the script. Updater can be \"agents\" or \"connectors\"")
+    parser.add_argument(
+        "--updater",
+        choices=["agents", "connectors"],
+        default="agents",
+        help="The name of updater who will be executed by the script. Updater can be \"agents\" or \"connectors\""
+    )
 
     args = parser.parse_args()
     wsm_logger.debug(f"Executing \"{args.updater}\" updater by command arguments")
