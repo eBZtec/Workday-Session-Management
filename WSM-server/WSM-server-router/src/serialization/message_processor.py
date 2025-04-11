@@ -345,8 +345,7 @@ class MessageProcessor:
                     return hostname,user_json
                 except Exception as e:
                     self.logger.error(f"WSM Router: No hostname find for this uid {user}")
-                    return {"status": "error", "message": f"No allowed schedule are set for {user}"}
-                    
+                    return {"status": "error", "message": f"No allowed schedule are set for {user}"}     
             except Exception as e:
                 self.logger.error(f"WSM Router: No hostname find for this uid {user}")
                 return {"status": "error", "message": f"No hostname find for this user {user}"}
@@ -368,6 +367,6 @@ class MessageProcessor:
         except Exception as e:
             self.logger.error(f"WSM Router - message_processor - Missing key in add_new_session data: {str(e)}")
         
- 
+
     def process_lock_or_unlock_user(self, message_data):
         return
