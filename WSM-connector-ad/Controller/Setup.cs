@@ -20,9 +20,6 @@ using System.Net;
 using System.Xml;
 
 using Newtonsoft.Json;
-using WsmConnectorAdService.Utils;
-using System;
-using System.Runtime.ConstrainedExecution;
 
 namespace WsmConnectorAdService.Controller
 {
@@ -127,47 +124,54 @@ namespace WsmConnectorAdService.Controller
 
         public static void Init()
         {
-
             LogToEventViewer("Starting setup configuration before service starts.", EventLogEntryType.Information);
-            
-            if (GetCertFromStore(StoreName.My, session_server_cn) == null)
-            {
-                GetCertificate(session_server_host, "REQUEST_SERVER_CERTIFICATE", MyMachineName);
-                LogToEventViewer("Server certificate requested.", EventLogEntryType.Information);
+
+            try {
+                X509Certificate2? certificate = GetCertFromStore(StoreName.My, session_server_cn);
+                if(certificate == null)
+                {
+                    LogToEventViewer("Server certificate requested.", EventLogEntryType.Information);
+                    GetCertificate(session_server_host, "REQUEST_SERVER_CERTIFICATE", MyMachineName);
+                }
             } 
-            else
+            catch (Exception ex)
             {
-                LogToEventViewer("Server certificate already in Certificate Store.", EventLogEntryType.Information);
+                LogToEventViewer($"Server certificate not found or invalid: {ex.Message}", EventLogEntryType.Warning);
             }
-            if (GetCertFromStore(StoreName.My, session_server_CA_cn) == null)
+            try
             {
-                GetCertificate(session_server_host, "REQUEST_CA_CERTIFICATE", MyMachineName);
-                LogToEventViewer("CA certificate requested.", EventLogEntryType.Information);
+                X509Certificate2? certificate = GetCertFromStore(StoreName.My, session_server_CA_cn);
+                if (certificate == null)
+                {
+                    LogToEventViewer("CA certificate requested.", EventLogEntryType.Information);
+                    GetCertificate(session_server_host, "REQUEST_CA_CERTIFICATE", MyMachineName);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                LogToEventViewer("CA certificate already in Certificate Store.", EventLogEntryType.Information);
+                LogToEventViewer($"CA certificate not found or invalid: {ex.Message}", EventLogEntryType.Warning);
             }
-            if (GetCertFromStore(StoreName.My, MyMachineName) == null)
+            try
             {
                 var (publicKey, privateKey) = GenerateRsaKeyPair();
                 CreateMyCertificate(publicKey, privateKey);
                 LogToEventViewer($"Creating {MyMachineName} CSR and requesting local machine certificate.", EventLogEntryType.Information);
+            
             }
-            else
+            catch (Exception ex)
             {
-                LogToEventViewer($"{MyMachineName} certificate already in Certificate Store.", EventLogEntryType.Information);
+                LogToEventViewer($"Machine certificate not found or invalid: {ex.Message}", EventLogEntryType.Warning);
             }
         }
 
         public static string GetFromRegistry(string valueName)
         {
             string keyPath = @"Software\eBZ Tecnologia\WsmConnectorAdService";
-            using (RegistryKey key = Registry.LocalMachine.OpenSubKey(keyPath))
+            using (RegistryKey? key = Registry.LocalMachine.OpenSubKey(keyPath))
             {
                 if (key != null)
                 {
-                    object value = key.GetValue(valueName);
+                    object? value = key.GetValue(valueName);
                     return value as string ?? "Value not found";
                 }
                 else
@@ -178,19 +182,34 @@ namespace WsmConnectorAdService.Controller
         }
         public static (RsaKeyParameters? Public, RsaPrivateCrtKeyParameters? Private) GetMyKeys()
         {
-            X509Certificate2 certificate = GetCertFromStore(StoreName.My, MyMachineName);
-            var (pubkey, prvkey) = (certificate.GetRSAPublicKey(), certificate.GetRSAPrivateKey());
+            X509Certificate2? certificate = GetCertFromStore(StoreName.My, MyMachineName);
+
+            using var pubkey = certificate?.GetRSAPublicKey();
+            using var prvkey = certificate?.GetRSAPrivateKey();
 
             if (pubkey != null && prvkey != null)
             {
-                RsaKeyParameters publicKey = ReadKeyFromPem<RsaKeyParameters>(pubkey.ExportRSAPublicKeyPem());
-                AsymmetricCipherKeyPair privateKey = ReadKeyFromPem<AsymmetricCipherKeyPair>(prvkey.ExportRSAPrivateKeyPem());
-                return (publicKey, (RsaPrivateCrtKeyParameters)privateKey.Private);
+                try
+                {
+                    RsaKeyParameters? publicKey = ReadKeyFromPem<RsaKeyParameters>(pubkey.ExportRSAPublicKeyPem());
+                    AsymmetricCipherKeyPair? privateKey = ReadKeyFromPem<AsymmetricCipherKeyPair>(prvkey.ExportRSAPrivateKeyPem());
+                    
+                    if (privateKey == null || privateKey.Private is not RsaPrivateCrtKeyParameters privateCrtKey)
+                    {
+                        throw new InvalidOperationException("Failed to parse private key from PEM.");
+                    }
+                    return (publicKey, (RsaPrivateCrtKeyParameters)privateKey.Private);
+                }
+                catch (Exception ex)
+                {
+                    Setup.LogToEventViewer($"Key parsing error: {ex.Message}", EventLogEntryType.Error);
+                    throw new InvalidOperationException("Failed to parse RSA key(s) from certificate.", ex);
+                }
             }
-            return (null, null);
+            throw new InvalidOperationException("Certificate does not contain both public and private RSA keys.");
         }
 
-        private static T ReadKeyFromPem<T>(string pemKey) where T : class
+        private static T? ReadKeyFromPem<T>(string pemKey) where T : class
         {
             using (var reader = new StringReader(pemKey))
             {
@@ -206,43 +225,45 @@ namespace WsmConnectorAdService.Controller
             TimeSpan timeUntilExpiry = certificate.NotAfter - now;
             return timeUntilExpiry.TotalDays <= days;
         }
-        private static string GetCommonName(string subject)
+
+        private static string GetCnFromDistinguishedName(string distinguishedName)
         {
-            if (string.IsNullOrEmpty(subject))
+            // Extracts the CN= portion from a DN string
+            var parts = distinguishedName.Split(',');
+            foreach (var part in parts)
             {
-                return null;
-            }
-
-            const string cnPrefix = "CN=";
-            string[] parts = subject.Split(',');
-
-            foreach (string part in parts)
-            {
-                string trimmedPart = part.Trim();
-                if (trimmedPart.StartsWith(cnPrefix, StringComparison.OrdinalIgnoreCase))
+                var trimmed = part.Trim();
+                if (trimmed.StartsWith("CN=", StringComparison.OrdinalIgnoreCase))
                 {
-                    return trimmedPart.Substring(cnPrefix.Length).Trim();
+                    return trimmed.Substring(3);
                 }
             }
-
-            return null;
+            return string.Empty;
         }
 
-        public static X509Certificate2 GetCertFromStore(StoreName storeName, string commonName)
+        public static X509Certificate2? GetCertFromStore(StoreName storeName, string commonName)
         {
-            X509Store store = new(storeName, StoreLocation.LocalMachine);
+            if (string.IsNullOrWhiteSpace(commonName))
+                throw new ArgumentException("Common name cannot be null or empty.", nameof(commonName));
+
+            if (string.IsNullOrWhiteSpace(session_server_CA_cn))
+                throw new InvalidOperationException("Expected issuer CN (session_server_CA_cn) is not set.");
+
+            using X509Store store = new(storeName, StoreLocation.LocalMachine);
             store.Open(OpenFlags.ReadOnly);
 
             foreach (X509Certificate2 cert in store.Certificates)
             {
-                string cn = GetCommonName(cert.Subject);
-                if (!string.IsNullOrEmpty(commonName) && cn.Equals(commonName, StringComparison.OrdinalIgnoreCase))
+                string cn = GetCnFromDistinguishedName(cert.Subject);
+                string issuer = GetCnFromDistinguishedName(cert.Issuer);
+
+                if (cn.Equals(commonName, StringComparison.OrdinalIgnoreCase) &&
+                    issuer.Equals(session_server_CA_cn, StringComparison.OrdinalIgnoreCase))
                 {
-                    store.Close();
                     return cert;
                 }
             }
-            store.Close();
+            //LogToEventViewer($"Certificate with CN '{commonName}' issued by '{session_server_CA_cn}' was not found in store '{storeName}'.", EventLogEntryType.Information);
             return null;
         }
 
@@ -270,7 +291,7 @@ namespace WsmConnectorAdService.Controller
             using (var store = new X509Store(storeName, storeLocation))
             {
                 store.Open(OpenFlags.ReadWrite);
-                X509Certificate2 existingCert = GetCertFromStore(storeName, commonName);
+                X509Certificate2? existingCert = GetCertFromStore(storeName, commonName);
 
                 if (existingCert != null)
                 {
@@ -307,6 +328,7 @@ namespace WsmConnectorAdService.Controller
             return ((RsaKeyParameters)keyPair.Public, (RsaPrivateCrtKeyParameters)keyPair.Private);
         }
 
+
         public static void CreateMyCertificate(RsaKeyParameters publicKey, RsaPrivateCrtKeyParameters privateKey)
         {
             // Generate CSR request
@@ -317,7 +339,8 @@ namespace WsmConnectorAdService.Controller
             // Store signed certificate in Store
 
             var csr = GenerateCSR(publicKey, privateKey);
-            X509Certificate2 signedCert = SendCSR(session_server_host, "REQUEST_SIGNED_CERTIFICATE",MyMachineName,csr); //SendCSRSigningRequest(csr);
+
+            X509Certificate2 signedCert = SendCSR(session_server_host, "REQUEST_SIGNED_CERTIFICATE", MyMachineName, csr); 
             
             var privateKeyInfo = PrivateKeyInfoFactory.CreatePrivateKeyInfo(privateKey);
             var RSAPrivateKey = DotNetUtilities.ToRSA((RsaPrivateCrtKeyParameters)PrivateKeyFactory.CreateKey(privateKeyInfo));
@@ -329,19 +352,16 @@ namespace WsmConnectorAdService.Controller
                 SetPrivateKeyPermissions(keyContainerName);
             }
             StoreCertificate(certificateWithPrivateKey, StoreName.My, StoreLocation.LocalMachine);
+
         }
 
         public static string GenerateCSR(RsaKeyParameters publicKey, RsaPrivateCrtKeyParameters privateKey)
-        {
+        {          
             // Create the subject public key info
             // Define the CSR attributes
             // Create the CSR
             // Convert BouncyCastle CSR to PEM format
             var subject = new X509Name(
-                $"C={"Country"}, " +
-                $"ST={"State"}, " +
-                $"L={"Location"}, " +
-                $"O={"Organization"}, " +
                 $"OU={"Workday Session Management Connector AD Certificate"}, " +
                 $"CN={MyMachineName}");
 
@@ -415,14 +435,19 @@ namespace WsmConnectorAdService.Controller
         }
         
 
-        private static string GetKeyContainerName(X509Certificate2 certificate)
+        private static string? GetKeyContainerName(X509Certificate2 certificate)
         {
-            using (var rsa = certificate.GetRSAPrivateKey() as RSACryptoServiceProvider)
+            try
             {
-                if (rsa != null)
+                using (var rsa = certificate.GetRSAPrivateKey() as RSACryptoServiceProvider)
                 {
-                    return rsa.CspKeyContainerInfo.UniqueKeyContainerName;
+                    if (rsa != null)
+                        return rsa.CspKeyContainerInfo.UniqueKeyContainerName;
                 }
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("Failed to get the key container name.", ex);
             }
             return null;
         }
@@ -442,21 +467,29 @@ namespace WsmConnectorAdService.Controller
             fileInfo.SetAccessControl(fileSecurity);
         }
 
+        // Get the subject of the certificate
+        // Split the subject by commas to extract different parts
+        // Find and display the Common Name (CN)
         public static string GetCertCommonName(X509Certificate2 certificate)
         {
-            // Get the subject of the certificate
-            // Split the subject by commas to extract different parts
-            // Find and display the Common Name (CN)
-            string subject = certificate.Subject;
-            string[] subjectParts = subject.Split(',');
-            foreach (string part in subjectParts)
+            try
             {
-                if (part.Trim().StartsWith("CN="))
+                string subject = certificate.Subject;
+                string[] subjectParts = subject.Split(',');
+                
+                foreach (string part in subjectParts)
                 {
-                    return part.Trim().Substring(3);
+                    if (part.Trim().StartsWith("CN="))
+                    {
+                        return part.Trim().Substring(3);
+                    }
                 }
+                throw new InvalidOperationException("Common Name (CN) not found in certificate subject.");
             }
-            return null;
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("Failed to extract Common Name (CN) from certificate.", ex);
+            }
         }
 
         public class Response
@@ -470,28 +503,6 @@ namespace WsmConnectorAdService.Controller
         public class SuccessResponse : Response
         {
             public required string Data { get; set; }
-        }
-        private class StringParser
-        {
-            public static List<string> ParseStringToList(string input)
-            {
-                if (string.IsNullOrEmpty(input))
-                {
-                    return new List<string>();
-                }
-                var result = new List<string>(input.Split(';', StringSplitOptions.RemoveEmptyEntries));
-                return result;
-            }
-        }
-
-        public class ResultsWrapper<T>
-        {
-            public List<T>? results { get; set; }
-
-            public string SerializeListToJson()
-            {
-                return JsonConvert.SerializeObject(this, Newtonsoft.Json.Formatting.Indented);
-            }
         }
         
         public static bool IsJsonFormatable(string input)
@@ -523,8 +534,7 @@ namespace WsmConnectorAdService.Controller
         {
             string hostname = Dns.GetHostName();
             IPHostEntry hostEntry = Dns.GetHostEntry(hostname);
-            // return "wsm:" + hostEntry.HostName.ToLower();
-            return hostEntry.HostName;
+            return hostEntry.HostName.ToLower();
         }
     }
 }
