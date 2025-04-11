@@ -189,3 +189,14 @@ class DatabaseManager:
             if name_:
                 query = query.filter(Target.target == name_)
             return query.all()
+        
+    def get_all_hosts_sessions(self):
+        with self.session_scope() as session:
+            return session.query(Sessions).filter(Sessions.status == "active").order_by(Sessions.hostname).all()
+            
+
+
+    def get_host_sessions(self, _host):
+        with self.session_scope() as session:
+            return session.query(Sessions).filter(Sessions.status == "active", Sessions.hostname == _host).order_by(Sessions.hostname).all()
+            
