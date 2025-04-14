@@ -6,6 +6,7 @@ from src.routes.http.v1.overtime import overtime_router
 from src.routes.http.v1.agent import agent_router
 from src.routes.http.v1.targets import targets_router
 from src.routes.http.v1.ntp import ntp
+from src.routes.http.v1.host_sessions import host_sessions
 
 
 router = APIRouter()
@@ -46,3 +47,8 @@ router.include_router(
     tags=["WSM NTP server"]
 )
 
+router.include_router(
+    host_sessions.router,
+    prefix= "/user_sessions",
+    tags=["User sessions"]   
+)

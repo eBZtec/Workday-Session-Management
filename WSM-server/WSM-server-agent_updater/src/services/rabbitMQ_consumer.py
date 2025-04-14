@@ -1,5 +1,6 @@
 import pika
 from src.logs.logger import Logger
+from src.config import config
 
 
 class RabbitMQConsumer:
@@ -17,7 +18,8 @@ class RabbitMQConsumer:
         """
         Inicia o consumidor RabbitMQ.
         """
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.host))
+        credentials = pika.PlainCredentials(config.RABBITMQ_USER, config.RABBITMQ_PWD)
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.host, credentials=credentials))
         channel = connection.channel()
         channel.queue_declare(queue=self.queue,durable=True)
 

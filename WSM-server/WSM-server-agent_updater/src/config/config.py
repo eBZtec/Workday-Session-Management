@@ -13,6 +13,10 @@ Z_MQ_PORT= os.getenv("Z_MQ_PORT")
 
 ZEROMQ_URL = os.getenv("DEV_ZEROMQ_URL")
 
+RABBITMQ_USER = os.getenv("RABBITMQ_USER")
+
+RABBITMQ_PWD = os.getenv("RABBITMQ_PWD")
+
 if not DATABASE_URL:
     raise ValueError("A variável de ambiente DATABASE_URL não está definida.")
 

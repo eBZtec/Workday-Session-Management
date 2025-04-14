@@ -198,7 +198,7 @@ def process_message(message):
         user = message.get("uid")
         timezone = str(datetime.datetime.now().astimezone().tzinfo)
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
-        processed_message = {"uid": user, "action":action, "allowed_work_hours": allowed_work_hours, "timezone": timezone, "timestamp": timestamp}
+        processed_message = {"user": user, "action":action, "allowed_work_hours": allowed_work_hours, "timezone": timezone, "timestamp": timestamp}
     except Exception as e:
         logger.error("Error to process message to AD")
     return processed_message

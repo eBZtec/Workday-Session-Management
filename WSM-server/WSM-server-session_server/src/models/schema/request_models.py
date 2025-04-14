@@ -121,4 +121,11 @@ class TargetResponse(BaseModel):
     enabled: int
 
 
+### Hostname x Sessions
+
+class HostnameSessions(BaseModel):
+    hostname: str
+    user: str
+    status: str
+    start_time: datetime
 
