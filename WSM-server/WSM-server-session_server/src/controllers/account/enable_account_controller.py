@@ -1,5 +1,5 @@
 from src.config.wsm_logger import logger
-from src.services.account.enable_or_disable_account_by_uid_service import EnableOrDisableAccountByUidService
+from src.services.account.status.account_status_manager import AccountStatusManager
 from src.services.pooling.accounts_pooling_service import AccountsPoolingService
 
 
@@ -8,7 +8,7 @@ class EnableAccountController:
     @staticmethod
     async def execute(uid: str):
         try:
-            await EnableOrDisableAccountByUidService.execute(uid, True)
+            await AccountStatusManager.enable(uid)
             logger.info(f"Account \"{uid}\" enabled successfully")
         except Exception as e:
             logger.error(f"Failed to enable account \"{uid}\", reason: {e}")

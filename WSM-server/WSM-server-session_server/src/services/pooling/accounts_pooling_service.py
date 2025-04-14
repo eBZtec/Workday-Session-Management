@@ -1,8 +1,9 @@
 from src.config import config
 from src.config.wsm_logger import logger
+from src.enums.types import JourneyType
 from src.models.models import StandardWorkHours
-from src.services.account.search_account_by_uid_service import SearchAccountByUIDService
-from src.services.account.update_allowed_logon_hours_account_service import UpdateAllowedLogonHoursAccountService
+from src.services.account.presenter.search_account_by_uid_service import SearchAccountByUIDService
+from src.services.account.database.update_allowed_logon_hours_account_service import UpdateAllowedLogonHoursAccountService
 from src.services.rabbitmq.rabbitmq_send_message_service import RabbitMQSendMessageService
 
 
@@ -12,6 +13,11 @@ class AccountsPoolingService:
     async def execute(uid: str):
         await UpdateAllowedLogonHoursAccountService.execute(uid)
         account = await SearchAccountByUIDService.execute(uid)
+
+        if account.journey == JourneyType.FLEX_TIME:
+            logger.debug(
+                f"Pooling account update is not triggered by account {uid} with journey type {account.journey}")
+            return
 
         if account:
             logger.info(f"Found account {account.__dict__} for uid \"{account.uid}\"")
