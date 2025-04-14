@@ -3,6 +3,7 @@ import argparse
 import pika.exceptions
 
 from src.config.wsm_logger import wsm_logger
+from src.modules.agent.agent_updater_server import AgentUpdaterServer
 
 
 def main():
@@ -28,6 +29,9 @@ def main():
         wsm_logger.info("Starting connection with WSM ZeroMQ Connection...")
         from src.infra.wsm_zeromq_manager import wsm_zeromq_manager
         wsm_logger.info("WSM ZeroMQ connected successfully.")
+
+        wsm_logger.info("Starting WSM Agent Updater Server for manage flex time...")
+        AgentUpdaterServer.start()
     elif args.updater == "connectors":
         wsm_logger.info("Starting connection with WSM Queue Manager...")
         from src.infra.wsm_queue_manager import wsm_queue_manager

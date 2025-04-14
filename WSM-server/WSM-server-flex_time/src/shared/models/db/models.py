@@ -45,12 +45,6 @@ class StandardWorkHours(TimestampedBase):
     create_timestamp = Column(DateTime(timezone=True), default=func.now(), nullable=False)
     update_timestamp = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False)
 
-    # Relacionamento com Messages
-    messages_entries = relationship("Messages", back_populates="standard_workhours", cascade='all, delete')
-
-    # Relacionamento com TargetStatus
-    target_status_entries = relationship("TargetStatus", back_populates="standard_workhours", cascade='all, delete')
-
      # Relacionamento com ExtendedWorkhours
     extended_workhours_entries = relationship("ExtendedWorkHours", back_populates="standard_workhours", cascade='all, delete')
 
@@ -69,6 +63,9 @@ class FlexTime(TimestampedBase):
 
     # Relacionamento com StandardWorkHours
     standard_workhours = relationship("StandardWorkHours",cascade='all, delete')
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 class ExtendedWorkHours(TimestampedBase):
