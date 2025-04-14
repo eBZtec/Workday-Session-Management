@@ -1,17 +1,18 @@
 ﻿using System.DirectoryServices;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Globalization;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using WsmConnectorAdService.Controller;
-using System.DirectoryServices.Protocols;
 using Newtonsoft.Json;
+using System.DirectoryServices.AccountManagement;
+
+using JsonException = Newtonsoft.Json.JsonException;
 
 namespace WsmConnectorAdService.ActiveDirectory
 {
-    // Struct to represent a time range
-    public struct TimeRange
+    // Class to represent a time range
+    public class TimeRange
     {
         [JsonPropertyName("start")]
         public int Start { get; set; }
@@ -32,157 +33,104 @@ namespace WsmConnectorAdService.ActiveDirectory
     public class AdManager
     {
         string domainName = Setup.GetFromRegistry("ACTIVE_DIRECTORY_HOST");
-        string jsonSchedule = "";
 
-        public void updateADLogonHours(string jsonSchedule)
+        public string UpdateAdUser(string jsonRequest)
         {
-            
-            JObject jsonObject = JObject.Parse(jsonSchedule);
-            string username = (string)jsonObject["uid"];
-            string allowedWorkHours = (string)jsonObject["allowed_work_hours"];
-            
-            // Deserialize JSON to Dictionary
-            var workHoursDictionary = JsonConvert.DeserializeObject<Dictionary<string, TimeRange[]>>(allowedWorkHours);
-           
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
+            JObject jsonObject = JObject.Parse(jsonRequest);
 
-            DirectoryEntry? user;
+            string? username = (string?)jsonObject["uid"];
+            string? enableAccount = (string?)jsonObject["enable"];
+            string? unlockAccount = (string?)jsonObject["unlock"];
+            string? allowedWorkHours = (string?)jsonObject["allowed_work_hours"];
+
+            if (string.IsNullOrWhiteSpace(username))
+                throw new ArgumentException("Username (uid) is required in the JSON input.");
+
+            var actionsTaken = new List<string>();
+
             try
             {
-                var domainConnection = ConnectToActiveDirectory(domainName);
-                if (domainConnection != null)
+                using (var context = new PrincipalContext(ContextType.Domain, domainName))
+                using (var user = UserPrincipal.FindByIdentity(context, IdentityType.SamAccountName, username))
                 {
-                    user = FindUserByUsername(domainConnection, username);
-                    if (user != null)
-                    {
-                        // Display old logon hours if any
-                        if (user.Properties.Contains("logonHours"))
-                        {
-                            byte[]? oldLogonHours = user.Properties["logonHours"].Value as byte[];
-                            Setup.LogToEventViewer("Old Logon Hours: " + BitConverter.ToString(oldLogonHours ?? Array.Empty<byte>()), EventLogEntryType.Information);
-                        }
-                        else
-                        {
-                            Setup.LogToEventViewer("No previous logon hours set.", EventLogEntryType.Information);
-                        }
-
-                        // Generate new logon hours based on the schedule
-                        //var schedule = JsonConvert.DeserializeObject<Schedule>(jsonSchedule);
-                        if (allowedWorkHours != null)
-                        {
-                            byte[] newLogonHours = GenerateLogonHours(workHoursDictionary);
-                            Setup.LogToEventViewer("New Logon Hours: " + BitConverter.ToString(newLogonHours), EventLogEntryType.Information);
-
-                            // Update user's logon hours
-                            user.Properties["logonHours"].Value = newLogonHours;
-                            user.CommitChanges();
-
-                            Setup.LogToEventViewer("Logon hours have been updated.", EventLogEntryType.Information);
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException("Failed to deserialize the schedule.");
-                        }
-                    }
-                    else
-                    {
+                    if (user == null)
                         throw new InvalidOperationException($"User '{username}' not found in Active Directory.");
-                    }
-                }
-                else
-                {
-                    throw new InvalidOperationException("Failed to connect to Active Directory.");
-                }
-            }
-            catch (InvalidOperationException ex)
-            {
-                // Log the error and propagate the exception
-                Setup.LogToEventViewer($"Error in updateADLogonHours: {ex.Message}", EventLogEntryType.Error);
-                throw;
-            }
-            catch (Exception ex)
-            {
-                // Catch any other unexpected errors
-                Setup.LogToEventViewer($"Unexpected error in updateADLogonHours: {ex.Message}", EventLogEntryType.Error);
-                throw new InvalidOperationException("An unexpected error occurred while updating logon hours.", ex);
-            }
-        }
 
-        // Função para estabelecer conexão e validar autenticação no Active Directory
-        static DirectoryEntry? ConnectToActiveDirectory(string domainName)
-        {
-            try
-            {
-                DirectoryEntry domain = new DirectoryEntry($"LDAP://{domainName}");
-                object nativeObject = domain.NativeObject;
-                return domain;
-            }
-            catch (LdapException ldapEx)
-            {
-                Setup.LogToEventViewer($"LDAP error: {ldapEx.Message}", EventLogEntryType.Error);
-                throw new InvalidOperationException("Failed to authenticate with the Active Directory. Check credentials and domain settings.", ldapEx);
-            }
-            catch (Exception ex)
-            {
-                Setup.LogToEventViewer($"An unexpected error occurred during AD connection: {ex.Message}", EventLogEntryType.Error);
-                throw new InvalidOperationException("An unexpected error occurred while connecting to the Active Directory.", ex);
-            }
-        }
+                    var directoryEntry = (DirectoryEntry)user.GetUnderlyingObject();
 
-        // Função para buscar o usuário no Active Directory
-        static DirectoryEntry? FindUserByUsername(DirectoryEntry domainConnection, string userName)
-        {
-            try
-            {
-                // Realiza a busca do usuário com o sAMAccountName fornecido
-                using (DirectorySearcher searcher = new DirectorySearcher(domainConnection))
-                {
-                    searcher.Filter = $"(sAMAccountName={userName})";
-                    var result = searcher.FindOne();
-
-                    if (result != null)
+                    if (!string.IsNullOrWhiteSpace(enableAccount))
                     {
-                        return result.GetDirectoryEntry();
+                        bool shouldEnable = enableAccount.Equals("true", StringComparison.OrdinalIgnoreCase);
+                        user.Enabled = shouldEnable;
+                        user.Save();
+                        var enableMsg = $"User '{username}' has been {(shouldEnable ? "enabled" : "disabled")}";
+                        Setup.LogToEventViewer(enableMsg, EventLogEntryType.Information);
+                        actionsTaken.Add(enableMsg);
                     }
-                    else
+
+                    if (!string.IsNullOrWhiteSpace(unlockAccount) && unlockAccount.Equals("true", StringComparison.OrdinalIgnoreCase))
                     {
-                        // Registro no log caso o usuário não seja encontrado
-                        Setup.LogToEventViewer($"User '{userName}' not found in domain '{domainConnection.Path}'.", EventLogEntryType.Warning);
-                        return null;
+                        if (user.IsAccountLockedOut())
+                        {
+                            user.UnlockAccount();
+                            user.Save();
+                            var unlockMsg = $"User '{username}' has been unlocked.";
+                            Setup.LogToEventViewer(unlockMsg, EventLogEntryType.Information);
+                            actionsTaken.Add(unlockMsg);
+                        }
+                        else
+                        {
+                            var notLockedMsg = $"User '{username}' is not locked.";
+                            Setup.LogToEventViewer(notLockedMsg, EventLogEntryType.Information);
+                            actionsTaken.Add(notLockedMsg);
+                        }
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(allowedWorkHours))
+                    {
+                        Dictionary<string, TimeRange[]> workHoursDictionary = JsonConvert.DeserializeObject<Dictionary<string, TimeRange[]>>(allowedWorkHours)
+                            ?? throw new InvalidOperationException("Deserialization of allowed_work_hours resulted in null.");
+
+                        byte[] newLogonHours = GenerateLogonHours(workHoursDictionary);
+
+                        directoryEntry.Properties["logonHours"].Value = newLogonHours;
+                        directoryEntry.CommitChanges();
+                        var logonMsg = "Logon hours have been updated.";
+                        Setup.LogToEventViewer(logonMsg, EventLogEntryType.Information);
+                        actionsTaken.Add(logonMsg);
                     }
                 }
+                return string.Join(" | ", actionsTaken);
+            }
+            catch (JsonException ex)
+            {
+                Setup.LogToEventViewer($"JSON error in UpdateAdUser: {ex.Message}", EventLogEntryType.Error);
+                throw new InvalidOperationException("Failed to parse input JSON.", ex);
             }
             catch (Exception ex)
             {
-                // Log de erros durante a pesquisa
-                Setup.LogToEventViewer($"An error occurred while searching for the user: {ex.Message}", EventLogEntryType.Error);
-                throw new InvalidOperationException("An unexpected error occurred while searching for the user in Active Directory.", ex);
+                Setup.LogToEventViewer($"Unexpected error in UpdateAdUser: {ex.Message}", EventLogEntryType.Error);
+                throw new InvalidOperationException("An unexpected error occurred while updating the AD user.", ex);
             }
         }
 
         // Generate logon hours from schedule
-        static byte[] GenerateLogonHours(Dictionary<string, TimeRange[]>? workHoursDictionary)
+        // Initialize all bytes to zero
+        static byte[] GenerateLogonHours(Dictionary<string, TimeRange[]> workHoursDictionary)
         {
             byte[] logonHours = new byte[21]; // 21 bytes represent 7 days * 3 bytes per day
-
-            // Initialize all bytes to zero
             for (int i = 0; i < logonHours.Length; i++)
-            {
                 logonHours[i] = 0;
-            }
-
-            //TimeZoneInfo userTimeZone = GetTimeZoneInfo(schedule.TimeZone);
 
             var allLogMessages = new List<string>(); // Lista para armazenar os logs de todos os dias
 
-            foreach (var day in workHoursDictionary)//schedule.AllowedSchedule)
+            foreach (var day in workHoursDictionary)
             {
-                int dayIndex = Array.IndexOf(new[] { "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY" }, day.Key);
-                var logMessages = new List<string>();
-                logMessages.Add($"Processing day: {day.Key}");
+                int dayIndex = Array.IndexOf(["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"], day.Key);
+                var logMessages = new List<string>
+                {
+                    $"Processing day: {day.Key}"
+                };
 
                 if (dayIndex == -1)
                 {
@@ -196,14 +144,10 @@ namespace WsmConnectorAdService.ActiveDirectory
                     logMessages.Add("  Allowed times:");
                     foreach (var timeRange in day.Value)
                     {
+                        // Caso especial: liberar todos os horários do dia
                         if (timeRange.Start == 0 && timeRange.End == 1)
                         {
-                            // Caso especial: liberar todos os horários do dia
-                            for (int hour = 0; hour < 24; hour++)
-                            {
-                                SetBits(logonHours, dayIndex, hour, hour + 1);
-                            }
-                            break;
+                            timeRange.End = 1439;
                         }
                         if (!IsEmptyTimeRange(timeRange))
                         {
@@ -220,7 +164,6 @@ namespace WsmConnectorAdService.ActiveDirectory
 
                             logMessages.Add($"    Local Start: {localStart} - {localStart.Kind}");
                             logMessages.Add($"    Local End: {localEnd} - {localEnd.Kind}");
-                            //logMessages.Add($"    User TimeZone: {userTimeZone.StandardName}");
 
                             var utcStart = TimeZoneInfo.ConvertTimeToUtc(localStart);
                             var utcEnd = TimeZoneInfo.ConvertTimeToUtc(localEnd);
@@ -269,60 +212,10 @@ namespace WsmConnectorAdService.ActiveDirectory
                 {
                     logMessages.Add("  No allowed times for this day.");
                 }
-
-                // Adiciona os logs do dia atual na lista geral
                 allLogMessages.AddRange(logMessages);
             }
-
-            // Registra todas as mensagens acumuladas em uma única entrada no Event Viewer
-            Setup.LogToEventViewer(string.Join("\n", allLogMessages), EventLogEntryType.Information);
-
-
+            //Setup.LogToEventViewer(string.Join("\n", allLogMessages), EventLogEntryType.Information);
             return logonHours;
-        }
-
-        // Method to get TimeZoneInfo based on provided timezone string
-        static TimeZoneInfo GetTimeZoneInfo(string timeZoneString)
-        {
-            try
-            {
-                if (TimeZoneInfo.GetSystemTimeZones().Any(tz => string.Equals(tz.StandardName, timeZoneString, StringComparison.OrdinalIgnoreCase)))
-                {
-                    return TimeZoneInfo.FindSystemTimeZoneById(timeZoneString);
-                }
-
-                if (timeZoneString.StartsWith("UTC", StringComparison.OrdinalIgnoreCase))
-                {
-                    var offsetString = timeZoneString.Substring(3).Trim();
-                    bool isNegative = offsetString.StartsWith("-");
-                    offsetString = offsetString.TrimStart('-');
-                    var timeParts = offsetString.Split(':');
-                    int hours;
-                    int minutes = 0;
-
-                    if (int.TryParse(timeParts[0], out hours))
-                    {
-                        if (timeParts.Length > 1 && int.TryParse(timeParts[1], out minutes))
-                        {
-                            var offset = new TimeSpan(0, hours * (isNegative ? -1 : 1), minutes, 0, 0);
-                            return TimeZoneInfo.GetSystemTimeZones().FirstOrDefault(tz => tz.BaseUtcOffset == offset) ?? TimeZoneInfo.Utc;
-                        }
-                        else
-                        {
-                            var offset = new TimeSpan(0, hours * (isNegative ? -1 : 1), 0, 0, 0);
-                            return TimeZoneInfo.GetSystemTimeZones().FirstOrDefault(tz => tz.BaseUtcOffset == offset) ?? TimeZoneInfo.Utc;
-                        }
-                    }
-                }
-
-                Setup.LogToEventViewer($"Warning: Timezone '{timeZoneString}' not found", EventLogEntryType.Information);
-                return TimeZoneInfo.Utc;
-            }
-            catch (Exception ex)
-            {
-                Setup.LogToEventViewer($"Error finding timezone: {ex.Message}", EventLogEntryType.Information);
-                return TimeZoneInfo.Utc;
-            }
         }
 
         // Helper method to set bits in the logon hours array
@@ -339,8 +232,10 @@ namespace WsmConnectorAdService.ActiveDirectory
         // Check if a TimeRange is empty
         static bool IsEmptyTimeRange(TimeRange timeRange)
         {
-            return string.IsNullOrEmpty(timeRange.Start.ToString()) && string.IsNullOrEmpty(timeRange.End.ToString());
+            return timeRange.Start == 0 && timeRange.End == 0;
         }
+
+        
     }
 }
 

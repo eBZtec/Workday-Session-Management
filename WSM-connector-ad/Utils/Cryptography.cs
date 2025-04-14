@@ -5,10 +5,13 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Security;
 using System.Text;
-using Org.BouncyCastle.OpenSsl;
+
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using System.Security.Cryptography.X509Certificates;
 using WsmConnectorAdService.Controller;
+using System.Diagnostics;
+using Newtonsoft.Json;
+using System.Text.Encodings.Web;
 
 namespace WsmConnectorAdService.Utils
 {
@@ -27,36 +30,78 @@ namespace WsmConnectorAdService.Utils
             public int End { get; set; }
         }
 
-        public static string processRequest(string message)
+        public static string ProcessRequest(string message)
         {
-            // Parse the received JSON
-            var receivedObject = JsonSerializer.Deserialize<ResponsePackage>(message);
-            if (message == null)
+            if (string.IsNullOrWhiteSpace(message))
             {
-                throw new Exception("Failed to parse JSON message.");
+                throw new ArgumentException("Incoming message cannot be null or empty.");
             }
 
-            // Decode Base64-encoded values
-            byte[] encryptedMessage = Convert.FromBase64String(receivedObject.EncryptedMessage);
-            byte[] encryptedAesKey = Convert.FromBase64String(receivedObject.EncryptedAESKey);
-            byte[] encryptedAesIv = Convert.FromBase64String(receivedObject.EncryptedAESIV);
+            ResponsePackage? receivedObject;
+            try
+            {
+                receivedObject = JsonSerializer.Deserialize<ResponsePackage>(message);
+                if (receivedObject == null)
+                {
+                    throw new InvalidOperationException("Failed to parse JSON message into ResponsePackage.");
+                }
+            }
+            catch (JsonException ex)
+            {
+                throw new InvalidOperationException("Invalid JSON format.", ex);
+            }
 
-            // Decrypt AES key and IV using RSA private key
-            byte[] aesKey = DecryptWithPrivateKey(encryptedAesKey);
-            byte[] aesIV = DecryptWithPrivateKey(encryptedAesIv);
+            try
+            {
+                // Validate and decode Base64-encoded values
+                byte[] encryptedMessage = DecodeBase64OrThrow(receivedObject.EncryptedMessage, nameof(receivedObject.EncryptedMessage));
+                byte[] encryptedAesKey = DecodeBase64OrThrow(receivedObject.EncryptedAESKey, nameof(receivedObject.EncryptedAESKey));
+                byte[] encryptedAesIv = DecodeBase64OrThrow(receivedObject.EncryptedAESIV, nameof(receivedObject.EncryptedAESIV));
 
-            // Decrypt the message using AES key and IV
-            byte[] decryptedMessageBytes = DecryptMessage(encryptedMessage, aesKey, aesIV);
-            string decryptedMessage = Encoding.UTF8.GetString(decryptedMessageBytes);
+                // Decrypt AES key and IV using RSA private key
+                byte[] aesKey = DecryptWithPrivateKey(encryptedAesKey);
+                byte[] aesIV = DecryptWithPrivateKey(encryptedAesIv);
 
-            Setup.LogToEventViewer("Decrypted message from client: " + decryptedMessage, System.Diagnostics.EventLogEntryType.Information);
-            return decryptedMessage;
+                // Decrypt the message using AES key and IV
+                byte[] decryptedMessageBytes = DecryptMessage(encryptedMessage, aesKey, aesIV);
+                string decryptedMessage = Encoding.UTF8.GetString(decryptedMessageBytes);
+
+                return decryptedMessage;
+            }
+            catch (Exception ex)
+            {
+                Setup.LogToEventViewer($"Decryption failed: {ex.Message}", EventLogEntryType.Error);
+                throw new InvalidOperationException("Failed to process or decrypt the message.", ex);
+            }
         }
+
+        private static byte[] DecodeBase64OrThrow(string? base64, string fieldName)
+        {
+            if (string.IsNullOrWhiteSpace(base64))
+            {
+                throw new InvalidOperationException($"Field '{fieldName}' is missing or empty.");
+            }
+
+            try
+            {
+                return Convert.FromBase64String(base64.Trim());
+            }
+            catch (FormatException ex)
+            {
+                throw new InvalidOperationException($"Field '{fieldName}' is not a valid Base64 string.", ex);
+            }
+        }
+
 
         public static string processResponse(Worker.ActiveDirectoryResponse response)
         {
+            var options = new System.Text.Json.JsonSerializerOptions
+            {
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            };
+
             // Serialize the object to JSON
-            string jsonString = JsonSerializer.Serialize(response);
+            string jsonString = JsonSerializer.Serialize(response, options);
 
             byte[] aesKey = GenerateAesKey();
             byte[] aesIV = GenerateAesIV();
@@ -73,42 +118,9 @@ namespace WsmConnectorAdService.Utils
             };
 
             string jsonMessage = JsonSerializer.Serialize(jsonObject);
-
-            Setup.LogToEventViewer("Sending JSON response to server: " + jsonString, System.Diagnostics.EventLogEntryType.Information);
-
             return jsonMessage;
         }
 
-        static AsymmetricKeyParameter LoadRsaKeyFromPem(string filePath)
-        {
-            using (var reader = File.OpenText(filePath))
-            {
-                PemReader pemReader = new PemReader(reader);
-                object keyObject = pemReader.ReadObject();
-
-                if (keyObject is AsymmetricCipherKeyPair keyPair)
-                {
-                    return keyPair.Private;
-
-                }
-                else if (keyObject is AsymmetricKeyParameter privateKey)
-                {
-                    return privateKey;
-                }
-                else if (keyObject is AsymmetricKeyParameter publicKey)
-                {
-                    return publicKey;
-                }
-                else if (keyObject is AsymmetricKeyParameter keyParameter)
-                {
-                    return keyParameter;
-                }
-                else
-                {
-                    throw new InvalidOperationException("Invalid RSA key format.");
-                }
-            }
-        }
         static byte[] GenerateAesKey()
         {
             const int keySize = 256;
@@ -132,15 +144,15 @@ namespace WsmConnectorAdService.Utils
 
         static byte[] EncryptWithPublicKey(byte[] plaintextBytes)
         {
-            X509Certificate2 certificate = Setup.GetCertFromStore(StoreName.My, Setup.session_server_cn);
-            var rsaKey = certificate.GetRSAPublicKey();
+            X509Certificate2? certificate = Setup.GetCertFromStore(StoreName.My, Setup.session_server_cn);
+            var rsaKey = certificate?.GetRSAPublicKey();
             AsymmetricKeyParameter rsaKeyParams = DotNetUtilities.GetRsaPublicKey(rsaKey);
 
             var rsaEngine = new OaepEncoding(
                 new RsaEngine(),
                 new Sha256Digest(),
-                new Sha256Digest(), // Optional: specify MGF1 digest
-                null                // Optional: use default OAEP parameters
+                new Sha256Digest(),
+                null                
             );
 
             rsaEngine.Init(true, rsaKeyParams);
@@ -149,21 +161,20 @@ namespace WsmConnectorAdService.Utils
 
         static byte[] DecryptWithPrivateKey(byte[] ciphertextBytes)
         {
-            X509Certificate2 certificate = Setup.GetCertFromStore(StoreName.My, Setup.MyMachineName);
-            var rsaKey = certificate.GetRSAPrivateKey();
+            X509Certificate2? certificate = Setup.GetCertFromStore(StoreName.My, Setup.MyMachineName);
+            var rsaKey = certificate?.GetRSAPrivateKey();
             var rsaKeyParams = DotNetUtilities.GetRsaKeyPair(rsaKey).Private as RsaPrivateCrtKeyParameters;
 
             var rsaEngine = new OaepEncoding(
                 new RsaEngine(),
                 new Sha256Digest(),
-                new Sha256Digest(), // Optional: specify MGF1 digest
-                null                // Optional: use default OAEP parameters
+                new Sha256Digest(),
+                null              
             );
 
             rsaEngine.Init(false, rsaKeyParams);
             return rsaEngine.ProcessBlock(ciphertextBytes, 0, ciphertextBytes.Length);
         }
-
 
         public static byte[] EncryptMessage(string message, byte[] key, byte[] iv)
         {
