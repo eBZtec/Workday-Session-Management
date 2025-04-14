@@ -189,7 +189,7 @@ class DatabaseManager:
             if name_:
                 query = query.filter(Target.target == name_)
             return query.all()
-<<<<<<< HEAD
+        
         
     def get_all_hosts_sessions(self):
         with self.session_scope() as session:
@@ -201,9 +201,9 @@ class DatabaseManager:
         with self.session_scope() as session:
             return session.query(Sessions).filter(Sessions.status == "active", Sessions.hostname == _host).order_by(Sessions.hostname).all()
             
-=======
+
 
     def get_last_flex_time_by_user_id(self, user_id: int) -> FlexTime | None:
         with self.session_scope() as session:
             return session.query(FlexTime).filter(FlexTime.std_wrk_id==user_id).order_by(desc(FlexTime.id)).first()
->>>>>>> eBZ-feature/flextime
+
