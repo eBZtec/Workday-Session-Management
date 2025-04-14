@@ -9,31 +9,27 @@ namespace WsmConnectorAdService.Utils
 
         public InstallationParameters()
         {
-            string registryValue;
+            string? registryValue;
             string folder = "WsmConnectorAdService";
             string registryPath = @"Software\eBZ Tecnologia\" + folder;
 
-            registryValue = (string)ReadFromRegistry(registryPath, SESSION_SERVER_HOST, nameof(SESSION_SERVER_HOST));
+            registryValue = ReadFromRegistry(registryPath, nameof(SESSION_SERVER_HOST));
             SESSION_SERVER_HOST = !string.IsNullOrEmpty(registryValue) ? registryValue : "";
 
-            registryValue = (string)ReadFromRegistry(registryPath, ACTIVE_DIRECTORY_HOST, nameof(ACTIVE_DIRECTORY_HOST));
+            registryValue = ReadFromRegistry(registryPath, nameof(ACTIVE_DIRECTORY_HOST));
             ACTIVE_DIRECTORY_HOST = !string.IsNullOrEmpty(registryValue) ? registryValue : "";
         }
 
-        public Object ReadFromRegistry(string subKeyPath, Object att, string att_name)
+        public string? ReadFromRegistry(string subKeyPath, string att_name)
         {
-            RegistryKey key = Registry.LocalMachine.OpenSubKey(subKeyPath); //@"Software\MyApplication"
+            RegistryKey? key = Registry.LocalMachine.OpenSubKey(subKeyPath);
             if (key != null)
             {
-                string value = key.GetValue(att_name) as string;
-                att = value;
-
+                string? value = key.GetValue(att_name) as string;
                 key.Close();
+                return value;
             }
-
-            return att;
+            return null;
         }
-
-        
     }
 }

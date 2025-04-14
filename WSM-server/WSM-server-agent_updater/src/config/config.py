@@ -8,12 +8,10 @@ load_dotenv()
 DATABASE_URL = os.getenv("DEV_DATABASE_URL")
 MQ_ADDRESS_HOST = os.getenv("DEV_MQ_ADDRESS_HOST")
 MQ_HOST_PORT = os.getenv("DEV_MQ_HOST_PORT")
-WORK_HOURS_QUEUE= os.getenv("DEV_WORK_HOURS_QUEUE")
+MQ_AGENT_UPDATER_QUEUE = os.getenv("MQ_AGENT_UPDATER_QUEUE")
 Z_MQ_PORT= os.getenv("Z_MQ_PORT")
 
 ZEROMQ_URL = os.getenv("DEV_ZEROMQ_URL")
-RABBITMQ_HOST = os.getenv("RABBITMQ_HOST")
-RABBITMQ_QUEUE= os.getenv("RABBITMQ_QUEUE")
 
 RABBITMQ_USER = os.getenv("RABBITMQ_USER")
 
@@ -21,3 +19,6 @@ RABBITMQ_PWD = os.getenv("RABBITMQ_PWD")
 
 if not DATABASE_URL:
     raise ValueError("A variável de ambiente DATABASE_URL não está definida.")
+
+if not MQ_ADDRESS_HOST:
+    raise ValueError("A variável de ambiente DEV_MQ_ADDRESS_HOST não está definida.")

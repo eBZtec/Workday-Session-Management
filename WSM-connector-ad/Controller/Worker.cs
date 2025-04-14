@@ -22,8 +22,8 @@ namespace WsmConnectorAdService.Controller
             _logger = logger;
             _setup = new Setup();
             _adManager = new AdManager();
-            localCertificate = loadLocalCertificate();
-            serverCertificate = loadServerCertificate();
+            localCertificate = LoadLocalCertificate();
+            serverCertificate = LoadServerCertificate();
         }
 
         public class ActiveDirectoryResponse
@@ -57,24 +57,22 @@ namespace WsmConnectorAdService.Controller
 
                                 try
                                 {
-                                    // Processa a requisição
-                                    string request = Cryptography.processRequest(frameString);
-
+                                    string request = Cryptography.ProcessRequest(frameString);
+                                    
                                     if (IsJsonFormatable(request))
                                     {
                                         try
                                         {
-                                            _adManager.updateADLogonHours(request);
-                                            LogToEventViewer($"Parsed: {request}",EventLogEntryType.Information);
-                                            response = Cryptography.processResponse(new ActiveDirectoryResponse { Status = "Success", Message = "Logon hours updated successfully." });
+                                            String result = _adManager.UpdateAdUser(request);
+                                            response = Cryptography.processResponse(new ActiveDirectoryResponse { Status = "Success", Message = result });
                                         }
                                         catch (InvalidOperationException ex)
                                         {
                                             response = Cryptography.processResponse(new ActiveDirectoryResponse { Status = "Error", Message = ex.Message });
                                         }
-                                        catch (Exception ex)
+                                        catch (Exception)
                                         {
-                                            response = Cryptography.processResponse(new ActiveDirectoryResponse { Status = "Error", Message = "An unexpected error occurred while updating AD logon hours." });
+                                            response = Cryptography.processResponse(new ActiveDirectoryResponse { Status = "Error", Message = "An unexpected error occurred while updating AD user." });
                                         }
                                     }
                                     else
@@ -89,7 +87,6 @@ namespace WsmConnectorAdService.Controller
                                     LogToEventViewer($"Decryption failed: {ex.Message}", EventLogEntryType.Warning);
                                 }
 
-                                // Tenta enviar a resposta de volta
                                 if (!responseSocket.TrySendFrame(TimeSpan.FromSeconds(2), response))
                                 {
                                     LogToEventViewer("Failed to send response: sender may have disconnected.", EventLogEntryType.Warning);
@@ -98,15 +95,11 @@ namespace WsmConnectorAdService.Controller
                         }
                         catch (Exception ex)
                         {
-                            // Captura erros inesperados no loop principal
                             LogToEventViewer($"Unexpected error in message processing: {ex.Message}", EventLogEntryType.Error);
                         }
-
-                        // Delay antes de continuar o próximo ciclo
                         await Task.Delay(200, stoppingToken);
 
-                        // Verifica se o certificado está prestes a expirar
-                        if (IsCertificateAboutToExpire(localCertificate))
+                        if(localCertificate != null && IsCertificateAboutToExpire(localCertificate))
                         {
                             try
                             {
@@ -114,7 +107,7 @@ namespace WsmConnectorAdService.Controller
                                 if (keys.Public != null && keys.Private != null)
                                 {
                                     CreateMyCertificate(keys.Public, keys.Private);
-                                    loadLocalCertificate();
+                                    LoadLocalCertificate();
                                 }
                             }
                             catch (Exception ex)
@@ -127,12 +120,11 @@ namespace WsmConnectorAdService.Controller
             }
             catch (Exception ex)
             {
-                // Captura erros críticos fora do loop principal
                 LogToEventViewer($"Critical error in worker: {ex.Message}", EventLogEntryType.Error);
             }
         }
 
-        public X509Certificate2 loadServerCertificate()
+        public X509Certificate2? LoadServerCertificate()
         {
             try
             {
@@ -140,12 +132,12 @@ namespace WsmConnectorAdService.Controller
             }
             catch (Exception ex)
             {
-                LogToEventViewer($"Certificate store exception - Load wsm certificate: {ex.Message}", EventLogEntryType.Information);
+                LogToEventViewer($"Certificate store exception - Load WSM certificate: {ex.Message}", EventLogEntryType.Error);
+                throw new InvalidOperationException("Failed to load the WSM server certificate.", ex);
             }
-            return null;
         }
 
-        public X509Certificate2 loadLocalCertificate()
+        public X509Certificate2? LoadLocalCertificate()
         {
             try
             {
@@ -153,9 +145,9 @@ namespace WsmConnectorAdService.Controller
             }
             catch (Exception ex)
             {
-                LogToEventViewer($"Certificate store exception - Load machine certificate: {ex.Message}", EventLogEntryType.Information);
+                LogToEventViewer($"Certificate store exception - Load machine certificate: {ex.Message}", EventLogEntryType.Error);
+                throw new InvalidOperationException("Failed to load the local machine certificate.", ex);
             }
-            return null;
         }
     }
 }
