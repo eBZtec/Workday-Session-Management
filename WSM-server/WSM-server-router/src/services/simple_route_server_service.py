@@ -159,7 +159,11 @@ class FlexibleRouterServerService:
                 if "user" in message_data["RoutingClientMessage"]:
                     client_id, response = self.message_processor.process_direct_message(message_data, hostname) # Send direct message to session/client
                 else:
-                    client_id, response = self.message_processor.process_wsm_agent_updater_message(message_data, hostname) #Update session/client workhours
+                    if message_data["RoutingClientMessage"].get("journey") == "FLEX_TIME":
+                        pass
+                        # faz a chamada 0mq
+                    else:
+                        client_id, response = self.message_processor.process_wsm_agent_updater_message(message_data, hostname) #Update session/client workhours
                 self.send_message(client_id, response, True)
             except Exception as e:
                 self.logger.error(f"Could not send message to client: {e}")
