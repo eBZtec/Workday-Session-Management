@@ -1,6 +1,6 @@
 from datetime import time
 
-from src.services.account.calculate_account_workhours_service import CalculateWorkhoursService
+from src.services.account.utils.calculate_account_workhours_service import CalculateWorkhoursService
 
 
 def test_calculate_unrestricted_user():

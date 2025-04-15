@@ -1,7 +1,6 @@
 from src.config.wsm_logger import logger
 from src.models.schema.request_models import ExtendedWorkHoursSchema
-from src.services.account.search_account_by_uid_service import SearchAccountByUIDService
-from src.services.account.update_allowed_logon_hours_account_service import UpdateAllowedLogonHoursAccountService
+from src.services.account.presenter.search_account_by_uid_service import SearchAccountByUIDService
 from src.services.overtime.insert_overtime_database_service import InsertOvertimeDatabaseService
 from src.services.pooling.accounts_pooling_service import AccountsPoolingService
 

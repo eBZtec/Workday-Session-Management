@@ -22,7 +22,7 @@ class MessageProcessor:
         """
         Reprocess messages of entry queue and resent to correspondent queue
         """
-        logger.info(f"WSM - Session Updater COnnectors - Listening for messages in queue: {self.input_queue}")
+        logger.info(f"WSM - Session Updater Connectors - Listening for messages in queue: {self.input_queue}")
 
         try:
             # Define the callback that will be called for each received message
@@ -40,22 +40,7 @@ class MessageProcessor:
             logger.error(f"WSM - Session Updater Connectors - Error in process_messages: {e}")
             raise
 
-        """
-        try:
-            while True:
-                body = self.rabbit_manager.consume_message(self.input_queue)
-                if body:
-                    self.process_message(body)
-                time.sleep(0.1)
-                
-        except KeyboardInterrupt:
-            logger.info("WSM - Session Updater COnnectors - Message processing interrupted by user.")
-        except Exception as e:
-            logger.error(f"WSM - Session Updater COnnectors - Error in process_messages: {e}")
-            raise
-        """
-
-            
+   
     def process_message(self, body):
         """
         Processa uma única mensagem.
@@ -63,7 +48,7 @@ class MessageProcessor:
         try:
             # Parse do JSON recebido
             message = json.loads(body)
-            logger.info(f"WSM - Session Updater COnnectors - Processing message: {message}")
+            logger.info(f"WSM - Session Updater Connectors - Processing message: {message}")
             target_queue = None
             # Obter o nome da fila com base no serviço
             if "uid" in message:

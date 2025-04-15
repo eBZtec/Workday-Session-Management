@@ -27,7 +27,7 @@ class DatabaseManager:
                 query = (select(Target.service)
                          .join(TargetStatus, Target.id == TargetStatus.id_target)
                          .join(StandardWorkHours, StandardWorkHours.id == TargetStatus.std_wrk_id)
-                         .where(StandardWorkHours.uid == _uid, Target.enabled == 1)
+                         .where(StandardWorkHours.uid == _uid, Target.enabled == 0)
                          )
                 result = session.execute(query).scalars().all()
                 if result:
