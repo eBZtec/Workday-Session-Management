@@ -29,6 +29,9 @@ class ConnectorsUpdater:
 
                     data = {k: v for k, v in processed_account.__dict__.items() if not k.startswith('_')}
                     response = json.dumps(data, default=str)
+
+                    wsm_queue_manager.send_message(response, wsm_config.wsm_queue_pooling)
+                    wsm_logger.info(f"Message \"{response}\" sent on queue \"{wsm_config.wsm_queue_pooling}\"")
                 else:
                     wsm_logger.warning(
                         f"Skipping processing, reason: Journey defined as {account.journey} for uid {account.uid}")

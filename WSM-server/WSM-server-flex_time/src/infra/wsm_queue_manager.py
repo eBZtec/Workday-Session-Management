@@ -52,5 +52,20 @@ class WSMQueueManager(metaclass=Singleton):
             self.channel.close()
             self.connection.close()
 
+    def send_message(self, message: str, queue: str):
+        if self.channel is None:
+            wsm_logger.error("Could not establish RabbitMQ connection")
+            raise ConnectionError("Could not establish RabbitMQ connection")
+
+        # Publish in the queue
+        self.channel.basic_publish(
+            exchange='',
+            routing_key=queue,
+            body=message,
+            properties=pika.BasicProperties(
+                delivery_mode=2,
+            )
+        )
+
 
 wsm_queue_manager = WSMQueueManager()
