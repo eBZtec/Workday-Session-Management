@@ -1,6 +1,7 @@
 import pika.exceptions
 
 from src.config.wsm_logger import wsm_logger
+from src.modules.connectors.connectors_updater import ConnectorsUpdater
 
 
 def main():
@@ -11,7 +12,7 @@ def main():
     wsm_logger.info("Starting connection with WSM Queue Manager...")
     from src.infra.wsm_queue_manager import wsm_queue_manager
     wsm_logger.info("WSM Queue Manager connected successfully.")
-
+    ConnectorsUpdater.start()
 
 
 if __name__ == "__main__":

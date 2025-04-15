@@ -1,6 +1,7 @@
 import pika
 
 from src.config.wsm_config import wsm_config
+from src.config.wsm_logger import wsm_logger
 from src.shared.generic.singleton import Singleton
 
 
@@ -30,14 +31,26 @@ class WSMQueueManager(metaclass=Singleton):
 
         user = wsm_config.wsm_queue_user
         password = wsm_config.wsm_queue_user_password
-        queue_name = wsm_config.wsm_queue_updater
+        self.queue_name = wsm_config.wsm_queue_updater
 
         credentials = pika.PlainCredentials(user, password)
         params = pika.ConnectionParameters(host=host, port=port, credentials=credentials)
         self.connection = pika.BlockingConnection(params)
         self.channel = self.connection.channel()
 
-        self.channel.queue_declare(queue=queue_name, durable=True)
+        self.channel.queue_declare(queue=self.queue_name, durable=True)
+
+    def start_mq(self, callback):
+        self.channel.basic_consume(queue=self.queue_name, on_message_callback=callback, auto_ack=True)
+        wsm_logger.info(f"Waiting messages on queue \"{self.queue_name}\"...")
+
+        try:
+            self.channel.start_consuming()
+        except KeyboardInterrupt:
+            wsm_logger.info("Exiting RabbitMQ consumer...")
+        finally:
+            self.channel.close()
+            self.connection.close()
 
 
 wsm_queue_manager = WSMQueueManager()
