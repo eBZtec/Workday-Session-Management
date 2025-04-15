@@ -15,8 +15,9 @@ class AccountsPoolingService:
         account = await SearchAccountByUIDService.execute(uid)
 
         if account.journey == JourneyType.FLEX_TIME:
-            logger.debug(
-                f"Pooling account update is not triggered by account {uid} with journey type {account.journey}")
+            rabbitmq_send_message = RabbitMQSendMessageService(queue_name=config.WSM_FLEX_HOURS_UPDATER_QUEUE)
+            rabbitmq_send_message.send(account.uid)
+            logger.info(f"Message \"{account.uid}\" sent for queue \"{config.WSM_FLEX_HOURS_UPDATER_QUEUE}\"")
             return
 
         if account:
