@@ -1,6 +1,6 @@
 from datetime import datetime, date
 from typing import Optional
-from sqlalchemy import create_engine, or_, desc
+from sqlalchemy import create_engine, or_, desc, RowMapping
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
@@ -9,7 +9,7 @@ from contextlib import contextmanager
 from src.enums.target_status_type import TargetStatusType
 from src.models.models import Base, TargetStatus, FlexTime
 from src.config import config
-from src.models.models import Holidays, ExtendedWorkHours, Target, Sessions
+from src.models.models import Holidays, ExtendedWorkHours, Target, Sessions, Client
 import os
 
 # Carregar as variáveis do arquivo .env
@@ -207,3 +207,27 @@ class DatabaseManager:
         with self.session_scope() as session:
             return session.query(FlexTime).filter(FlexTime.std_wrk_id==user_id).order_by(desc(FlexTime.id)).first()
 
+
+    def get_client_info_by_hostname(self, _host):
+        with self.session_scope() as session:
+            return session.query(Client.hostname,
+                                 Sessions.user,
+                                 Client.ip_address,
+                                 Client.client_version,
+                                 Client.os_name,
+                                 Client.os_version,
+                                 Client.uptime,
+                                 Client.agent_info
+                                 ).join(Sessions, Sessions.hostname == Client.hostname).filter(Sessions.hostname == _host).all()
+
+    def get_all_sessions_client_info(self):
+        with self.session_scope() as session:
+            return session.query(Client.hostname,
+                                 Sessions.user,
+                                 Client.ip_address,
+                                 Client.client_version,
+                                 Client.os_name,
+                                 Client.os_version,
+                                 Client.uptime,
+                                 Client.agent_info
+                                 ).join(Sessions, Sessions.hostname == Client.hostname).all()

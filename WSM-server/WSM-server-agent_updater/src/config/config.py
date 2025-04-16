@@ -13,6 +13,7 @@ Z_MQ_PORT= os.getenv("Z_MQ_PORT")
 
 ZEROMQ_URL = os.getenv("DEV_ZEROMQ_URL")
 
+RABBITMQ_QUEUE = os.getenv("RABBITMQ_QUEUE")
 RABBITMQ_USER = os.getenv("RABBITMQ_USER")
 
 RABBITMQ_PWD = os.getenv("RABBITMQ_PWD")
