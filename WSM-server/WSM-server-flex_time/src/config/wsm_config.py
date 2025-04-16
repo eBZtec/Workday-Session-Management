@@ -45,6 +45,7 @@ class Config(metaclass=Singleton):
         self.wsm_queue_user = os.getenv("MQ_USER")
         self.wsm_queue_user_password = os.getenv("MQ_PASSWORD")
         self.wsm_queue_updater = os.getenv("WSM_SERVER_FLEX_QUEUE_UPDATER")
+        self.wsm_queue_pooling = os.getenv("WORK_HOURS_QUEUE")
 
         self.wsm_zeromq_url = os.getenv("ZEROMQ_URL")
 

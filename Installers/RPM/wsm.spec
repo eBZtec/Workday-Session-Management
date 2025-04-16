@@ -1,6 +1,6 @@
 Name:           wsm
 Version:        1.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Workday Session Management Installation Package
 
 License:        GPL-3.0
@@ -207,6 +207,42 @@ EnvironmentFile=/opt/wsm/WSM-server/WSM-AD-Connector/.env
 WantedBy=multi-user.target
 EOF
 
+echo '  system unit for: WSM Flex Time Server: Agents Updater'
+cat << EOF > %{buildroot}/etc/systemd/system/wsm-flex-time-agents-updater.service
+[Unit]
+Description=WSM Flex Time Server: Agents Updater Service
+After=network.target
+
+[Service]
+User=wsm
+WorkingDirectory=/opt/wsm/WSM-server/WSM-server-flex_time
+ExecStart=/opt/wsm/wsmvenv3.12/bin/python3.12 agent_updater_server.py
+Restart=always
+Environment="PYTHONUNBUFFERED=1"
+EnvironmentFile=/opt/wsm/WSM-server/WSM-server-flex_time/.env
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+echo '  system unit for: WSM Flex Time Server: Connectors Updater'
+cat << EOF > %{buildroot}/etc/systemd/system/wsm-flex-time-connectors-updater.service
+[Unit]
+Description=WSM Flex Time Server: Connectors Updater Service
+After=network.target
+
+[Service]
+User=wsm
+WorkingDirectory=/opt/wsm/WSM-server/WSM-server-flex_time
+ExecStart=/opt/wsm/wsmvenv3.12/bin/python3.12 connectors_updater_server.py
+Restart=always
+Environment="PYTHONUNBUFFERED=1"
+EnvironmentFile=/opt/wsm/WSM-server/WSM-server-flex_time/.env
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
 echo 'setting wsm systemd permissions'
 chmod 755 %{buildroot}/etc/systemd/system/wsm-*.service
 
@@ -223,6 +259,8 @@ chown -R wsm:wsm /opt/wsm/
 /etc/systemd/system/wsm-router.service
 /etc/systemd/system/wsm-session_server.service
 /etc/systemd/system/wsm-ad-connector.service
+/etc/systemd/system/wsm-flex-time-connectors-updater.service
+/etc/systemd/system/wsm-flex-time-agents-updater.service
 %ghost /opt/wsm/WSM-audit-server/.env
 %ghost /opt/wsm/WSM-server/WSM-server-session_server/.env
 %ghost /opt/wsm/WSM-server/WSM-archive-processor/.env
@@ -245,4 +283,5 @@ chown -R wsm:wsm /opt/wsm/
 %ghost /opt/wsm/wsmvenv3.12
 %ghost /opt/wsm/WSM-server/WSM-server-router/src/config/encrypted.env
 %ghost /opt/wsm/WSM-server/WSM-server-router/encrypted.env
+%ghost /opt/wsm/WSM-server/WSM-server-flex_time/.env
 
