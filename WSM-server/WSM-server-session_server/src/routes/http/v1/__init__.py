@@ -7,6 +7,7 @@ from src.routes.http.v1.agent import agent_router
 from src.routes.http.v1.targets import targets_router
 from src.routes.http.v1.ntp import ntp
 from src.routes.http.v1.host_sessions import host_sessions
+from src.routes.http.v1.online_hosts_info import online_hosts_info
 
 
 router = APIRouter()
@@ -51,4 +52,10 @@ router.include_router(
     host_sessions.router,
     prefix= "/user_sessions",
     tags=["User sessions"]   
+)
+
+router.include_router(
+    online_hosts_info.router,
+    prefix="/online_hosts_info",
+    tags=["Host Informations"]
 )

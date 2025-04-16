@@ -5,6 +5,7 @@ from src.config import config
 from src.serialization.message_processor import MessageProcessor
 from src.services.encripted_messages_services import CryptoMessages
 from src.ca_services.ca_server import Server 
+from src.services.zmq_client import ZMQClient
 
 class FlexibleRouterServerService:
     
@@ -150,6 +151,10 @@ class FlexibleRouterServerService:
 
     def handle_routing_client_message(self, message_data):
         self.logger.info("Processing routing client message")
+
+        if message_data["RoutingClientMessage"].get("journey") == "FLEX_TIME": # if the user get flex_time, it will call 0MQ server to get workhours
+            message_data = self.get_response_flex_time(message_data["RoutingClientMessage"]["user"])
+
         user = message_data["RoutingClientMessage"].get("uid") or message_data["RoutingClientMessage"].get("user")
         sessions = self.dm.get_sessions_by_uid(user)
 
@@ -158,16 +163,25 @@ class FlexibleRouterServerService:
                 hostname = session.hostname
                 if "user" in message_data["RoutingClientMessage"]:
                     client_id, response = self.message_processor.process_direct_message(message_data, hostname) # Send direct message to session/client
-                else:
-                    if message_data["RoutingClientMessage"].get("journey") == "FLEX_TIME":
-                        pass
-                        # faz a chamada 0mq
-                    else:
-                        client_id, response = self.message_processor.process_wsm_agent_updater_message(message_data, hostname) #Update session/client workhours
+                else:    
+                    client_id, response = self.message_processor.process_wsm_agent_updater_message(message_data, hostname) #Update session/client workhours
                 self.send_message(client_id, response, True)
             except Exception as e:
                 self.logger.error(f"Could not send message to client: {e}")
                 continue
+
+    def get_response_flex_time(self, user):
+
+        cli = ZMQClient("tcp://localhost:52555") 
+
+        try:
+            response = cli.send_message(user)
+
+        finally:
+            cli.close()
+
+        pass
+
 
     def handle_heartbeat(self, client_id, message_data):
         self.logger.info("Processing heartbeat")
