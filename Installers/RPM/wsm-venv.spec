@@ -23,7 +23,7 @@ curl -o requirements.txt http://gitea.ebz:3000/eBZ/Workday_Session_Management/ra
 chroot %{buildroot}
 cd %{buildroot}/opt/wsm
 python3.12 -m venv %{buildroot}/opt/wsm/wsmvenv3.12
-. %{buildroot}/opt/wsm/wsmvenv3.12/bin/activate && %{buildroot}/opt/wsm/wsmvenv3.12/bin/pip install --upgrade pip && %{buildroot}/opt/wsm/wsmvenv3.12/bin/pip install -r %{buildroot}/opt/wsm/requirements.txt
+. %{buildroot}/opt/wsm/wsmvenv3.12/bin/pip install --upgrade pip && %{buildroot}/opt/wsm/wsmvenv3.12/bin/pip install -r %{buildroot}/opt/wsm/requirements.txt
 
 %build
 # nothing needed
