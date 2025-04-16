@@ -196,9 +196,18 @@ def process_message(message):
         action = "ad_update"
         allowed_work_hours = message.get("allowed_work_hours")
         user = message.get("uid")
+        enable = message.get("enable")
         timezone = str(datetime.datetime.now().astimezone().tzinfo)
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
-        processed_message = {"uid": user, "action":action, "allowed_work_hours": allowed_work_hours, "timezone": timezone, "timestamp": timestamp}
+        processed_message = {
+            "user": user,
+            "action":action,
+            "allowed_work_hours": allowed_work_hours,
+            "timezone": timezone,
+            "timestamp": timestamp,
+            "enable": enable,
+            "unlock": enable
+        }
     except Exception as e:
         logger.error("Error to process message to AD")
     return processed_message

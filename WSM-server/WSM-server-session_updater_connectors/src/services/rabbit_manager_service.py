@@ -8,7 +8,8 @@ logger = Logger(log_name='WSM-Server-Agent-Updater').get_logger()
 class RabbitMQManagerService:
     def __init__(self, host):
         try:
-            self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=host))
+            credentials = pika.PlainCredentials(config.RABBITMQ_USER, config.RABBITMQ_PWD)
+            self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=host, credentials=credentials))
             self.channel = self.connection.channel()
         except Exception as e:
             logger.error(f"Error initializing RabbitMQManager: {e}")

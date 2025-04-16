@@ -5,6 +5,7 @@ from datetime import datetime, time
 from enum import Enum
 
 from src.enums.target_status_type import TargetStatusType
+from src.enums.types import JourneyType
 
 
 class AllowedWorkSchema(str, Enum):
@@ -24,6 +25,7 @@ class StandardWorkHoursSchema(BaseModel):
     start_time: str
     end_time: str
     allowed_work_hours: Optional[str] = None
+    journey: JourneyType = JourneyType.FIXED_TIME
     uf:str
     st: str
     c: int
@@ -34,6 +36,11 @@ class StandardWorkHoursSchema(BaseModel):
     enable: bool = True
     unrestricted: bool = False
     deactivation_date: Optional[datetime] = None
+
+
+class FlexTimeSchema(StandardWorkHoursSchema):
+    work_time: datetime
+
 
 class EventsSchema(BaseModel):
     event_type: str
@@ -114,4 +121,11 @@ class TargetResponse(BaseModel):
     enabled: int
 
 
+### Hostname x Sessions
+
+class HostnameSessions(BaseModel):
+    hostname: str
+    user: str
+    status: str
+    start_time: datetime
 

@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.sql import func
 from src.models.schema.request_models import SessionTerminationActionSchema
 from datetime import datetime
+from src.enums.types import JourneyType, WorkTimeType
 
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -68,6 +69,7 @@ class StandardWorkHours(Base):
     st = Column(String(35), nullable=False)
     c = Column(String(100), nullable=False)
     weekdays = Column(String(7), nullable=False)
+    journey = Column(String(15), nullable=False, default=JourneyType.FLEX_TIME)
     session_termination_action = Column(String(15), default=SessionTerminationActionSchema.LOGOFF) ## Se a sesão for Lock, ou logoff
     cn = Column(String(240), nullable=False)
     l = Column(String(240))
@@ -88,6 +90,22 @@ class StandardWorkHours(Base):
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+class FlexTime(Base):
+    __tablename__ = 'flex_time'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    std_wrk_id = Column(Integer, ForeignKey('standard_workhours.id'), nullable=True)
+    work_time_type = Column(String(10), nullable=False)
+    work_time = Column(DateTime(timezone=True), nullable=False)
+    create_timestamp = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+    update_timestamp = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False)
+
+    # Relacionamento com StandardWorkHours
+    standard_workhours = relationship("StandardWorkHours",cascade='all, delete')
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 
 
 # Classe Messages (tabela messages)
