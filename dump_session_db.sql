@@ -305,6 +305,7 @@ CREATE TABLE public.standard_workhours (
     st character varying(35) NOT NULL,
     c character varying(100) NOT NULL,
     weekdays character varying(7) NOT NULL,
+    journey VARCHAR(15) NOT NULL DEFAULT 'FIXED_TIME',
     session_termination_action character varying(15),
     cn character varying(240) NOT NULL,
     l character varying(240),
@@ -317,6 +318,19 @@ CREATE TABLE public.standard_workhours (
 
 
 ALTER TABLE public.standard_workhours OWNER TO wsm;
+
+CREATE TABLE IF NOT EXISTS flex_time (
+	id serial4 NOT NULL,
+	std_wrk_id int4 NULL,
+	work_time_type VARCHAR(10) NOT NULL,
+	work_time timestamptz NOT NULL,
+    work_time_type VARCHAR(150) NOT NULL,
+	create_timestamp timestamptz NOT NULL,
+	update_timestamp timestamptz NOT NULL,
+	CONSTRAINT flex_time_pkey PRIMARY KEY (id)
+);
+
+ALTER TABLE public.flex_time OWNER TO wsm;
 
 --
 -- Name: standard_workhours_id_seq; Type: SEQUENCE; Schema: public; Owner: wsm
@@ -645,6 +659,8 @@ ALTER TABLE ONLY public.target_status
 
 ALTER TABLE ONLY public.target_status
     ADD CONSTRAINT target_status_std_wrk_id_fkey FOREIGN KEY (std_wrk_id) REFERENCES public.standard_workhours(id);
+
+ALTER TABLE ONLY public.flex_time ADD CONSTRAINT flex_time_std_wrk_id_fkey FOREIGN KEY (std_wrk_id) REFERENCES public.standard_workhours(id);
 
 
 --
