@@ -171,17 +171,12 @@ class FlexibleRouterServerService:
                 continue
 
     def get_response_flex_time(self, user):
-
         cli = ZMQClient("tcp://localhost:52555") 
-
         try:
             response = cli.send_message(user)
-
+            return response
         finally:
             cli.close()
-
-        pass
-
 
     def handle_heartbeat(self, client_id, message_data):
         self.logger.info("Processing heartbeat")
@@ -198,14 +193,11 @@ class FlexibleRouterServerService:
         return var
 
     #SEND ENCRYPTED MESSAGE TO CLIENT
-    def encrypt_message(self,hostname,message):
-        
+    def encrypt_message(self,hostname,message):        
         print("Message without encryption: ", message)
-        
         public_key = self.cm.load_public_key(hostname)
         aes_key, aes_iv = self.cm.generate_aes_key_iv()
         encrypted_message = self.cm.encrypt_message_aes(message, aes_key, aes_iv)
-
         encrypted_aes_key = self.cm.encrypt_rsa(aes_key, public_key)
         encrypted_aes_iv = self.cm.encrypt_rsa(aes_iv, public_key)
 
