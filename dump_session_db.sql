@@ -311,6 +311,8 @@ CREATE TABLE public.standard_workhours (
     l character varying(240),
     unrestricted boolean,
     enable boolean NOT NULL,
+    block_station_during_interval BOOLEAN NOT NULL DEFAULT false,
+    block_station_during_interval_in_minutes INTEGER,
     deactivation_date timestamp with time zone,
     create_timestamp timestamp with time zone NOT NULL,
     update_timestamp timestamp with time zone NOT NULL
