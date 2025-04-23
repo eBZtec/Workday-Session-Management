@@ -20,7 +20,9 @@ class AccountDTO:
     enable = True
     unrestricted = False
     journey: JourneyType = JourneyType.FIXED_TIME
+    block_station_during_interval: Union[bool, None] = False
     deactivation_date: Union[datetime, None] = None
     allowed_work_hours: Union[str, None] = None
     session_termination_action: SessionTerminationActionSchema = SessionTerminationActionSchema.LOGOFF
     work_time: Union[datetime, None] = None
+    block_station_during_interval_in_minutes: Union[int, None] = None
