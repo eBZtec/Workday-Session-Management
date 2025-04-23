@@ -12,7 +12,8 @@ from src.shared.services.flextime.calculate_flextime_service import CalculateFle
 class ConnectorsUpdater:
     @staticmethod
     def message_callback(ch, method, properties, body):
-        uid = body
+        uid = body.decode("utf-8")
+        uid = uid.strip("\"")
         wsm_logger.info(f"Message \"{uid}\" received on queue {wsm_config.wsm_queue_updater}")
         with wsm_session_database.session_scope() as session:
             search_account_service = SearchAccountService(session)

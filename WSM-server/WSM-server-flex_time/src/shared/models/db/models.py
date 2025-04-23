@@ -41,6 +41,8 @@ class StandardWorkHours(TimestampedBase):
     l = Column(String(240))
     unrestricted = Column(Boolean, default=False)
     enable = Column(Boolean, nullable=False, default=True)
+    block_station_during_interval = Column(Boolean, default=False)
+    block_station_during_interval_in_minutes = Column(Integer, nullable=True)
     deactivation_date = Column(DateTime(timezone=True),nullable=True)
     create_timestamp = Column(DateTime(timezone=True), default=func.now(), nullable=False)
     update_timestamp = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False)

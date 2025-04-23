@@ -1,3 +1,5 @@
+from time import sleep
+
 import pika.exceptions
 
 from src.config.wsm_logger import wsm_logger
@@ -12,15 +14,17 @@ def main():
     wsm_logger.info("Starting connection with WSM Queue Manager...")
     from src.infra.wsm_queue_manager import wsm_queue_manager
     wsm_logger.info("WSM Queue Manager connected successfully.")
-    ConnectorsUpdater.start()
+    while True:
+        try:
+            ConnectorsUpdater.start()
+        except pika.exceptions.AMQPConnectionError as e:
+            wsm_logger.error(f"WSM Server Flex could not connect to RabbitMQ server, reason: {e}")
+        except Exception as e:
+            wsm_logger.error(f"WSM Server Flex time process with error, reason: {e}")
+        sleep(10)
 
 
 if __name__ == "__main__":
-    try:
-        wsm_logger.info("Starting WSM Server Flex Time Server - Agent Updater module...")
-        main()
-        wsm_logger.info("Finished WSM Server Flex Time Server...")
-    except pika.exceptions.AMQPConnectionError as e:
-        wsm_logger.error(f"WSM Server Flex could not connect to RabbitMQ server, reason: {e}")
-    except Exception as e:
-        wsm_logger.error(f"WSM Server Flex time terminated by error: {e}")
+    wsm_logger.info("Starting WSM Server Flex Time Server - Agent Updater module...")
+    main()
+    wsm_logger.info("Finished WSM Server Flex Time Server...")
