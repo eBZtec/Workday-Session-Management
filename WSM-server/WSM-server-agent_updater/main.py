@@ -18,7 +18,8 @@ def main():
         logger.info(f"Mensagem recebida do RabbitMQ: {body.decode()}")
         processor.process_message(body.decode())
 
-    rabbitmq_consumer = RabbitMQConsumer(config.MQ_ADDRESS_HOST, config.MQ_AGENT_UPDATER_QUEUE, rabbitmq_callback)
+    rabbitmq_consumer = RabbitMQConsumer(config.MQ_ADDRESS_HOST, config.RABBITMQ_QUEUE, rabbitmq_callback)
+
     try:
         rabbitmq_consumer.start()
     finally:

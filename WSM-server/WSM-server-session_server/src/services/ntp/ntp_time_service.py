@@ -16,7 +16,7 @@ class ntpTimeService():
     def get_ntp_time():
         try:
             client = ntplib.NTPClient()
-            response = client.request(host=config.NTP_SERVER,port=config.NTP_SERVER_PORT)
+            response = client.request(host=config.NTP_SERVER,port=config.NTP_PORT)
             return datetime.fromtimestamp(response.tx_time).replace(tzinfo=pytz.utc)
         except ntplib.NTPException as e:
             logger.error(f"Could not get NTP time: {e}")

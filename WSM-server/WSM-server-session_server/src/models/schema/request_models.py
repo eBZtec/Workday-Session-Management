@@ -129,3 +129,14 @@ class HostnameSessions(BaseModel):
     status: str
     start_time: datetime
 
+
+class OnlineHostInfoResponse(BaseModel):
+    hostname:str
+    user:str
+    client_ip_address: str
+    client_cli_version: str
+    client_os_name: str
+    client_os_version: str
+    client_uptime: str
+    client_agent_info: str
+
