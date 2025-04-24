@@ -11,9 +11,11 @@ class SearchAccountByUidController:
     @staticmethod
     async def execute(uid: str):
         try:
+            logger.info(f"Starting search account by uid {uid}")
             account = await SearchAccountByUIDService.execute(uid)
 
             if account:
+                logger.info(f"Found account {account.__dict__}")
                 account_overtimes = GetOvertimesByAccountUidService.execute(uid)
                 account_target_status_response = await GetTargetStatusByAccountUidService.execute(account.id)
 

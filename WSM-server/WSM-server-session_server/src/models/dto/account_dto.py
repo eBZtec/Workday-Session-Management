@@ -17,8 +17,9 @@ class AccountDTO:
     weekdays: str
     cn: str
     l: str
-    enable = True
-    unrestricted = False
+    enable: bool  = True
+    lock: bool  = False
+    unrestricted: bool = False
     journey: JourneyType = JourneyType.FIXED_TIME
     block_station_during_interval: Union[bool, None] = False
     deactivation_date: Union[datetime, None] = None
