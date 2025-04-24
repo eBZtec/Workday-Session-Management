@@ -1,68 +1,76 @@
-from fastapi import HTTPException, status
-from src.config import config
-from src.services.ntp.ntp_time_service import ntpTimeService
-from src.services.ntp.timestamp_service import TimestampService
+from fastapi import HTTPException
 from src.config.wsm_logger import logger
-from src.models.schema.request_models import NTP_response
-from src.models.models import StandardWorkHours
-from typing import Optional
-from datetime import datetime, timezone
+from src.services.ntp.ntp_time_service import ntpTimeService
+from src.models.schema.request_models import NTP_response, LocationRequest
+from timezonefinder import TimezoneFinder
+from datetime import datetime
 import pytz
 import json
+from pathlib import  Path
+
+LOCATION_DATA = None
+
+
+def load_location_data():
+    global LOCATION_DATA
+    if LOCATION_DATA is None:
+        file_path = Path(__file__).resolve().parent.parent.parent / "resources" / "countries+states+cities.json"
+        with open(file_path, encoding="utf-8") as f:
+            LOCATION_DATA = json.load(f)
+
+def find_city_data(country: str, state: str, city: str, data: list):
+    country = country.strip().lower()
+    state = state.strip().lower()
+    city = city.strip().lower()
+
+    for country_entry in data:
+        if country_entry["name"].strip().lower() == country:
+            for state_entry in country_entry.get("states", []):
+                if state_entry["name"].strip().lower() == state:
+                    for city_entry in state_entry.get("cities", []):
+                        if city_entry["name"].strip().lower() == city:
+                            return {
+                                "lat": float(city_entry["latitude"]),
+                                "lng": float(city_entry["longitude"]),
+                                "city": city_entry["name"],
+                                "state": state_entry["name"],
+                                "country": country_entry["name"]
+                            }
+    return None
 
 
 class NTPActionController:
 
-    async def execute(self, uid: str):
+    async def execute(self, location: LocationRequest):
         try:
             ntp_time = ntpTimeService.get_ntp_time()
             if ntp_time is None:
-                logger.error(f"NTP time is None (uid: {uid})")
-                raise HTTPException(status_code=500, detail="NTP time could not be retrieved")
+                raise HTTPException(status_code=500, detail="Could not retrieve NTP time")
 
-            responses = []
+            load_location_data()
+            city_data = find_city_data(location.country, location.state, location.city, LOCATION_DATA)
 
-            # Caso uid seja None ou string vazia
-            if not uid:
-                responses.append(NTP_response(
-                    uid="N/A",
-                    ntp=str(ntp_time),
-                    timezone="UTC",
-                    tz_name="UTC"
-                ))
-                return responses
+            if not city_data:
+                raise HTTPException(status_code=404, detail="Location not found")
 
-            user_sessions = await TimestampService.user_timestamp(uid)
+            tf = TimezoneFinder()
+            timezone_str = tf.timezone_at(lat=city_data["lat"], lng=city_data["lng"])
 
-            for session in user_sessions:
-                tz_name, timezone = await self.get_timezone_from_create_timestamp(session.create_timestamp)
-                responses.append(NTP_response(
-                    uid=str(session.user),
-                    ntp=str(ntp_time),
-                    timezone=str(timezone) if timezone else "Unknown",
-                    tz_name=tz_name if tz_name else "Unknown"
-                ))
+            if not timezone_str:
+                raise HTTPException(status_code=404, detail="Timezone not found")
 
-            return responses
+            local_time = ntp_time.astimezone(pytz.timezone(timezone_str))
+
+            return NTP_response(
+                ntp=ntp_time.strftime('%Y-%m-%d %H:%M:%S %Z%z'),
+                local_time=local_time.strftime('%Y-%m-%d %H:%M:%S %Z%z'),
+                country=city_data["country"],
+                state=city_data["state"],
+                city=city_data["city"]
+            )
 
         except HTTPException as http_exc:
             raise http_exc
         except Exception as e:
-            logger.error(f"Unexpected error while retrieving NTP time for uid {uid}: {e}")
+            logger.error(f"Unexpected error while processing location request: {e}")
             raise HTTPException(status_code=500, detail="Unexpected error occurred")
-
-    async def get_timezone_from_create_timestamp(self, timestamp):
-        try:
-            dt = datetime.fromisoformat(str(timestamp))
-            tz_offset = dt.utcoffset() if dt.tzinfo else None
-
-            if tz_offset is not None:
-                offset_hours = tz_offset.total_seconds() / 3600
-                for tz_name in pytz.all_timezones:
-                    tz = pytz.timezone(tz_name)
-                    if dt.astimezone(tz).utcoffset().total_seconds() / 3600 == offset_hours:
-                        return tz_name, tz_offset
-            return None, tz_offset
-        except Exception as e:
-            logger.warning(f"Failed to determine timezone from timestamp '{timestamp}': {e}")
-            return None, None
