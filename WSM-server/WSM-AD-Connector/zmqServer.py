@@ -197,6 +197,8 @@ def process_message(message):
         allowed_work_hours = message.get("allowed_work_hours")
         user = message.get("uid")
         enable = message.get("enable")
+        lock = message.get("lock")
+        lock = bool(lock)
         timezone = str(datetime.datetime.now().astimezone().tzinfo)
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
         processed_message = {
@@ -206,8 +208,9 @@ def process_message(message):
             "timezone": timezone,
             "timestamp": timestamp,
             "enable": enable,
-            "unlock": enable
+            "unlock": not lock
         }
+        logger.info(f"Message defined as {processed_message}")
     except Exception as e:
         logger.error("Error to process message to AD")
     return processed_message
