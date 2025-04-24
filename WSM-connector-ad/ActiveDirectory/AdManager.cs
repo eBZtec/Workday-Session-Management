@@ -70,13 +70,37 @@ namespace WsmConnectorAdService.ActiveDirectory
 
                     if (!string.IsNullOrWhiteSpace(unlockAccount) && unlockAccount.Equals("true", StringComparison.OrdinalIgnoreCase))
                     {
-                        if (user.IsAccountLockedOut())
-                        {
-                            user.UnlockAccount();
-                            user.Save();
-                            var unlockMsg = $"User '{username}' has been unlocked.";
+                        if(user.Enabled == false) {
+                            var unlockMsg = $"User '{username}' is disabled, no action was taken.";
                             Setup.LogToEventViewer(unlockMsg, EventLogEntryType.Information);
                             actionsTaken.Add(unlockMsg);
+
+                        } else {
+
+                            if (user.IsAccountLockedOut())
+                            {
+                                user.UnlockAccount();
+                                user.Save();
+                                var unlockMsg = $"User '{username}' has been unlocked.";
+                                Setup.LogToEventViewer(unlockMsg, EventLogEntryType.Information);
+                                actionsTaken.Add(unlockMsg);
+                            }
+                            else
+                            {
+                                var notLockedMsg = $"User '{username}' is not locked.";
+                                Setup.LogToEventViewer(notLockedMsg, EventLogEntryType.Information);
+                                actionsTaken.Add(notLockedMsg);
+                            }
+                        }
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(unlockAccount) && unlockAccount.Equals("false", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (user.IsAccountLockedOut())
+                        {
+                            var msg = $"User '{username}' is locked.";
+                            Setup.LogToEventViewer(msg, EventLogEntryType.Information);
+                            actionsTaken.Add(msg);
                         }
                         else
                         {
@@ -84,6 +108,7 @@ namespace WsmConnectorAdService.ActiveDirectory
                             Setup.LogToEventViewer(notLockedMsg, EventLogEntryType.Information);
                             actionsTaken.Add(notLockedMsg);
                         }
+                        
                     }
 
                     if (!string.IsNullOrWhiteSpace(allowedWorkHours))
@@ -234,8 +259,6 @@ namespace WsmConnectorAdService.ActiveDirectory
         {
             return timeRange.Start == 0 && timeRange.End == 0;
         }
-
-        
     }
 }
 
