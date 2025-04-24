@@ -5,7 +5,7 @@ from datetime import datetime, time
 from enum import Enum
 
 from src.enums.target_status_type import TargetStatusType
-from src.enums.types import JourneyType
+from src.enums.types import JourneyType, WorkTimeType
 
 
 class AllowedWorkSchema(str, Enum):
@@ -62,6 +62,10 @@ class ExtendedWorkHoursSchema(BaseModel):
     week_days_count: str = ""
     extension_active: int = 0
     ou: int = 0
+
+class FlexTimeResponse(BaseModel):
+    id: int
+    work_time: datetime
 
 class ExtendedWorkHoursResponse(ExtendedWorkHoursSchema):
     id: int

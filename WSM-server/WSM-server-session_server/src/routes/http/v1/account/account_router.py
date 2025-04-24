@@ -1,11 +1,16 @@
-from fastapi import APIRouter, status, Depends, BackgroundTasks, HTTPException
+from datetime import datetime
+from typing import List, Optional
+
+from fastapi import APIRouter, status, Depends, BackgroundTasks, HTTPException, Query
 from starlette.status import HTTP_200_OK
 
 from src.controllers.account.lock_account_controller import LockAccountController
 from src.controllers.account.search_account_by_uid_controller import SearchAccountByUidController
 from src.models.dto.account_dto import AccountDTO
+from src.models.models import FlexTime
+from src.services.account.presenter.search_flex_time_presenter import SearchFlexTimePresenter
 from src.services.auth_service import AuthService
-from src.models.schema.request_models import StandardWorkHoursSchema, StandardWorkHoursResponse
+from src.models.schema.request_models import StandardWorkHoursSchema, StandardWorkHoursResponse, FlexTimeResponse
 from src.controllers.account.disable_account_controller import DisableAccountController
 from src.controllers.account.enable_account_controller import EnableAccountController
 from src.controllers.account.logoff_account_controller import LogoffAccountController
@@ -91,10 +96,22 @@ async def search_account_by_uid(uid: str) -> StandardWorkHoursResponse | None:
 
 
 @router.get(
-    "/",
+    "/flextime/{uid}",
     status_code=HTTP_200_OK,
-    name="Search all accounts",
-    deprecated=True
+    name="Search flex times register by user",
+    response_model=List[FlexTimeResponse]
 )
-async def search_accounts():
-    ...
+async def get_flex_times_by_user_and_period(
+    uid: str,
+    skip: int = 0,
+    limit: int = 10,
+    date_from: Optional[datetime] = Query(None),
+    date_to: Optional[datetime] = Query(None)
+):
+    return SearchFlexTimePresenter.get_flex_time_by_user_and_date(
+        uid,
+        date_from,
+        date_to,
+        skip,
+        limit
+    )

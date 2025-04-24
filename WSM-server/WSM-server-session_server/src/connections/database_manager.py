@@ -231,3 +231,13 @@ class DatabaseManager:
                                  Client.uptime,
                                  Client.agent_info
                                  ).join(Sessions, Sessions.hostname == Client.hostname).all()
+
+    def get_flex_time_by_user_and_date_with_pagination(self, account_id: int, date_from: datetime = None, date_to: datetime = None, skip = 0, limit = 10) -> list[FlexTime]:
+        with self.session_scope() as session:
+            query = session.query(FlexTime).filter(FlexTime.std_wrk_id == account_id)
+
+            if date_from:
+                query = query.filter(FlexTime.work_time >= date_from)
+            if date_from:
+                query = query.filter(FlexTime.work_time >= date_from)
+            return query.offset(skip).limit(limit).all()
