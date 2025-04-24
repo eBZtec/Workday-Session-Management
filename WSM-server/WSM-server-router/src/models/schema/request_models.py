@@ -29,7 +29,11 @@ class StandardWorkHoursSchema(BaseModel):
     cn: str
     l: str
     unrestricted: bool
-    deactivation_date: Optional[datetime]
+    lock: bool = False
+    enable: bool = True
+    deactivation_date: Optional[datetime] = None
+    block_station_during_interval: bool = False
+    block_station_during_interval_in_minutes: int | None = 0
 
 
 class EventsSchema(BaseModel):
