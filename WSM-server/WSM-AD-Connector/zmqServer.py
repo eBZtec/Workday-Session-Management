@@ -202,7 +202,7 @@ def process_message(message):
         timezone = str(datetime.datetime.now().astimezone().tzinfo)
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
         processed_message = {
-            "user": user,
+            "uid": user,
             "action":action,
             "allowed_work_hours": allowed_work_hours,
             "timezone": timezone,
