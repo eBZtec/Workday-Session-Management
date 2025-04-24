@@ -240,7 +240,7 @@ def process_response(response):
     private_key = load_private_key()
 
     data = json.loads(response)
-    logger.info("\nResponse JSON message:\n", json.dumps(data, indent=4))
+    logger.info("Response JSON message: " + json.dumps(data, indent=4))
 
     encrypted_message = base64.b64decode(data["EncryptedMessage"])
 
@@ -254,7 +254,7 @@ def process_response(response):
         "DecryptedMessage": decrypted_message
     }
 
-    logger.info("\nDecrypted JSON response:\n", json.dumps(decrypted_response, indent=4))
+    logger.info("Decrypted JSON response:" + json.dumps(decrypted_response, indent=4))
 
 def get_certs(database_url:str ):
     """
