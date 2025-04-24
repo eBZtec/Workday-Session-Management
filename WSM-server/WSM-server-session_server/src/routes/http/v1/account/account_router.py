@@ -1,6 +1,7 @@
 from fastapi import APIRouter, status, Depends, BackgroundTasks, HTTPException
 from starlette.status import HTTP_200_OK
 
+from src.controllers.account.lock_account_controller import LockAccountController
 from src.controllers.account.search_account_by_uid_controller import SearchAccountByUidController
 from src.models.dto.account_dto import AccountDTO
 from src.services.auth_service import AuthService
@@ -55,6 +56,22 @@ async def deactivate(
 )
 async def enable(background_task: BackgroundTasks, uid: str):
     background_task.add_task(EnableAccountController.execute, uid)
+
+
+@router.post(
+    "/lock/{uid}",
+    status_code=status.HTTP_204_NO_CONTENT
+)
+async def lock(background_task: BackgroundTasks, uid: str):
+    background_task.add_task(LockAccountController.lock, uid)
+
+
+@router.post(
+    "/unlock/{uid}",
+    status_code=status.HTTP_204_NO_CONTENT
+)
+async def unlock(background_task: BackgroundTasks, uid: str):
+    background_task.add_task(LockAccountController.unlock, uid)
 
 
 @router.post(
