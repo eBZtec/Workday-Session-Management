@@ -37,7 +37,7 @@ class StandardWorkHoursSchema(BaseModel):
     unrestricted: bool = False
     deactivation_date: Optional[datetime] = None
     block_station_during_interval: bool = False
-    block_station_during_interval_in_minutes: int = None
+    block_station_during_interval_in_minutes: int | None = 0
 
 
 class FlexTimeSchema(StandardWorkHoursSchema):

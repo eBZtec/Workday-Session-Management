@@ -45,6 +45,8 @@ class FlexWorkTimeManager(WorkTimeManager):
 
             FlexTimeManagerService().insert(uid, account.id, work_time)
 
+            await ConfigureAccountTargets.execute(account.id)
+
             return account
         else:
             raise Exception(f"Account \"{uid}\" not found in the database")
