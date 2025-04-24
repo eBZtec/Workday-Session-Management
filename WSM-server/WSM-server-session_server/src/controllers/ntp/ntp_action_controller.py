@@ -3,7 +3,7 @@ from src.config.wsm_logger import logger
 from src.services.ntp.ntp_time_service import ntpTimeService
 from src.models.schema.request_models import NTP_response, LocationRequest
 from timezonefinder import TimezoneFinder
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 import json
 from pathlib import  Path
@@ -55,11 +55,14 @@ class NTPActionController:
 
             tf = TimezoneFinder()
             timezone_str = tf.timezone_at(lat=city_data["lat"], lng=city_data["lng"])
+            logger.info(f"TimezoneFinder result: {timezone_str}")
+
 
             if not timezone_str:
                 raise HTTPException(status_code=404, detail="Timezone not found")
 
             local_time = ntp_time.astimezone(pytz.timezone(timezone_str))
+            #local_time += timedelta(hours=3) Added because lab shows error in get NTP.
 
             return NTP_response(
                 ntp=ntp_time.strftime('%Y-%m-%d %H:%M:%S %Z%z'),
