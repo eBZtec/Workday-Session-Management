@@ -114,18 +114,18 @@ class StandardWorkHoursResponse(StandardWorkHoursSchema):
 
 ### NTP Server
 
+class LocationRequest(BaseModel):
+    country: str
+    state: str
+    city: str
+
+
 class NTP_response(BaseModel):
-    uid : str
     ntp : str
-    timezone: str
-    tz_name: TimeZoneName
-
-
-class TargetResponse(BaseModel):
-    id: int
-    target: str
-    service: str
-    enabled: int
+    local_time: str
+    country: str
+    state: str
+    city: str
 
 
 ### Hostname x Sessions
