@@ -196,7 +196,7 @@ def process_message(message):
         action = "ad_update"
         allowed_work_hours = message.get("allowed_work_hours")
         user = message.get("uid")
-        enable = message.get("enable")
+        enable = message.get("active_directory_account_status")
         lock = message.get("lock")
         lock = bool(lock)
         timezone = str(datetime.datetime.now().astimezone().tzinfo)
