@@ -36,6 +36,7 @@ class StandardWorkHoursSchema(BaseModel):
     enable: bool = True
     lock: bool = False
     unrestricted: bool = False
+    active_directory_account_status: Optional[bool] = None
     deactivation_date: Optional[datetime] = None
     block_station_during_interval: bool = False
     block_station_during_interval_in_minutes: int | None = 0

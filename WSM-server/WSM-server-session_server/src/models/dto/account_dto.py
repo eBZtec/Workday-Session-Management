@@ -21,6 +21,7 @@ class AccountDTO:
     lock: bool  = False
     unrestricted: bool = False
     journey: JourneyType = JourneyType.FIXED_TIME
+    active_directory_account_status: Union[bool, None] = None
     block_station_during_interval: Union[bool, None] = False
     deactivation_date: Union[datetime, None] = None
     allowed_work_hours: Union[str, None] = None
