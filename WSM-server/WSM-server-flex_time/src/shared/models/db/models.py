@@ -42,6 +42,7 @@ class StandardWorkHours(TimestampedBase):
     unrestricted = Column(Boolean, default=False)
     enable = Column(Boolean, nullable=False, default=True)
     lock = Column(Boolean, default=False)
+    active_directory_account_status = Column(Boolean, nullable=True)
     block_station_during_interval = Column(Boolean, default=False)
     block_station_during_interval_in_minutes = Column(Integer, nullable=True)
     deactivation_date = Column(DateTime(timezone=True),nullable=True)
