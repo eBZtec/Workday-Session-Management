@@ -6,6 +6,7 @@ from src.routes.http.v1.overtime import overtime_router
 from src.routes.http.v1.agent import agent_router
 from src.routes.http.v1.targets import targets_router
 from src.routes.http.v1.active_directory import active_directory_router
+from src.routes.http.v1.configuration import configuration_router
 from src.routes.http.v1.ntp import ntp
 from src.routes.http.v1.host_sessions import host_sessions
 from src.routes.http.v1.online_hosts_info import online_hosts_info
@@ -65,4 +66,10 @@ router.include_router(
     online_hosts_info.router,
     prefix="/online_hosts_info",
     tags=["Host Informations"]
+)
+
+router.include_router(
+    configuration_router.router,
+    prefix="/settings",
+    tags=["WSM Settings"]
 )

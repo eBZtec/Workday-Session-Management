@@ -28,3 +28,5 @@ class AccountDTO:
     session_termination_action: SessionTerminationActionSchema = SessionTerminationActionSchema.LOGOFF
     work_time: Union[datetime, None] = None
     block_station_during_interval_in_minutes: Union[int, None] = None
+    disable_reason: Union[str, None] = None
+    formatted_work_hours: Union[str, None] = None

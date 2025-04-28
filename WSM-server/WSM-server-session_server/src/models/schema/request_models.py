@@ -36,10 +36,12 @@ class StandardWorkHoursSchema(BaseModel):
     enable: bool = True
     lock: bool = False
     unrestricted: bool = False
+    formatted_work_hours: Optional[str] = None
     active_directory_account_status: Optional[bool] = None
     deactivation_date: Optional[datetime] = None
     block_station_during_interval: bool = False
     block_station_during_interval_in_minutes: int | None = 0
+    disable_reason: str | None = None
 
 
 class FlexTimeSchema(StandardWorkHoursSchema):
@@ -148,3 +150,12 @@ class OnlineHostInfoResponse(BaseModel):
     client_uptime: str
     client_agent_info: str
 
+
+class ConfigurationRequest(BaseModel):
+    grace_login: int
+
+
+class ConfigurationResponse(BaseModel):
+    grace_login: int
+    create_timestamp: datetime
+    update_timestamp: datetime
