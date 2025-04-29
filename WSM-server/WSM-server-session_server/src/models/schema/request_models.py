@@ -108,9 +108,7 @@ class StandardWorkHoursResponse(StandardWorkHoursSchema):
 ### NTP Server
 
 class LocationRequest(BaseModel):
-    country: str
-    state: str
-    city: str
+    ibge_code: int
 
 
 class NTP_response(BaseModel):
