@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, or_, select
 from sqlalchemy.orm import sessionmaker
-from src.models.models import StandardWorkHours, ExtendedWorkHours, Sessions, Certificate_Authority
+from src.models.models import StandardWorkHours, ExtendedWorkHours, Sessions, Certificate_Authority, Configuration
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from contextlib import contextmanager
@@ -266,3 +266,12 @@ class DatabaseManager:
                 return allowed_schedule
             else:
                 return None
+            
+
+    # GET GRACE_LOGIN
+    # The filter is equals one because is a unique register to hold grace_login time
+    def get_grace_login(self):
+        with self.session_scope() as session:
+            return session.query(Configuration.grace_login).filter(Configuration.id == 1).first()
+
+

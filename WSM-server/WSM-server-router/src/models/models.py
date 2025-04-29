@@ -202,3 +202,10 @@ class Certificate_Authority(Base):
     fqdn = Column(String(100), nullable=False)
     certificate = Column(Text, nullable=False)
     validity = Column(DateTime(timezone=True), nullable=False)
+
+class Configuration(Base):
+    __tablename__ = 'configuration'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    grace_login = Column(Integer, nullable=False, default=5)
+    create_timestamp = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+    update_timestamp = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False)
