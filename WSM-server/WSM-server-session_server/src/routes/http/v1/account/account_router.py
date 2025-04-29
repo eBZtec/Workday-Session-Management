@@ -10,7 +10,8 @@ from src.models.dto.account_dto import AccountDTO
 from src.models.models import FlexTime
 from src.services.account.presenter.search_flex_time_presenter import SearchFlexTimePresenter
 from src.services.auth_service import AuthService
-from src.models.schema.request_models import StandardWorkHoursSchema, StandardWorkHoursResponse, FlexTimeResponse
+from src.models.schema.request_models import StandardWorkHoursSchema, StandardWorkHoursResponse, FlexTimeResponse, \
+    AccountDisableSchema
 from src.controllers.account.disable_account_controller import DisableAccountController
 from src.controllers.account.enable_account_controller import EnableAccountController
 from src.controllers.account.logoff_account_controller import LogoffAccountController
@@ -50,9 +51,10 @@ async def update(
 )
 async def deactivate(
         background_task: BackgroundTasks,
-        uid: str
+        uid: str,
+        disable_data: AccountDisableSchema
 ):
-    background_task.add_task(DisableAccountController.execute, uid)
+    background_task.add_task(DisableAccountController.execute, uid, disable_data)
 
 
 @router.post(
