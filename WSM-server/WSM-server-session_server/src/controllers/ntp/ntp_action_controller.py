@@ -4,10 +4,9 @@ from src.services.ntp.ntp_time_service import ntpTimeService
 from src.models.schema.request_models import NTP_response, LocationRequest
 from timezonefinder import TimezoneFinder
 from datetime import datetime
+from pathlib import Path
 import pytz
 import json
-from pathlib import Path
-
 
 # Global cache for loaded location data
 LOCATION_DATA = None
@@ -28,6 +27,7 @@ def load_location_data():
             logger.error(f"Error while loading location data: {e}")
             raise HTTPException(status_code=500, detail="Error loading location data")
 
+# Mapping IBGE UF codes to full state names
 UF_CODES = {
     11: "Rondônia", 12: "Acre", 13: "Amazonas", 14: "Roraima", 15: "Pará",
     16: "Amapá", 17: "Tocantins", 21: "Maranhão", 22: "Piauí", 23: "Ceará",
@@ -64,30 +64,33 @@ class NTPActionController:
 
     async def execute(self, location: LocationRequest):
         """
-        Main method to fetch current NTP time and convert it to local time
-        based on the IBGE municipality code provided in the request.
+        Main method to fetch current NTP time (assumed from São Paulo timezone)
+        and convert it to local time based on the IBGE municipality code.
         """
         try:
             logger.info(f"Starting NTP time process for IBGE Code: {location.ibge_code}")
 
-            # Get NTP time from the time service
+            # Get NTP time from the service
             ntp_time = ntpTimeService.get_ntp_time()
-            logger.debug(f"NTP time received: {ntp_time}")
 
-            if ntp_time is None:
-                logger.error("Failed to retrieve NTP time.")
-                raise HTTPException(status_code=500, detail="Could not retrieve NTP time")
+            # Make NTP time timezone-aware with São Paulo timezone if it's naive
+            if ntp_time.tzinfo is None:
+                logger.warning("NTP time is naive. Applying timezone America/Sao_Paulo manually.")
+                sao_paulo_tz = pytz.timezone("America/Sao_Paulo")
+                ntp_time = sao_paulo_tz.localize(ntp_time)
 
-            # Load municipalities from JSON
+            logger.debug(f"NTP time set to Sao Paulo timezone: {ntp_time}")
+
+            # Load location data (once)
             load_location_data()
 
-            # Find the city data using IBGE code
+            # Find municipality info by IBGE code
             city_data = find_city_data_by_ibge(location.ibge_code, LOCATION_DATA)
             if not city_data:
                 logger.error(f"Municipality not found for IBGE code: {location.ibge_code}")
                 raise HTTPException(status_code=404, detail="Location not found")
 
-            # Get timezone from lat/lng
+            # Determine timezone using latitude/longitude
             tf = TimezoneFinder()
             timezone_str = tf.timezone_at(lat=city_data["lat"], lng=city_data["lng"])
             logger.info(f"Timezone found for {city_data['city']}: {timezone_str}")
@@ -96,15 +99,15 @@ class NTPActionController:
                 logger.error(f"Timezone not found for coordinates: {city_data}")
                 raise HTTPException(status_code=404, detail="Timezone not found")
 
-            # Convert NTP time to local time
-            local_time = ntp_time.astimezone(pytz.timezone(timezone_str))
+            # Convert NTP time (São Paulo) to local time
+            city_tz = pytz.timezone(timezone_str)
+            local_time = datetime.now(city_tz)
             logger.debug(f"Local time converted: {local_time}")
 
-            # Return formatted response
             return NTP_response(
-                ntp=ntp_time.strftime('%Y-%m-%d %H:%M:%S %Z%z'),
-                local_time=local_time.strftime('%Y-%m-%d %H:%M:%S %Z%z'),
-                country="Brazil",  # Fixed value since all municipalities are in Brazil
+                ntp=ntp_time.strftime('%Y-%m-%d %H:%M:%S'),
+                local_time=local_time.strftime('%Y-%m-%d %H:%M:%S'),
+                country="Brazil",
                 state=city_data["state"],
                 city=city_data["city"]
             )

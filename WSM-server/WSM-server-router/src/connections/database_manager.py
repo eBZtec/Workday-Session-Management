@@ -267,9 +267,9 @@ class DatabaseManager:
             else:
                 return None
             
-def get_grace_login(self):
-    with self.session_scope() as session:
-        result = session.query(Configuration.grace_login).filter(Configuration.id == 1).first()
-        return result[0] if result else None
+    def get_grace_login(self):
+        with self.session_scope() as session:
+            result = session.query(Configuration.grace_login).filter(Configuration.id == 1).first()
+            return result[0] if result else None
 
 
