@@ -50,6 +50,7 @@ class FlexTimeSchema(StandardWorkHoursSchema):
 
 class AccountDisableSchema(BaseModel):
     disable_reason: str
+    disable_time_in_seconds: int = 60
 
 
 class EventsSchema(BaseModel):

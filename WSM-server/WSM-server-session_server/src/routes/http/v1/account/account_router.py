@@ -1,16 +1,16 @@
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, status, Depends, BackgroundTasks, HTTPException, Query
+from fastapi import APIRouter, status, Depends, BackgroundTasks, Query
 from starlette.status import HTTP_200_OK
 
+from src.connections.scheduler import get_scheduler
 from src.controllers.account.lock_account_controller import LockAccountController
 from src.controllers.account.search_account_by_uid_controller import SearchAccountByUidController
 from src.models.dto.account_dto import AccountDTO
-from src.models.models import FlexTime
 from src.services.account.presenter.search_flex_time_presenter import SearchFlexTimePresenter
 from src.services.auth_service import AuthService
-from src.models.schema.request_models import StandardWorkHoursSchema, StandardWorkHoursResponse, FlexTimeResponse, \
+from src.models.schema.request_models import StandardWorkHoursResponse, FlexTimeResponse, \
     AccountDisableSchema
 from src.controllers.account.disable_account_controller import DisableAccountController
 from src.controllers.account.enable_account_controller import EnableAccountController
@@ -52,9 +52,10 @@ async def update(
 async def deactivate(
         background_task: BackgroundTasks,
         uid: str,
-        disable_data: AccountDisableSchema
+        disable_data: AccountDisableSchema,
+        scheduler = Depends(get_scheduler)
 ):
-    background_task.add_task(DisableAccountController.execute, uid, disable_data)
+    background_task.add_task(DisableAccountController.execute, uid, disable_data, scheduler)
 
 
 @router.post(
