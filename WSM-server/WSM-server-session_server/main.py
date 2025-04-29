@@ -1,9 +1,24 @@
+from contextlib import asynccontextmanager
 from datetime import timedelta
-from fastapi import FastAPI, Depends, HTTPException, status, Form
+from fastapi import FastAPI, HTTPException, status, Form
+
+from src.config.wsm_logger import logger
+from src.connections.scheduler import scheduler
 from src.routes.http.router import api_router
 from src.services.auth_service import AuthService, Token
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler.start()
+    logger.info("AsyncIO Scheduler started")
+
+    yield
+
+    scheduler.shutdown()
+    logger.info("AsyncIO Scheduler shutdown")
+
+
+app = FastAPI(lifespan=lifespan)
 # fastapi dev main.py
 
 # Instance of the authentication service
