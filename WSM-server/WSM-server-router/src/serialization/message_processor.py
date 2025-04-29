@@ -218,6 +218,7 @@ class MessageProcessor:
             title = "Notification"
             options = "yes_no"
             try:
+                grace_login = self.dm.get_grace_login()
                 account = self.dm.get_by_uid(StandardWorkHours, user)
                 if account:
                     unrestricted = account.unrestricted
@@ -234,7 +235,7 @@ class MessageProcessor:
                     self.add_new_session(session_data) #Send start session to session table
 
                     self.sent_to_session_audit(action_type="start", session_data=session_data) #Sent do function to preprare to sent do audit_database, when user STARTS to use
-                    user_json = {"action": action, "hostname": hostname, "user": user, "timezone": timezone,"unrestricted": unrestricted,"enable": enable, "allowed_schedule": allowed_schedule,"timestamp": timestamp,"message":message,"title":title,"options":options}
+                    user_json = {"action": action, "hostname": hostname, "grace_login": grace_login ,"user": user, "timezone": timezone,"unrestricted": unrestricted,"enable": enable, "allowed_schedule": allowed_schedule,"timestamp": timestamp,"message":message,"title":title,"options":options}
                     return user_json
                 else:
                     self.logger.error(f"WSM Router - message_processor -  Error when trying to find user:{user}")
@@ -339,9 +340,10 @@ class MessageProcessor:
             message= None
             title = "Notification"
             options = "yes_no"
+            grace_login = self.dm.get_grace_login()
             try:
                 try:
-                    user_json = {"action": action, "hostname": hostname, "user": user, "timezone": timezone, "unrestricted": unrestricted,"enable": enable, "allowed_schedule": allowed_schedule,"timestamp": timestamp,"message":message,"title":title,"options":options}
+                    user_json = {"action": action, "hostname": hostname, "user": user, "grace_login": grace_login, "timezone": timezone, "unrestricted": unrestricted,"enable": enable, "allowed_schedule": allowed_schedule,"timestamp": timestamp,"message":message,"title":title,"options":options}
                     return hostname,user_json
                 except Exception as e:
                     self.logger.error(f"WSM Router: No hostname find for this uid {user}")
