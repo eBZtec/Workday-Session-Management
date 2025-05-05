@@ -306,16 +306,17 @@ namespace SessionService.Service
             {
                 LogManager.Log("CA certificate already in Certificate Store.");
             }
-            if (GetCertFromStore(StoreName.My, MyMachineName) == null)
+            try
             {
                 var (publicKey, privateKey) = GenerateRsaKeyPair();
                 CreateMyCertificate(publicKey, privateKey);
                 LogManager.Log($"Creating {MyMachineName} CSR and requesting local machine certificate.");
             }
-            else
+            catch (Exception ex)
             {
-                LogManager.Log($"{MyMachineName} certificate already in Certificate Store.");
+                LogManager.Log($"Machine certificate not found or invalid: {ex.Message}");
             }
+
 
         }
 
