@@ -15,19 +15,19 @@ RequestExecutionLevel admin
 
 ; Set installer name and output
 Name "Workday Session Management - Windows Agent"
-OutFile "WSM Setup1.exe"
+OutFile "WSM Setup.exe"
 
 ; Define installation directory
 InstallDir "$PROGRAMFILES32\eBZ Tecnologia\Workday Session Management"
 
 Section "Install Other Setups"
   ; Include the setups in the installer and extract them at runtime
-  File /oname=$TEMP\DotNetRuntimeInstaller.exe "dotnet-runtime-8.0.11-win-x64.exe"
+  File /oname=$TEMP\DotNetRuntimeInstaller.exe "dotnet-runtime-9.0.4-win-x64.exe"
   File /oname=$TEMP\DesktopAgentSetup.exe "WSM Desktop Agent Setup.exe"
   File /oname=$TEMP\WSMServiceSetup.exe "WSM Service Setup.exe"
 
   ; Install .NET Runtime
-  DetailPrint "Installing .NET Runtime 8.0.11..."
+  DetailPrint "Installing .NET Runtime..."
   ExecWait '"$TEMP\DotNetRuntimeInstaller.exe" /quiet /norestart'
   IfErrors 0 +2
   MessageBox MB_OK "Error installing .NET Runtime."

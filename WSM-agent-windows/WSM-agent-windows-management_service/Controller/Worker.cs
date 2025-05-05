@@ -15,6 +15,7 @@ public class Worker : BackgroundService
     private ClientInfo clientInfo;
     private DealerSocket dealer;
     private string lastUsrLogon = "";
+    public static bool inAuditMode = true;
 
     public Worker()
     {
@@ -61,6 +62,8 @@ public class Worker : BackgroundService
             string pubUrl = "tcp://localhost:12345";
             string dealerUrl = "tcp://" + StartupManager.getServerURL();
 
+            inAuditMode = StartupManager.getMode();
+
             try
             {
                 InitializePublisher(publisher, pubUrl);
@@ -68,6 +71,7 @@ public class Worker : BackgroundService
 
                 _ = Task.Run(() => WorkdayManager.Vigilance(userSessions, usersAllowed, publisher, stoppingToken));
                 _ = Task.Run(() => StartupManager.HeartBeat(clientInfo, dealer, stoppingToken));
+                _ = Task.Run(() => RefreshMode(stoppingToken));
 
                 while (!stoppingToken.IsCancellationRequested)
                 {
@@ -216,7 +220,8 @@ public class Worker : BackgroundService
 
     private void HandleLogoffCase(ServerResponse messageObject)
     {
-        Thread.Sleep(TimeSpan.FromSeconds(5));
+        if(inAuditMode)return;
+        Thread.Sleep(TimeSpan.FromSeconds(10));
 
         List<int> ids = SessionManager.GetSessionIDs(messageObject.user ?? "Unknown", userSessions);
         foreach (int id in ids)
@@ -227,12 +232,24 @@ public class Worker : BackgroundService
 
     private void HandleLockCase(ServerResponse messageObject)
     {
-        Thread.Sleep(TimeSpan.FromSeconds(5));
+        if(inAuditMode)return;
+        Thread.Sleep(TimeSpan.FromSeconds(10));
 
         List<int> ids = SessionManager.GetSessionIDs(messageObject.user ?? "Unknown", userSessions);
         foreach (int id in ids)
         {
             SessionManager.Lock(id, messageObject.user);
+        }
+    }
+
+    private async Task RefreshMode(CancellationToken stoppingToken){
+        while(!stoppingToken.IsCancellationRequested){
+            var currentMode = inAuditMode;
+            inAuditMode = StartupManager.getMode();
+            if(currentMode != inAuditMode){
+                LogManager.Log($"refreshMode -> Audit mode updated, new value: {inAuditMode}");
+            }
+            await Task.Delay(TimeSpan.FromMinutes(5));
         }
     }
 }

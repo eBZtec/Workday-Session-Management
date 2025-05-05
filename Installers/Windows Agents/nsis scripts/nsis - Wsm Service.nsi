@@ -54,7 +54,7 @@ Section "Install"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${ServiceName}" "UninstallString" '"$INSTDIR\uninstall.exe"'
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${ServiceName}" "DisplayIcon" "$INSTDIR\SessionService.exe"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${ServiceName}" "Publisher" "eBZ Tecnologia"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${ServiceName}" "DisplayVersion" "1.0.2"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${ServiceName}" "DisplayVersion" "1.0.3"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${ServiceName}" "InstallLocation" "$INSTDIR"
     WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${ServiceName}" "NoModify" 1
     WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${ServiceName}" "NoRepair" 1
