@@ -11,7 +11,7 @@ class AccountStatusManager:
         account: StandardWorkHours | None = database_manager.get_by_uid(StandardWorkHours, uid)
 
         if account:
-            entry = {"enable": True}
+            entry = {"enable": True, "disable_reason": None}
             database_manager.update_entry(StandardWorkHours, account.id, entry)
 
             account.enable = True
@@ -21,13 +21,13 @@ class AccountStatusManager:
             raise Exception(f"Account not find or uid \"{uid}\"")
 
     @staticmethod
-    async def disable(uid: str):
+    async def disable(uid: str, disable_reason: str):
         database_manager = DatabaseManager()
 
         account: StandardWorkHours | None = database_manager.get_by_uid(StandardWorkHours, uid)
 
         if account:
-            entry = {"enable": False}
+            entry = {"enable": False, "disable_reason": disable_reason}
             database_manager.update_entry(StandardWorkHours, account.id, entry)
 
             account.enable = False

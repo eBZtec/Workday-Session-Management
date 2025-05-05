@@ -48,6 +48,11 @@ class FlexTimeSchema(StandardWorkHoursSchema):
     work_time: datetime
 
 
+class AccountDisableSchema(BaseModel):
+    disable_reason: str
+    disable_time_in_seconds: int = 60
+
+
 class EventsSchema(BaseModel):
     event_type: str
 
@@ -118,9 +123,7 @@ class StandardWorkHoursResponse(StandardWorkHoursSchema):
 ### NTP Server
 
 class LocationRequest(BaseModel):
-    country: str
-    state: str
-    city: str
+    ibge_code: int
 
 
 class NTP_response(BaseModel):
