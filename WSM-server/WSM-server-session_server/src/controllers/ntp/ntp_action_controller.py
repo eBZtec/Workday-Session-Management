@@ -38,6 +38,7 @@ UF_CODES = {
     52: "Goiás", 53: "Distrito Federal"
 }
 
+
 def find_city_data_by_ibge(ibge_code: int, data: list):
     """
     Searches for a municipality using its IBGE code in the loaded data.
@@ -59,6 +60,7 @@ def find_city_data_by_ibge(ibge_code: int, data: list):
 
     logger.warning(f"Municipality not found for IBGE code: {ibge_code}")
     return None
+
 
 class NTPActionController:
 
