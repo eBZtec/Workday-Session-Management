@@ -268,6 +268,7 @@ def get_certs(database_url:str ):
         List[dict]: Lista de registros como dicionários.
     """
     try:
+        logger.info("Starting process to get Active Directory agent certificate")
         table_name = "certificate_authority"
         # Conectar ao banco de dados
         connection = psycopg2.connect(database_url)
@@ -275,10 +276,11 @@ def get_certs(database_url:str ):
 
         # Query para buscar todos os registros
         hostname = str(os.getenv("AD_HOSTNAME"))
+        logger.debug(f"Active directory FQDN defined as \"{hostname}\"")
         query = f"SELECT certificate FROM {table_name} WHERE fqdn=%s"
         cursor.execute(query, (hostname,))
         results = cursor.fetchone()
-        print (f"Results: {results} ")
+        logger.debug(f"Results found \"{results} for FQDN \"{hostname}\"")
         result = results["certificate"]
         return result
     except psycopg2.Error as e:
