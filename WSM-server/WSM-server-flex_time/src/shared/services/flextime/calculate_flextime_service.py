@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
@@ -23,6 +24,7 @@ class CalculateFlextimeService:
     def calculate(self) -> StandardWorkHours:
         account = self._account
         timeframes = []
+        formatted_work_hours = None
         wsm_logger.info(f"Starting service to calculate flex work hours for account \"{account.uid}\"")
 
         wsm_logger.debug(f"Standard work time range for today, start \"{self._standard_work_time[0]}\", end \"{self._standard_work_time[1]}\"")
@@ -36,6 +38,7 @@ class CalculateFlextimeService:
         if account.enable:
             wsm_logger.info(f"Account {account.uid} is enabled. Calculating work hours...")
             current_work_hours = self.get_effective_work_hours()
+            formatted_work_hours = self.define_work_hour_formatted(current_work_hours)
             flex_time_timeframes = self.flex_times_as_timeframes(current_work_hours)
             timeframes = cleanup(flex_time_timeframes)
             self.debug_timeframe(timeframes)
@@ -45,8 +48,10 @@ class CalculateFlextimeService:
         allowed_work_hours = allowed_work_days_as_json(timeframes)
 
         account.allowed_work_hours = allowed_work_hours
+        account.formatted_work_hours = formatted_work_hours
 
         wsm_logger.info(f"Allowed work hours defined as {allowed_work_hours} for account {account.uid}")
+        wsm_logger.debug(f"Formatted Allowed work hours defined as {formatted_work_hours} for account {account.uid}")
 
         wsm_logger.debug(f"Standard work hours defined successfully as \"{account.allowed_work_hours}\"")
         wsm_logger.info(f"Finishing service to calculate flex work hours for account \"{self._account.uid}\"")
@@ -90,6 +95,44 @@ class CalculateFlextimeService:
 
     def get_effective_work_hours_for_night(self) -> set[FlexTime]:
         pass
+
+    def define_work_hour_formatted(self, flex_times: list[FlexTime]) -> str:
+        i = 0
+        time_worked = 0.0
+        work_hour_in: datetime | None = None
+        work_hour_out: datetime | None = None
+
+        while i < len(flex_times):
+            current = flex_times[i]
+            work_hour_in = None
+
+            if i == 0 and current.work_time_type == WorkTimeType.OUT:
+                wsm_logger.debug(
+                    f"Defining work hour formatted, current flex time \"{current.work_time}\", iteration {i}, has journey type \"{current.work_time_type}\". Skipping...")
+                i = i + 1
+                continue
+
+            work_hour_in = current.work_time
+
+            if (i + 1) == len(flex_times):
+                work_hours_left = self._account_work_hours.total_seconds() - time_worked
+                work_hour_out = work_hour_in + timedelta(seconds=work_hours_left)
+            else:
+                _next = flex_times[i + 1].work_time
+                work_hour_out = _next
+                dt = _next - work_hour_in
+                time_worked += dt.total_seconds()
+
+            i = i + 2
+
+        wsm_logger.info(f"Work hour defined as start \"{work_hour_in}\", and \"{work_hour_out}\"")
+
+        formatted_work_hour = {
+            "start": work_hour_in.isoformat(),
+            "end": work_hour_out.isoformat()
+        }
+
+        return json.dumps(formatted_work_hour)
 
     def flex_times_as_timeframes(self, flex_times: list[FlexTime]) -> [(FlexTime, FlexTime)]:
         i = 0
