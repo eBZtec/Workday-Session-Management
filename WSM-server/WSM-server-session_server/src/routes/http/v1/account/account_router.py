@@ -1,10 +1,17 @@
-from fastapi import APIRouter, status, Depends, BackgroundTasks, HTTPException
+from datetime import datetime
+from typing import List, Optional
+
+from fastapi import APIRouter, status, Depends, BackgroundTasks, Query
 from starlette.status import HTTP_200_OK
 
+from src.connections.scheduler import get_scheduler
+from src.controllers.account.lock_account_controller import LockAccountController
 from src.controllers.account.search_account_by_uid_controller import SearchAccountByUidController
 from src.models.dto.account_dto import AccountDTO
+from src.services.account.presenter.search_flex_time_presenter import SearchFlexTimePresenter
 from src.services.auth_service import AuthService
-from src.models.schema.request_models import StandardWorkHoursSchema, StandardWorkHoursResponse
+from src.models.schema.request_models import StandardWorkHoursResponse, FlexTimeResponse, \
+    AccountDisableSchema
 from src.controllers.account.disable_account_controller import DisableAccountController
 from src.controllers.account.enable_account_controller import EnableAccountController
 from src.controllers.account.logoff_account_controller import LogoffAccountController
@@ -44,9 +51,11 @@ async def update(
 )
 async def deactivate(
         background_task: BackgroundTasks,
-        uid: str
+        uid: str,
+        disable_data: AccountDisableSchema,
+        scheduler = Depends(get_scheduler)
 ):
-    background_task.add_task(DisableAccountController.execute, uid)
+    background_task.add_task(DisableAccountController.execute, uid, disable_data, scheduler)
 
 
 @router.post(
@@ -55,6 +64,22 @@ async def deactivate(
 )
 async def enable(background_task: BackgroundTasks, uid: str):
     background_task.add_task(EnableAccountController.execute, uid)
+
+
+@router.post(
+    "/lock/{uid}",
+    status_code=status.HTTP_204_NO_CONTENT
+)
+async def lock(background_task: BackgroundTasks, uid: str):
+    background_task.add_task(LockAccountController.lock, uid)
+
+
+@router.post(
+    "/unlock/{uid}",
+    status_code=status.HTTP_204_NO_CONTENT
+)
+async def unlock(background_task: BackgroundTasks, uid: str):
+    background_task.add_task(LockAccountController.unlock, uid)
 
 
 @router.post(
@@ -74,10 +99,22 @@ async def search_account_by_uid(uid: str) -> StandardWorkHoursResponse | None:
 
 
 @router.get(
-    "/",
+    "/flextime/{uid}",
     status_code=HTTP_200_OK,
-    name="Search all accounts",
-    deprecated=True
+    name="Search flex times register by user",
+    response_model=List[FlexTimeResponse]
 )
-async def search_accounts():
-    ...
+async def get_flex_times_by_user_and_period(
+    uid: str,
+    skip: int = 0,
+    limit: int = 10,
+    date_from: Optional[datetime] = Query(None),
+    date_to: Optional[datetime] = Query(None)
+):
+    return SearchFlexTimePresenter.get_flex_time_by_user_and_date(
+        uid,
+        date_from,
+        date_to,
+        skip,
+        limit
+    )

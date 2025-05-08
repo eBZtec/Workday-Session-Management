@@ -36,7 +36,7 @@ class Config(metaclass=Singleton):
         self.log_format = os.getenv("WSM_SERVER_FLEX_TIME_LOG_FORMAT")
         self.log_level = int(os.getenv("WSM_SERVER_FLEX_TIME_LOG_LEVEL"))
         self.log_max_bytes = int(os.getenv("WSM_SERVER_FLEX_TIME_LOG_MAX_BYTES"))
-        self.log_backup_count = os.getenv("WSM_SERVER_FLEX_TIME_LOG_BACKUP_COUNT")
+        self.log_backup_count = int(os.getenv("WSM_SERVER_FLEX_TIME_LOG_BACKUP_COUNT"))
 
         self.wsm_session_db_url = os.getenv("DATABASE_URL")
 

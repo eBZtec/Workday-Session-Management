@@ -5,7 +5,7 @@ from datetime import datetime, time
 from enum import Enum
 
 from src.enums.target_status_type import TargetStatusType
-from src.enums.types import JourneyType
+from src.enums.types import JourneyType, WorkTimeType
 
 
 class AllowedWorkSchema(str, Enum):
@@ -34,12 +34,23 @@ class StandardWorkHoursSchema(BaseModel):
     cn: str
     l: str
     enable: bool = True
+    lock: bool = False
     unrestricted: bool = False
+    formatted_work_hours: Optional[str] = None
+    active_directory_account_status: Optional[bool] = None
     deactivation_date: Optional[datetime] = None
+    block_station_during_interval: bool = False
+    block_station_during_interval_in_minutes: int | None = 0
+    disable_reason: str | None = None
 
 
 class FlexTimeSchema(StandardWorkHoursSchema):
     work_time: datetime
+
+
+class AccountDisableSchema(BaseModel):
+    disable_reason: str
+    disable_time_in_seconds: int = 60
 
 
 class EventsSchema(BaseModel):
@@ -59,6 +70,10 @@ class ExtendedWorkHoursSchema(BaseModel):
     week_days_count: str = ""
     extension_active: int = 0
     ou: int = 0
+
+class FlexTimeResponse(BaseModel):
+    id: int
+    work_time: datetime
 
 class ExtendedWorkHoursResponse(ExtendedWorkHoursSchema):
     id: int
@@ -138,3 +153,12 @@ class OnlineHostInfoResponse(BaseModel):
     client_uptime: str
     client_agent_info: str
 
+
+class ConfigurationRequest(BaseModel):
+    grace_login: int
+
+
+class ConfigurationResponse(BaseModel):
+    grace_login: int
+    create_timestamp: datetime
+    update_timestamp: datetime

@@ -37,6 +37,8 @@ class FixedWorkTimeManager(WorkTimeManager):
             entry = standard_work_hours.model_dump()
             dm.update_entry(StandardWorkHours, account.id, entry)
 
+            await ConfigureAccountTargets.execute(account.id)
+
             return account
         else:
             raise Exception(f"Account \"{uid}\" not found in the database")

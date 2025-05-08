@@ -15,6 +15,7 @@ class AgentActionController:
 
             message = payload.model_dump()
             rabbitmq_send_message.send(message)
+            logger.info(f"Message {payload} sent successfully")
         except Exception as e:
             logger.error(f"Could not send action {payload.model_dump()}, reason: {e}")
             raise HTTPException(

@@ -35,6 +35,14 @@ class Certificate_Authority(Base):
     client = relationship("Client", back_populates="certificate_authority", uselist=False, cascade="all, delete-orphan")
 
 
+class Configuration(TimestampedBase):
+    __tablename__ = 'configuration'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    grace_login = Column(Integer, nullable=False, default=5)
+    create_timestamp = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+    update_timestamp = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=True)
+
+
 # Classe Client
 class Client(TimestampedBase):
     __tablename__ = 'client'
@@ -99,6 +107,7 @@ class StandardWorkHours(TimestampedBase):
     start_time = Column(String(5), nullable=False)
     end_time = Column(String(5), nullable=False)
     allowed_work_hours = Column(Text, nullable=True)
+    formatted_work_hours = Column(Text, nullable=True)
     uf = Column(String(2), nullable=False)
     st = Column(String(35), nullable=False)
     c = Column(String(100), nullable=False)
@@ -109,6 +118,11 @@ class StandardWorkHours(TimestampedBase):
     l = Column(String(240))
     unrestricted = Column(Boolean, default=False)
     enable = Column(Boolean, nullable=False, default=True)
+    lock = Column(Boolean, default=False)
+    disable_reason = Column(String(240))
+    active_directory_account_status = Column(Boolean, nullable=True)
+    block_station_during_interval = Column(Boolean, default=False)
+    block_station_during_interval_in_minutes = Column(Integer, nullable=True)
     deactivation_date = Column(DateTime(timezone=True),nullable=True)
     create_timestamp = Column(DateTime(timezone=True), default=func.now(), nullable=False)
     update_timestamp = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False)

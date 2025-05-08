@@ -41,6 +41,7 @@ class WSMQueueManager(metaclass=Singleton):
         self.channel.queue_declare(queue=self.queue_name, durable=True)
 
     def start_mq(self, callback):
+        self._init_connection()
         self.channel.basic_consume(queue=self.queue_name, on_message_callback=callback, auto_ack=True)
         wsm_logger.info(f"Waiting messages on queue \"{self.queue_name}\"...")
 

@@ -18,12 +18,13 @@ Pre-installed python virtualenv for Workday Session Management (WSM).
 
 %prep
 mkdir -p %{buildroot}/opt/wsm
+mkdir -p %{buildroot}/opt/wsm/wsmvenv3.12
 cd %{buildroot}/opt/wsm
 curl -o requirements.txt http://gitea.ebz:3000/eBZ/Workday_Session_Management/raw/branch/main/requirements.txt
-chroot %{buildroot}
-cd /opt/wsm
-python3.12 -m venv /opt/wsm/wsmvenv3.12
-. /opt/wsm/wsmvenv3.12/bin/activate && pip install --upgrade pip && pip install -r /opt/wsm/requirements.txt
+cd %{buildroot}/opt/wsm
+/usr/bin/python3.12 -m venv %{buildroot}/opt/wsm/wsmvenv3.12
+%{buildroot}/opt/wsm/wsmvenv3.12/bin/pip install --upgrade pip 
+%{buildroot}/opt/wsm/wsmvenv3.12/bin/pip install -r %{buildroot}/opt/wsm/requirements.txt
 
 %build
 # nothing needed

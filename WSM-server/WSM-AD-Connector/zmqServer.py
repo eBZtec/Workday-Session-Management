@@ -196,18 +196,21 @@ def process_message(message):
         action = "ad_update"
         allowed_work_hours = message.get("allowed_work_hours")
         user = message.get("uid")
-        enable = message.get("enable")
+        enable = message.get("active_directory_account_status")
+        lock = message.get("lock")
+        lock = bool(lock)
         timezone = str(datetime.datetime.now().astimezone().tzinfo)
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
         processed_message = {
-            "user": user,
+            "uid": user,
             "action":action,
             "allowed_work_hours": allowed_work_hours,
             "timezone": timezone,
             "timestamp": timestamp,
             "enable": enable,
-            "unlock": enable
+            "unlock": not lock
         }
+        logger.info(f"Message defined as {processed_message}")
     except Exception as e:
         logger.error("Error to process message to AD")
     return processed_message
@@ -237,7 +240,7 @@ def process_response(response):
     private_key = load_private_key()
 
     data = json.loads(response)
-    logger.info("\nResponse JSON message:\n", json.dumps(data, indent=4))
+    logger.info("Response JSON message: " + json.dumps(data, indent=4))
 
     encrypted_message = base64.b64decode(data["EncryptedMessage"])
 
@@ -251,7 +254,7 @@ def process_response(response):
         "DecryptedMessage": decrypted_message
     }
 
-    logger.info("\nDecrypted JSON response:\n", json.dumps(decrypted_response, indent=4))
+    logger.info("Decrypted JSON response:" + json.dumps(decrypted_response, indent=4))
 
 def get_certs(database_url:str ):
     """
@@ -265,6 +268,7 @@ def get_certs(database_url:str ):
         List[dict]: Lista de registros como dicionários.
     """
     try:
+        logger.info("Starting process to get Active Directory agent certificate")
         table_name = "certificate_authority"
         # Conectar ao banco de dados
         connection = psycopg2.connect(database_url)
@@ -272,10 +276,11 @@ def get_certs(database_url:str ):
 
         # Query para buscar todos os registros
         hostname = str(os.getenv("AD_HOSTNAME"))
+        logger.debug(f"Active directory FQDN defined as \"{hostname}\"")
         query = f"SELECT certificate FROM {table_name} WHERE fqdn=%s"
         cursor.execute(query, (hostname,))
         results = cursor.fetchone()
-        print (f"Results: {results} ")
+        logger.debug(f"Results found \"{results} for FQDN \"{hostname}\"")
         result = results["certificate"]
         return result
     except psycopg2.Error as e:
