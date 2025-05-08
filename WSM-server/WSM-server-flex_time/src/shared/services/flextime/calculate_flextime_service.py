@@ -22,6 +22,7 @@ class CalculateFlextimeService:
 
     def calculate(self) -> StandardWorkHours:
         account = self._account
+        timeframes = []
         wsm_logger.info(f"Starting service to calculate flex work hours for account \"{account.uid}\"")
 
         wsm_logger.debug(f"Standard work time range for today, start \"{self._standard_work_time[0]}\", end \"{self._standard_work_time[1]}\"")
@@ -32,10 +33,15 @@ class CalculateFlextimeService:
         wsm_logger.debug(
             f"Work day type for account \"{account.uid}\" is \"{self._account_work_day_type}\"")
 
-        current_work_hours = self.get_effective_work_hours()
-        flex_time_timeframes = self.flex_times_as_timeframes(current_work_hours)
-        timeframes = cleanup(flex_time_timeframes)
-        self.debug_timeframe(timeframes)
+        if account.enable:
+            wsm_logger.info(f"Account {account.uid} is enabled. Calculating work hours...")
+            current_work_hours = self.get_effective_work_hours()
+            flex_time_timeframes = self.flex_times_as_timeframes(current_work_hours)
+            timeframes = cleanup(flex_time_timeframes)
+            self.debug_timeframe(timeframes)
+        else:
+            wsm_logger.info(f"Account {account.uid} is disabled. Blocking work hours...")
+
         allowed_work_hours = allowed_work_days_as_json(timeframes)
 
         account.allowed_work_hours = allowed_work_hours
