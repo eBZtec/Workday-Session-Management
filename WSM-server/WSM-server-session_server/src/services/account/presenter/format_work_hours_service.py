@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, date
 
 from src.config.wsm_logger import logger
 
@@ -10,47 +10,18 @@ class FormatWorkHoursService:
         try:
             work_hours: dict = json.loads(work_hours)
             logger.debug(f"Work hours defined as {work_hours}")
-            today = datetime.today()
-            today_week_day = today.weekday()
+            result = None
 
-            week_map = {
-                0: "MONDAY",
-                1: "TUESDAY",
-                2: "WEDNESDAY",
-                3: "THURSDAY",
-                4: "FRIDAY",
-                5: "SATURDAY",
-                6: "SUNDAY"
-            }
+            if "start" in work_hours:
+                start_time = datetime.fromisoformat(work_hours["start"])
 
-            week_day = week_map.get(today_week_day)
+                logger.debug(f"Today is {date.today()}")
 
-            if week_day in work_hours:
-                today_work_hours: list = work_hours.get(week_day)
+                if start_time.date() == date.today():
+                    logger.debug(f"Start time {start_time} is today {date.today()}")
+                    result = work_hours
 
-                if len(today_work_hours) == 1:
-                    first_today_work_hour = today_work_hours[0]
-                    start_time = first_today_work_hour.get("start")
-                    end_time = first_today_work_hour.get("end")
-
-                    result = {
-                        "start": str(timedelta(minutes=start_time)),
-                        "end": str(timedelta(minutes=end_time)),
-                    }
-                    return str(result)
-                elif len(today_work_hours) > 0:
-                    first_today_work_hour = today_work_hours[0]
-                    last_today_work_hour = today_work_hours[-1]
-
-                    start_time = first_today_work_hour.get("start")
-                    end_time = last_today_work_hour.get("end")
-
-                    result = {
-                        "start": str(timedelta(minutes=start_time)),
-                        "end": str(timedelta(minutes=end_time)),
-                    }
-
-                    return str(result)
+            return str(result)
         except Exception as e:
             logger.warn(f"Could not format work hours, reason: {e}")
         return None

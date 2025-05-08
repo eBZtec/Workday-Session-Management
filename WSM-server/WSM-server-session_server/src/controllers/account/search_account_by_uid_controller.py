@@ -37,7 +37,7 @@ class SearchAccountByUidController:
                         targets.append(target_status_response)
 
                     account_targets = {"target_status": targets}
-                    formatted_work_hours = {"formatted_work_hours": await FormatWorkHoursService.format(account.allowed_work_hours)}
+                    formatted_work_hours = {"formatted_work_hours": await FormatWorkHoursService.format(account.formatted_work_hours)}
 
                     clean_account_data.update(formatted_work_hours)
                     clean_account_data.update(account_targets)
