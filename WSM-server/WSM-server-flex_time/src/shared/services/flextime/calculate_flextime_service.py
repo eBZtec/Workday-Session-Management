@@ -116,7 +116,7 @@ class CalculateFlextimeService:
 
             if (i + 1) == len(flex_times):
                 work_hours_left = self._account_work_hours.total_seconds() - time_worked
-                work_hour_out = work_hour_in + timedelta(seconds=work_hours_left)
+                work_hour_out = work_hour_in + timedelta(seconds=work_hours_left) - timedelta(hours=1)
             else:
                 _next = flex_times[i + 1].work_time
                 work_hour_out = _next
