@@ -31,8 +31,7 @@ class AccountDTO:
     disable_reason: Union[str, None] = None
     formatted_work_hours: Union[str, None] = None
 
-"""
+
     def __post_init__(self):
         self.uid = self.uid.lower() if self.uid else self.uid
 
-"""
