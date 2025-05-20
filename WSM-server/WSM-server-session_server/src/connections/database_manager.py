@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from typing import Optional
+from typing import Optional, Any, Type
 from sqlalchemy import create_engine, or_, desc, RowMapping
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
@@ -14,6 +14,7 @@ import os
 
 # Carregar as variáveis do arquivo .env
 load_dotenv()
+
 
 class DatabaseManager:
     def __init__(self):
@@ -127,49 +128,42 @@ class DatabaseManager:
                 for key, value in update_data.items():
                     setattr(entry, key, value)
 
+    ######   CUSTOMIZED QUERIES   ###########
 
-   
-
-######   CUSTOMIZED QUERIES   ###########
-
-    def get_id_by_uid(self, model,uid_):
+    def get_id_by_uid(self, model, uid_):
         with self.session_scope() as session:
             return session.query(model.id).filter_by(uid=uid_).scalar()
-
 
     def get_by_uid(self, model, uid_):
         with self.session_scope() as session:
             return session.query(model).filter_by(uid=uid_).first()
-        
 
-    def get_by_employee_id(self,model,employee_id_):
+    def get_by_employee_id(self, model, employee_id_):
         with self.session_scope() as session:
             return session.query(model).filter_by(employee_id=employee_id_).first()
-        
 
-######    CUSTOMIZED PONTUAL QUERIES    ############
+    ######    CUSTOMIZED PONTUAL QUERIES    ############
 
-    def get_holidays(self, city) -> list[Holidays] | None:
+    def get_holidays(self, city) -> list[Type[Holidays]]:
         with self.session_scope() as session:
             return session \
                 .query(Holidays) \
-                .filter(or_(Holidays.holiday_type.like("N"),Holidays.city == city)) \
+                .filter(or_(Holidays.holiday_type.like("N"), Holidays.city == int(city))) \
                 .all()
-
 
     def get_active_extensions(self, uid, start_date: datetime, end_date: datetime):
         with self.session_scope() as session:
             return session.query(ExtendedWorkHours) \
                 .filter(
-                    ExtendedWorkHours.uid == uid,
-                    ExtendedWorkHours.extension_end_time >= start_date,
-                    ExtendedWorkHours.extension_end_time <= end_date,
-                    ExtendedWorkHours.extension_active == 0
-                ).all()
-        
+                ExtendedWorkHours.uid == uid,
+                ExtendedWorkHours.extension_end_time >= start_date,
+                ExtendedWorkHours.extension_end_time <= end_date,
+                ExtendedWorkHours.extension_active == 0
+            ).all()
+
     def get_enable_targets(self):
         with self.session_scope() as session:
-            return session.query(Target).filter(Target.enabled==TargetStatusType.ENABLE).all()
+            return session.query(Target).filter(Target.enabled == TargetStatusType.ENABLE).all()
 
     def get_all_targets(self):
         with self.session_scope() as session:
@@ -177,36 +171,32 @@ class DatabaseManager:
 
     def get_target_status_by_account_id(self, account_id: int):
         with self.session_scope() as session:
-            return session.query(Target, TargetStatus).join(Target, TargetStatus.id_target == Target.id).filter(TargetStatus.std_wrk_id == account_id).all()
+            return session.query(Target, TargetStatus).join(Target, TargetStatus.id_target == Target.id).filter(
+                TargetStatus.std_wrk_id == account_id).all()
 
     def get_user_session_timezone(self, user_: str):
         with self.session_scope() as session:
             return session.query(Sessions).filter(Sessions.user == user_).all()
 
-    def get_target_by_name(self, name_: Optional [str] = None):
+    def get_target_by_name(self, name_: Optional[str] = None):
         with self.session_scope() as session:
             query = session.query(Target)
             if name_:
                 query = query.filter(Target.target == name_)
             return query.all()
-        
-        
+
     def get_all_hosts_sessions(self):
         with self.session_scope() as session:
             return session.query(Sessions).filter(Sessions.status == "active").order_by(Sessions.hostname).all()
-            
-
 
     def get_host_sessions(self, _host):
         with self.session_scope() as session:
-            return session.query(Sessions).filter(Sessions.status == "active", Sessions.hostname == _host).order_by(Sessions.hostname).all()
-            
-
+            return session.query(Sessions).filter(Sessions.status == "active", Sessions.hostname == _host).order_by(
+                Sessions.hostname).all()
 
     def get_last_flex_time_by_user_id(self, user_id: int) -> FlexTime | None:
         with self.session_scope() as session:
-            return session.query(FlexTime).filter(FlexTime.std_wrk_id==user_id).order_by(desc(FlexTime.id)).first()
-
+            return session.query(FlexTime).filter(FlexTime.std_wrk_id == user_id).order_by(desc(FlexTime.id)).first()
 
     def get_client_info_by_hostname(self, _host):
         with self.session_scope() as session:
@@ -218,7 +208,8 @@ class DatabaseManager:
                                  Client.os_version,
                                  Client.uptime,
                                  Client.agent_info
-                                 ).join(Sessions, Sessions.hostname == Client.hostname).filter(Sessions.hostname == _host).all()
+                                 ).join(Sessions, Sessions.hostname == Client.hostname).filter(
+                Sessions.hostname == _host).all()
 
     def get_all_sessions_client_info(self):
         with self.session_scope() as session:
@@ -232,7 +223,8 @@ class DatabaseManager:
                                  Client.agent_info
                                  ).join(Sessions, Sessions.hostname == Client.hostname).all()
 
-    def get_flex_time_by_user_and_date_with_pagination(self, account_id: int, date_from: datetime = None, date_to: datetime = None, skip = 0, limit = 10) -> list[FlexTime]:
+    def get_flex_time_by_user_and_date_with_pagination(self, account_id: int, date_from: datetime = None,
+                                                       date_to: datetime = None, skip=0, limit=10) -> list[FlexTime]:
         with self.session_scope() as session:
             query = session.query(FlexTime).filter(FlexTime.std_wrk_id == account_id)
 
