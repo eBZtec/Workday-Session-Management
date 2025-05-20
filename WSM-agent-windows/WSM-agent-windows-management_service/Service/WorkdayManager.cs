@@ -44,8 +44,8 @@ namespace SessionService.Service
                         {
                             if (user.username.Equals(userAllowed.username))
                             {
-                                
-                                if(userAllowed.allowed_schedule != null)
+
+                                if (userAllowed.allowed_schedule != null)
                                 {
                                     int currentMinutes = (DateTimeOffset.UtcNow.LocalDateTime.Hour * 60) + DateTimeOffset.UtcNow.LocalDateTime.Minute;
 
@@ -60,6 +60,12 @@ namespace SessionService.Service
                                                 }
                                             }
 
+                                            if (userAllowed.grace_time > 0)
+                                            {
+                                                userAllowed.grace_time--;
+                                                LogManager.Log($"Vigilance -> User: {user.username} in grace time, minutes remaning: {userAllowed.grace_time}");
+                                                break;
+                                            }
                                             LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
                                             HandleWrongHour(user.sessionID, user.username, publisher);
                                             break;
@@ -73,6 +79,12 @@ namespace SessionService.Service
                                                 }
                                             }
 
+                                            if (userAllowed.grace_time > 0)
+                                            {
+                                                userAllowed.grace_time--;
+                                                LogManager.Log($"Vigilance -> User: {user.username} in grace time, minutes remaning: {userAllowed.grace_time}");
+                                                break;
+                                            }
                                             LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
                                             HandleWrongHour(user.sessionID, user.username, publisher);
                                             break;
@@ -86,6 +98,12 @@ namespace SessionService.Service
                                                 }
                                             }
 
+                                            if (userAllowed.grace_time > 0)
+                                            {
+                                                userAllowed.grace_time--;
+                                                LogManager.Log($"Vigilance -> User: {user.username} in grace time, minutes remaning: {userAllowed.grace_time}");
+                                                break;
+                                            }
                                             LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
                                             HandleWrongHour(user.sessionID, user.username, publisher);
                                             break;
@@ -99,6 +117,12 @@ namespace SessionService.Service
                                                 }
                                             }
 
+                                            if (userAllowed.grace_time > 0)
+                                            {
+                                                userAllowed.grace_time--;
+                                                LogManager.Log($"Vigilance -> User: {user.username} in grace time, minutes remaning: {userAllowed.grace_time}");
+                                                break;
+                                            }
                                             LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
                                             HandleWrongHour(user.sessionID, user.username, publisher);
                                             break;
@@ -112,6 +136,12 @@ namespace SessionService.Service
                                                 }
                                             }
 
+                                            if (userAllowed.grace_time > 0)
+                                            {
+                                                userAllowed.grace_time--;
+                                                LogManager.Log($"Vigilance -> User: {user.username} in grace time, minutes remaning: {userAllowed.grace_time}");
+                                                break;
+                                            }
                                             LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
                                             HandleWrongHour(user.sessionID, user.username, publisher);
                                             break;
@@ -125,6 +155,12 @@ namespace SessionService.Service
                                                 }
                                             }
 
+                                            if (userAllowed.grace_time > 0)
+                                            {
+                                                userAllowed.grace_time--;
+                                                LogManager.Log($"Vigilance -> User: {user.username} in grace time, minutes remaning: {userAllowed.grace_time}");
+                                                break;
+                                            }
                                             LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
                                             HandleWrongHour(user.sessionID, user.username, publisher);
                                             break;
@@ -138,6 +174,12 @@ namespace SessionService.Service
                                                 }
                                             }
 
+                                            if (userAllowed.grace_time > 0)
+                                            {
+                                                userAllowed.grace_time--;
+                                                LogManager.Log($"Vigilance -> User: {user.username} in grace time, minutes remaning: {userAllowed.grace_time}");
+                                                break;
+                                            }
                                             LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
                                             HandleWrongHour(user.sessionID, user.username, publisher);
                                             break;
@@ -145,9 +187,19 @@ namespace SessionService.Service
                                         default:
                                             break;
                                     }
-                                }else{
+                                }
+                                else
+                                {
+                                    if (userAllowed.grace_time > 0)
+                                    {
+                                        userAllowed.grace_time--;
+                                        LogManager.Log($"Vigilance -> User: {user.username} in grace time, minutes remaning: {userAllowed.grace_time}");
+                                    }
+                                    else
+                                    {
                                     LogManager.Log($"Vigilance -> User: {user.username} does not have schedule!");
                                     HandleWrongHour(user.sessionID, user.username, publisher);
+                                    }
                                 }
                             }
                         }
@@ -160,7 +212,7 @@ namespace SessionService.Service
 
                 try
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(20), cancellationToken);
+                    await Task.Delay(TimeSpan.FromSeconds(60), cancellationToken);
                 }
                 catch (TaskCanceledException)
                 {

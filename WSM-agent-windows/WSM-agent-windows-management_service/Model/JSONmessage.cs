@@ -17,6 +17,7 @@ namespace SessionService.Model
         public string options { get; set; }
         public bool unrestricted { get; set; }
         public bool enable { get; set; }
+        public int? grace_login { get; set; }
     }
 
     public class AllowedSchedule
@@ -99,13 +100,6 @@ namespace SessionService.Model
     }
 
     // ----- crypt -----
-    public class EncryptedServerResponse
-    {
-        public string EncryptedAESKey { get; set; }
-        public string EncryptedAESIV { get; set; }
-        public string EncryptedMessage { get; set; }
-    }
-
     public class Response
     {
         public required string Status { get; set; }
@@ -117,61 +111,5 @@ namespace SessionService.Model
     public class SuccessResponse : Response
     {
         public required string Data { get; set; }
-    }
-    public class StringParser
-    {
-        public static List<string> ParseStringToList(string input)
-        {
-            if (string.IsNullOrEmpty(input))
-            {
-                return new List<string>();
-            }
-            var result = new List<string>(input.Split(';', StringSplitOptions.RemoveEmptyEntries));
-            return result;
-        }
-    }
-
-
-    public class ResultsWrapper<T>
-    {
-        public List<T>? results { get; set; }
-
-        public string SerializeListToJson()
-        {
-            return JsonConvert.SerializeObject(this, Newtonsoft.Json.Formatting.Indented);
-        }
-
-        public static bool IsJsonFormatable(string input)
-        {
-            if (string.IsNullOrWhiteSpace(input))
-                return false;
-
-            input = input.Trim();
-            if (input.StartsWith("{") && input.EndsWith("}") || // For object
-                input.StartsWith("[") && input.EndsWith("]"))   // For array
-            {
-                try
-                {
-                    Newtonsoft.Json.Linq.JToken.Parse(input);
-                    return true;
-                }
-                catch (JsonReaderException)
-                {
-                    return false;
-                }
-                catch (Exception)
-                {
-                    return false;
-                }
-            }
-            return false;
-        }
-        public static string GetMachineFQDN()
-        {
-            string hostname = Dns.GetHostName();
-            IPHostEntry hostEntry = Dns.GetHostEntry(hostname);
-            return "wsm:" + hostEntry.HostName.ToLower();
-        }
-
     }
 }

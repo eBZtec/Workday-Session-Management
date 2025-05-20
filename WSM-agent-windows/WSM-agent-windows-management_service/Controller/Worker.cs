@@ -32,7 +32,6 @@ public class Worker : BackgroundService
         };
         _eventLog.EntryWritten += OnEntryWritten;
         _eventLog.EnableRaisingEvents = true;
-
         LogManager.LogClientInfo(clientInfo.ToString());
     }
 
@@ -116,7 +115,7 @@ public class Worker : BackgroundService
         {
             try
             {
-                LogManager.Log($"Worker -> Received message: {messageParts[1]}");
+                LogManager.Log($"Worker -> Message received from router");
 
 
                 var rawMessage = Cryptography.processRequest(messageParts[1]);
@@ -166,7 +165,11 @@ public class Worker : BackgroundService
                         break;
 
                     default:
-                        LogManager.Log($"Worker -> Unknown command received: {messageObject.action}");
+                        if(messageObject.action != null)
+                        {
+                            LogManager.Log($"Worker -> Unknown command received: {messageObject.action}");
+                        }
+                        LogManager.Log($"Worker -> No response needed");
                         break;
                 }
             }
@@ -175,6 +178,7 @@ public class Worker : BackgroundService
                 LogManager.Log($"HandleMessages -> Error handling message: {ex.Message}");
             }
         }
+        LogManager.Log($"HandleMessages -> timeout achieved, waiting for messages");
         await Task.Delay(1000, stoppingToken);
     }
 
@@ -186,6 +190,7 @@ public class Worker : BackgroundService
                 if ((e.Entry.ReplacementStrings[8].Equals("2") || e.Entry.ReplacementStrings[8].Equals("10") 
                 || e.Entry.ReplacementStrings[8].Equals("11")) 
                     && !e.Entry.ReplacementStrings[11].Equals("-")
+                    && e.Entry.ReplacementStrings[9].Trim().Equals("User32")
                     && !e.Entry.ReplacementStrings[5].Equals(lastUsrLogon))
                 {
                     EventManager.HandleLogonEvent(e.Entry, dealer);

@@ -42,7 +42,7 @@ class AgentController
                             break;
 
                         case "logoff":
-                            NotificationManager.SendBasicNotification("Encerrando", "A sessão encerrará em 10 segundos");
+                            NotificationManager.SendBasicNotification("Encerrando", "A sessão encerrará em poucos segundos");
                             break;
 
                         case "interact":

@@ -136,7 +136,9 @@ namespace SessionService.Service
 
         public static void LogoffSession(int sessionId, string user)
         {
-            bool result = WTSLogoffSession((IntPtr)WTS_CURRENT_SERVER_HANDLE, sessionId, false);
+            try
+            {
+                bool result = WTSLogoffSession((IntPtr)WTS_CURRENT_SERVER_HANDLE, sessionId, false);
             if (result)
             {
                 Console.WriteLine($"Successfully logged off session {sessionId}");
@@ -148,6 +150,11 @@ namespace SessionService.Service
                 Console.WriteLine($"Failed to log off session {sessionId}. Error code: {errorCode}");
                 LogManager.Log($"SessionManager -> Failed to log off session {sessionId}. Error code: {errorCode}");
             }
+            }catch(Exception e)
+            {
+                LogManager.Log($"SessionManager[LogoffSession] -> Failed to log off session: {e.Message}");
+            }
+            
         }
 
         public static void DescribeUsers(List<UserSession> users)

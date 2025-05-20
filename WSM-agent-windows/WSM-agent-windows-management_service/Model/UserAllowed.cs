@@ -4,7 +4,7 @@
     {
         public string username { get; set; }
         public AllowedSchedule allowed_schedule { get; set; }
-
+        public int grace_time { get; set; }
 
         public static bool allowAll = false;
 
@@ -15,6 +15,7 @@
         {
             this.username = response.user;
             this.allowed_schedule = response.allowed_schedule;
+            this.grace_time = response.grace_login ?? 0;
         }
     }
 }

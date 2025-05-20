@@ -284,76 +284,92 @@ namespace SessionService.Service
             return true;
         }
 
-        // ----- crypt -----
-
         public static void CheckCerts()
         {
-            if (GetCertFromStore(StoreName.My, session_server_cn) == null)
+            LogManager.LogClientInfo("-------------------------");
+            try
             {
+                LogManager.Log("Server certificate requested.");
                 GetCertificate(session_server_host, "REQUEST_SERVER_CERTIFICATE", MyMachineName);
-                LogManager.LogClientInfo("\n\nServer certificate requested.");
             }
-            else
+            catch (Exception ex)
             {
-                LogManager.LogClientInfo("\n\nServer certificate already in Certificate Store.");
-            }
-            if (GetCertFromStore(StoreName.My, session_server_CA_cn) == null)
-            {
-                GetCertificate(session_server_host, "REQUEST_CA_CERTIFICATE", MyMachineName);
-                LogManager.Log("CA certificate requested.");
-            }
-            else
-            {
-                LogManager.Log("CA certificate already in Certificate Store.");
+                LogManager.Log($"Server certificate not found or invalid: {ex.Message}");
             }
             try
             {
+                LogManager.Log("CA certificate requested.");
+                GetCertificate(session_server_host, "REQUEST_CA_CERTIFICATE", MyMachineName);
+            }
+            catch (Exception ex)
+            {
+                LogManager.Log($"CA certificate not found or invalid: {ex.Message}");
+            }
+            try
+            {
+                LogManager.Log($"Creating {MyMachineName} CSR and requesting local machine certificate.");
                 var (publicKey, privateKey) = GenerateRsaKeyPair();
                 CreateMyCertificate(publicKey, privateKey);
-                LogManager.Log($"Creating {MyMachineName} CSR and requesting local machine certificate.");
             }
             catch (Exception ex)
             {
                 LogManager.Log($"Machine certificate not found or invalid: {ex.Message}");
             }
-
-
         }
 
-        public static string SendRequestToRouter(string routerAddress, string identity, string message)
+        
+        public static string SendRequestToRouter(string routerAddress, string identity,
+        string message, CancellationToken stoppingToken = default)
         {
-            // Cria o contexto e o socket Dealer
-            // Define a identidade do cliente
-            // Conecta ao router
-            // Envia a mensagem (identity já está associado ao socket Dealer)
-            // Aguarda a resposta multipart
-            using (var dealer = new DealerSocket())
+            while (!stoppingToken.IsCancellationRequested)
             {
-                try
+                using (var dealer = new DealerSocket())
                 {
-                    dealer.Options.Identity = Encoding.UTF8.GetBytes(identity);
+                    try
+                    {
+                        dealer.Options.Identity = Encoding.UTF8.GetBytes(identity);
+                        dealer.Connect(routerAddress);
+                        Console.WriteLine($"Connected to router: {routerAddress}");
 
-                    dealer.Connect(routerAddress);
-                    Console.WriteLine($"Connected to router: {routerAddress}");
+                        dealer.SendFrame(message);
+                        Console.WriteLine($"Message sent to router: {message}");
 
-                    dealer.SendFrame(message);
-                    Console.WriteLine($"Message sent to router: {message}");
+                        var messageParts = new List<string>();
+                        TimeSpan timeout = TimeSpan.FromSeconds(60);
 
-                    var messageParts = dealer.ReceiveMultipartMessage();
+                        if (dealer.TryReceiveMultipartStrings(timeout, ref messageParts, 2))
+                        {
+                            if (messageParts.Count < 2)
+                            {
+                                LogManager.Log($"SendRequestToRouter -> Invalid response format from router");
+                                throw new Exception("Invalid response format from router.");
+                            }
 
-                    string jsonString = Encoding.UTF8.GetString(messageParts[1].Buffer);
+                            string jsonString = messageParts[1];
+                            
+                            LogManager.Log($"SendRequestToRouter -> [DEBUG] Json String: {jsonString}");
+                            Console.WriteLine($"JSON String: {jsonString}");
+                            return jsonString;
+                        }
+                        LogManager.Log($"SendRequestToRouter -> No response received. Retrying with a new connection...");
+                        Console.WriteLine("No response received. Retrying with a new connection...");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error communicating with the router: {ex.Message}");
+                        LogManager.Log($"SendRequestToRouter -> Error: {ex.Message}");
+                    }
 
-                    Console.WriteLine($"JSON String: {jsonString}");
-
-                    return jsonString;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error communicating with the router: {ex.Message}");
-                    LogManager.Log($"Startup -> Error communicating with the router: {ex.Message}");
-                    throw;
+                    if (stoppingToken.IsCancellationRequested)
+                    {
+                        LogManager.Log($"SendRequestToRouter -> Operation cancelled.");
+                        Console.WriteLine("Operation cancelled.");
+                        break;
+                    }
                 }
             }
+            LogManager.Log($"SendRequestToRouter -> SendRequestToRouter was cancelled.");
+            throw new OperationCanceledException("SendRequestToRouter was cancelled.");
         }
 
         public static void GetCertificate(string routerAddress, string request, string identity)

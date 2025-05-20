@@ -5,7 +5,7 @@ namespace DesktopAgent.Service
     internal class StartupManager
     {
         private static readonly string ebzDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "eBZ Tecnologia");
-        private static readonly string wsmDir = Path.Combine(ebzDir, "Workday Session Management");
+        public static readonly string wsmDir = Path.Combine(ebzDir, "Workday Session Management");
         private static readonly string wsmServiceDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "eBZ Tecnologia", "Workday Session Management");
 
         public static void Init()
