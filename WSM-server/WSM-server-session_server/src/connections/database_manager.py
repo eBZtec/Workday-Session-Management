@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Any, Type
 from sqlalchemy import create_engine, or_, desc
 from sqlalchemy.orm import sessionmaker
 from contextlib import contextmanager
@@ -93,12 +93,12 @@ class DatabaseManager:
 
     ######    CUSTOMIZED PONTUAL QUERIES    ############
 
-    def get_holidays(self, city) -> list[Holidays] | None:
+    def get_holidays(self, city) -> list[Type[Holidays]]:
         with self.session_scope() as session:
             return session.query(Holidays).filter(
                 or_(
                     Holidays.holiday_type.ilike("N"),
-                    Holidays.city.ilike(city)
+                    Holidays.city == int(city)
                 )
             ).all()
 
