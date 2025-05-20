@@ -6,7 +6,6 @@ from src.serialization.message_processor import MessageProcessor
 from src.services.encripted_messages_services import CryptoMessages
 from src.ca_services.ca_server import Server 
 from src.services.zmq_client import ZMQClient
-from zmq.utils.monitor import parse_monitor_message
 
 class FlexibleRouterServerService:
     
@@ -21,33 +20,6 @@ class FlexibleRouterServerService:
         # socket ROUTER config
         self.socket = self.context.socket(zmq.ROUTER)
         self.socket.bind(self.bind_address)
-
-        ###ADDED FOR SOCKET MONITORING
-        self.socket.monitor("inproc://router-monitor", zmq.EVENT_ALL)
-        self.socket.bind(self.bind_address)
-        self.monitor = self.context.socket(zmq.PAIR)
-        self.monitor.connect("inproc://router-monitor")
-        threading.Thread(target=self.monitor_socket, daemon=True).start()
-
-
-    def monitor_socket(self):
-        while True:
-            try:
-                evt = self.monitor.recv_multipart()
-                evt_parsed = parse_monitor_message(evt)
-                event = evt_parsed['event']
-                endpoint = evt_parsed['endpoint']
-                self.logger.info(f"[MONITOR] Event {event} on {endpoint}")
-
-                if event == zmq.EVENT_DISCONNECTED:
-                    self.logger.warning(f"[MONITOR] Client disconnected: {endpoint}")
-                elif event == zmq.EVENT_HANDSHAKE_SUCCEEDED:
-                    self.logger.info(f"[MONITOR] Client handshake succeeded: {endpoint}")
-                elif event == zmq.EVENT_CONNECTED:
-                    self.logger.info(f"[MONITOR] Client connected to: {endpoint}")
-            except zmq.ZMQError as e:
-                self.logger.error(f"[MONITOR] ZMQ error: {e}")
-                break
 
     def start(self):
         self.logger.info("WSM - simple_route_server_service - Flexible Router server started...")
@@ -105,11 +77,7 @@ class FlexibleRouterServerService:
     def handle_message(self, client_id, message):
         try:
             message_data = json.loads(message)
-            
-            if "EncryptedAESKey" not in json.dumps(message_data):
-                self.logger.info(f"Parsing message: {message_data}")
-            else:
-                self.logger.warning("Parsing message: [REDACTED due to sensitive content.]")
+            self.logger.info(f"Parsing message: {message_data}")
 
             if self.message_is_encrypted(message_data) == False:
                 response = self.route_message(client_id,message_data)
@@ -240,7 +208,7 @@ class FlexibleRouterServerService:
         }
         # message = json.dumps(payload, indent=4)
         message = json.dumps(payload)
-        #print(message)
+        print(message)
         return message
 
     def send_message(self, client_id, message, to_encrypt):
