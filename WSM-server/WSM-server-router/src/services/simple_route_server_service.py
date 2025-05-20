@@ -240,7 +240,7 @@ class FlexibleRouterServerService:
         }
         # message = json.dumps(payload, indent=4)
         message = json.dumps(payload)
-        print(message)
+        #print(message)
         return message
 
     def send_message(self, client_id, message, to_encrypt):
