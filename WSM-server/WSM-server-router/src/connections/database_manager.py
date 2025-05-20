@@ -227,7 +227,6 @@ class DatabaseManager:
             else:
                 return None
 
-
     def get_hostname_by_uid(self, _uid):
         with self.session_scope() as session:
             result = session.query(Sessions.hostname).filter(Sessions.user == _uid).first()
@@ -267,11 +266,9 @@ class DatabaseManager:
             else:
                 return None
             
-
-    # GET GRACE_LOGIN
-    # The filter is equals one because is a unique register to hold grace_login time
     def get_grace_login(self):
         with self.session_scope() as session:
-            return session.query(Configuration.grace_login).filter(Configuration.id == 1).first()
+            result = session.query(Configuration.grace_login).filter(Configuration.id == 1).first()
+            return result[0] if result else None
 
 

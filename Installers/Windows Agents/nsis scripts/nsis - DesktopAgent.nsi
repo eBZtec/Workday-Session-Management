@@ -1,6 +1,6 @@
 # Define the application name, version, and target directory
 !define APP_NAME "WSM Desktop Agent"
-!define APP_VERSION "1.0.0"
+!define APP_VERSION "1.0.1"
 !define INSTALL_DIR "$PROGRAMFILES32\eBZ Tecnologia\Workday Session Management\${APP_NAME}"
 
 # Include necessary NSIS plugins and scripts

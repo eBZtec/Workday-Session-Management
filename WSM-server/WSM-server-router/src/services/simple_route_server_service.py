@@ -1,4 +1,4 @@
-import zmq, json, base64, re
+import zmq, json, base64, re, threading
 from src.logs.logger import Logger
 from src.connections.database_manager import DatabaseManager
 from src.config import config
@@ -20,7 +20,6 @@ class FlexibleRouterServerService:
         # socket ROUTER config
         self.socket = self.context.socket(zmq.ROUTER)
         self.socket.bind(self.bind_address)
-
 
     def start(self):
         self.logger.info("WSM - simple_route_server_service - Flexible Router server started...")

@@ -226,7 +226,7 @@ namespace SessionService.Service
                     {
                         if (text.StartsWith("wsm_session_servers=", StringComparison.OrdinalIgnoreCase))
                         {
-                            return text.Split('=')[1].Split(',')[0].Trim();
+                            return text.Split(";")[0].Split('=')[1].Split(',')[0].Trim();
                         }
                     }
                 }
@@ -238,6 +238,50 @@ namespace SessionService.Service
 
             LogManager.Log("ServerURL -> Could not retrieve the server URL. Dealer not properly bound (localhost:5555)");
             return "localhost:5555";
+        }
+
+        public static bool getMode()
+        {
+            string domainName = "";
+
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher("SELECT Domain FROM Win32_ComputerSystem"))
+                {
+                    foreach (ManagementObject domain in searcher.Get())
+                    {
+                        domainName = domain["Domain"].ToString();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogManager.Log($"getMode -> Error retrieving information: {ex.Message}");
+            }
+
+            try
+            {
+                var lookup = new LookupClient();
+                var result = lookup.Query(domainName, QueryType.TXT);
+
+                foreach (var txtRecord in result.Answers.TxtRecords())
+                {
+                    foreach (var text in txtRecord.Text)
+                    {
+                        if (text.StartsWith("wsm_session_servers=", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return text.Split(";")[1].Split('=')[1].Trim().ToLower().Equals("true");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogManager.Log($"getMode -> Error retrieving TXT record info: {ex.Message}");
+            }
+
+            LogManager.Log("getMode -> Could not retrieve the server mode. audit = true");
+            return true;
         }
 
         // ----- crypt -----
@@ -262,16 +306,17 @@ namespace SessionService.Service
             {
                 LogManager.Log("CA certificate already in Certificate Store.");
             }
-            if (GetCertFromStore(StoreName.My, MyMachineName) == null)
+            try
             {
                 var (publicKey, privateKey) = GenerateRsaKeyPair();
                 CreateMyCertificate(publicKey, privateKey);
                 LogManager.Log($"Creating {MyMachineName} CSR and requesting local machine certificate.");
             }
-            else
+            catch (Exception ex)
             {
-                LogManager.Log($"{MyMachineName} certificate already in Certificate Store.");
+                LogManager.Log($"Machine certificate not found or invalid: {ex.Message}");
             }
+
 
         }
 

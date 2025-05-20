@@ -44,103 +44,110 @@ namespace SessionService.Service
                         {
                             if (user.username.Equals(userAllowed.username))
                             {
-                                int currentMinutes = (DateTimeOffset.UtcNow.LocalDateTime.Hour * 60) + DateTimeOffset.UtcNow.LocalDateTime.Minute;
-
-                                switch (DateTimeOffset.UtcNow.LocalDateTime.DayOfWeek)
+                                
+                                if(userAllowed.allowed_schedule != null)
                                 {
-                                    case DayOfWeek.Sunday:
-                                        foreach (Schedule sunday in userAllowed.allowed_schedule.sunday)
-                                        {
-                                            if (currentMinutes >= sunday.start && currentMinutes <= sunday.end)
+                                    int currentMinutes = (DateTimeOffset.UtcNow.LocalDateTime.Hour * 60) + DateTimeOffset.UtcNow.LocalDateTime.Minute;
+
+                                    switch (DateTimeOffset.UtcNow.LocalDateTime.DayOfWeek)
+                                    {
+                                        case DayOfWeek.Sunday:
+                                            foreach (Schedule sunday in userAllowed.allowed_schedule.sunday)
                                             {
-                                                goto default;
+                                                if (currentMinutes >= sunday.start && currentMinutes <= sunday.end)
+                                                {
+                                                    goto default;
+                                                }
                                             }
-                                        }
 
-                                        LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
-                                        HandleWrongHour(user.sessionID, user.username, publisher);
-                                        break;
+                                            LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
+                                            HandleWrongHour(user.sessionID, user.username, publisher);
+                                            break;
 
-                                    case DayOfWeek.Monday:
-                                        foreach (Schedule monday in userAllowed.allowed_schedule.monday)
-                                        {
-                                            if (currentMinutes >= monday.start && currentMinutes <= monday.end)
+                                        case DayOfWeek.Monday:
+                                            foreach (Schedule monday in userAllowed.allowed_schedule.monday)
                                             {
-                                                goto default;
+                                                if (currentMinutes >= monday.start && currentMinutes <= monday.end)
+                                                {
+                                                    goto default;
+                                                }
                                             }
-                                        }
 
-                                        LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
-                                        HandleWrongHour(user.sessionID, user.username, publisher);
-                                        break;
+                                            LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
+                                            HandleWrongHour(user.sessionID, user.username, publisher);
+                                            break;
 
-                                    case DayOfWeek.Tuesday:
-                                        foreach (Schedule tuesday in userAllowed.allowed_schedule.tuesday)
-                                        {
-                                            if (currentMinutes >= tuesday.start && currentMinutes <= tuesday.end)
+                                        case DayOfWeek.Tuesday:
+                                            foreach (Schedule tuesday in userAllowed.allowed_schedule.tuesday)
                                             {
-                                                goto default;
+                                                if (currentMinutes >= tuesday.start && currentMinutes <= tuesday.end)
+                                                {
+                                                    goto default;
+                                                }
                                             }
-                                        }
 
-                                        LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
-                                        HandleWrongHour(user.sessionID, user.username, publisher);
-                                        break;
+                                            LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
+                                            HandleWrongHour(user.sessionID, user.username, publisher);
+                                            break;
 
-                                    case DayOfWeek.Wednesday:
-                                        foreach (Schedule wednesday in userAllowed.allowed_schedule.wednesday)
-                                        {
-                                            if (currentMinutes >= wednesday.start && currentMinutes <= wednesday.end)
+                                        case DayOfWeek.Wednesday:
+                                            foreach (Schedule wednesday in userAllowed.allowed_schedule.wednesday)
                                             {
-                                                goto default;
+                                                if (currentMinutes >= wednesday.start && currentMinutes <= wednesday.end)
+                                                {
+                                                    goto default;
+                                                }
                                             }
-                                        }
 
-                                        LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
-                                        HandleWrongHour(user.sessionID, user.username, publisher);
-                                        break;
+                                            LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
+                                            HandleWrongHour(user.sessionID, user.username, publisher);
+                                            break;
 
-                                    case DayOfWeek.Thursday:
-                                        foreach (Schedule thursday in userAllowed.allowed_schedule.thursday)
-                                        {
-                                            if (currentMinutes >= thursday.start && currentMinutes <= thursday.end)
+                                        case DayOfWeek.Thursday:
+                                            foreach (Schedule thursday in userAllowed.allowed_schedule.thursday)
                                             {
-                                                goto default;
+                                                if (currentMinutes >= thursday.start && currentMinutes <= thursday.end)
+                                                {
+                                                    goto default;
+                                                }
                                             }
-                                        }
 
-                                        LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
-                                        HandleWrongHour(user.sessionID, user.username, publisher);
-                                        break;
+                                            LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
+                                            HandleWrongHour(user.sessionID, user.username, publisher);
+                                            break;
 
-                                    case DayOfWeek.Friday:
-                                        foreach (Schedule friday in userAllowed.allowed_schedule.friday)
-                                        {
-                                            if (currentMinutes >= friday.start && currentMinutes <= friday.end)
+                                        case DayOfWeek.Friday:
+                                            foreach (Schedule friday in userAllowed.allowed_schedule.friday)
                                             {
-                                                goto default;
+                                                if (currentMinutes >= friday.start && currentMinutes <= friday.end)
+                                                {
+                                                    goto default;
+                                                }
                                             }
-                                        }
 
-                                        LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
-                                        HandleWrongHour(user.sessionID, user.username, publisher);
-                                        break;
+                                            LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
+                                            HandleWrongHour(user.sessionID, user.username, publisher);
+                                            break;
 
-                                    case DayOfWeek.Saturday:
-                                        foreach (Schedule saturday in userAllowed.allowed_schedule.saturday)
-                                        {
-                                            if (currentMinutes >= saturday.start && currentMinutes <= saturday.end)
+                                        case DayOfWeek.Saturday:
+                                            foreach (Schedule saturday in userAllowed.allowed_schedule.saturday)
                                             {
-                                                goto default;
+                                                if (currentMinutes >= saturday.start && currentMinutes <= saturday.end)
+                                                {
+                                                    goto default;
+                                                }
                                             }
-                                        }
 
-                                        LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
-                                        HandleWrongHour(user.sessionID, user.username, publisher);
-                                        break;
+                                            LogManager.Log($"Vigilance -> User: {user.username} not allowed at this time!");
+                                            HandleWrongHour(user.sessionID, user.username, publisher);
+                                            break;
 
-                                    default:
-                                        break;
+                                        default:
+                                            break;
+                                    }
+                                }else{
+                                    LogManager.Log($"Vigilance -> User: {user.username} does not have schedule!");
+                                    HandleWrongHour(user.sessionID, user.username, publisher);
                                 }
                             }
                         }
@@ -175,6 +182,7 @@ namespace SessionService.Service
 
         public static void LogoffUnallowed(int id, string username)
         {
+            if(Worker.inAuditMode) return;
             Thread.Sleep(TimeSpan.FromSeconds(10));
             SessionManager.LogoffSession(id, username);
         }
