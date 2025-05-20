@@ -6,7 +6,7 @@ from src.connections.database_manager import DatabaseManager
 class SearchNextHolidaysByCityService:
 
     @staticmethod
-    def execute(city: str):
+    def execute(city: int):
         database_manager = DatabaseManager()
 
         start_date = date.today()
