@@ -346,13 +346,11 @@ namespace SessionService.Service
                             }
 
                             string jsonString = messageParts[1];
-                            
-                            LogManager.Log($"SendRequestToRouter -> [DEBUG] Json String: {jsonString}");
-                            Console.WriteLine($"JSON String: {jsonString}");
                             return jsonString;
                         }
                         LogManager.Log($"SendRequestToRouter -> No response received. Retrying with a new connection...");
                         Console.WriteLine("No response received. Retrying with a new connection...");
+                        dealer.Close();
                     }
                     catch (Exception ex)
                     {

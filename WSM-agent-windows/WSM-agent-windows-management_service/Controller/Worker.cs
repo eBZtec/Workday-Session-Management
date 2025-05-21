@@ -1,3 +1,4 @@
+using Microsoft.Win32;
 using NetMQ;
 using NetMQ.Sockets;
 using SessionService.Model;
@@ -17,10 +18,17 @@ public class Worker : BackgroundService
     private string lastUsrLogon = "";
     public static bool inAuditMode = true;
 
-    public Worker()
+    public Worker(IHostApplicationLifetime appLifetime)
     {
         userSessions = new List<UserSession>();
         usersAllowed = new List<UserAllowed>();
+
+        appLifetime.ApplicationStopping.Register(() =>
+        {
+            LogManager.Log("O serviço está sendo finalizado (ApplicationStopping).");
+            publisher?.Close();
+            dealer?.Close();
+        });
 
         clientInfo = new ClientInfo();
 
@@ -48,6 +56,13 @@ public class Worker : BackgroundService
             {
                 Console.WriteLine($"Worker encountered an exception: {ex.Message}. Retrying...");
                 LogManager.Log($"Worker -> Exception: {ex.Message}");
+
+                dealer?.Close();
+                publisher?.Close();
+
+                Console.WriteLine("encerrando sockets");
+                LogManager.Log($"Worker -> Closing sockets...");
+
                 await Task.Delay(TimeSpan.FromSeconds(50), stoppingToken);
             }
         }
@@ -165,7 +180,7 @@ public class Worker : BackgroundService
                         break;
 
                     default:
-                        if(messageObject.action != null)
+                        if (messageObject.action != null)
                         {
                             LogManager.Log($"Worker -> Unknown command received: {messageObject.action}");
                         }
@@ -187,8 +202,8 @@ public class Worker : BackgroundService
         switch (e.Entry.InstanceId)
         {
             case 4624: // Logon
-                if ((e.Entry.ReplacementStrings[8].Equals("2") || e.Entry.ReplacementStrings[8].Equals("10") 
-                || e.Entry.ReplacementStrings[8].Equals("11")) 
+                if ((e.Entry.ReplacementStrings[8].Equals("2") || e.Entry.ReplacementStrings[8].Equals("10")
+                || e.Entry.ReplacementStrings[8].Equals("11"))
                     && !e.Entry.ReplacementStrings[11].Equals("-")
                     && e.Entry.ReplacementStrings[9].Trim().Equals("User32")
                     && !e.Entry.ReplacementStrings[5].Equals(lastUsrLogon))
@@ -212,7 +227,7 @@ public class Worker : BackgroundService
             case 4647: // Logoff
                 EventManager.HandleLogoffEvent(e.Entry, dealer);
                 userSessions = SessionManager.EnumerateSessions();
-                if(e.Entry.ReplacementStrings[1].Equals(lastUsrLogon))
+                if (e.Entry.ReplacementStrings[1].Equals(lastUsrLogon))
                 {
                     lastUsrLogon = "";
                 }
@@ -225,7 +240,7 @@ public class Worker : BackgroundService
 
     private void HandleLogoffCase(ServerResponse messageObject)
     {
-        if(inAuditMode)return;
+        if (inAuditMode) return;
         Thread.Sleep(TimeSpan.FromSeconds(10));
 
         List<int> ids = SessionManager.GetSessionIDs(messageObject.user ?? "Unknown", userSessions);
@@ -237,7 +252,7 @@ public class Worker : BackgroundService
 
     private void HandleLockCase(ServerResponse messageObject)
     {
-        if(inAuditMode)return;
+        if (inAuditMode) return;
         Thread.Sleep(TimeSpan.FromSeconds(10));
 
         List<int> ids = SessionManager.GetSessionIDs(messageObject.user ?? "Unknown", userSessions);
@@ -247,11 +262,14 @@ public class Worker : BackgroundService
         }
     }
 
-    private async Task RefreshMode(CancellationToken stoppingToken){
-        while(!stoppingToken.IsCancellationRequested){
+    private async Task RefreshMode(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
             var currentMode = inAuditMode;
             inAuditMode = StartupManager.getMode();
-            if(currentMode != inAuditMode){
+            if (currentMode != inAuditMode)
+            {
                 LogManager.Log($"refreshMode -> Audit mode updated, new value: {inAuditMode}");
             }
             await Task.Delay(TimeSpan.FromMinutes(5));
