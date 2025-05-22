@@ -1,4 +1,4 @@
-import zmq, json, base64, re, threading
+import zmq, json, base64, re, threading, time
 from src.logs.logger import Logger
 from src.connections.database_manager import DatabaseManager
 from src.config import config
@@ -10,6 +10,7 @@ from src.services.zmq_client import ZMQClient
 class FlexibleRouterServerService:
     
     def __init__(self, bind_address="tcp://*:"+config.Z_MQ_PORT):
+        
         self.logger = Logger(log_name='WSM-Router').get_logger()
         self.context = zmq.Context()
         self.bind_address = bind_address
@@ -24,18 +25,35 @@ class FlexibleRouterServerService:
     def start(self):
         self.logger.info("WSM - simple_route_server_service - Flexible Router server started...")
         #self.logger.info("Flexible Router server started...")
-        while True:
 
+        poller = zmq.Poller()
+        poller.register(self.socket, zmq.POLLIN)
+
+        while True:
             try:    
-                # Receive two parts message: [identidade, mensagem]
-                identity, message = self.socket.recv_multipart()
-                client_id = identity
-                message_text = message.decode()
-                client_id = client_id.decode()
-                #self.logger.info(f"WSM - simple_route_server_service - Received from {client_id}: {message_text}")
-                self.logger.info(f"WSM - simple_route_server_service - Received from {client_id}:")
-                # process the message
-                self.handle_message(client_id, message_text)
+                socks = dict(poller.poll(timeout=100))
+                if self.socket in socks and socks[self.socket]== zmq.POLLIN:
+                    # Receive two parts message: [identidade, mensagem]
+                    multipart_msg = self.socket.recv_multipart()
+                    self.logger.info(f"Message received:{multipart_msg}")
+                    if len(multipart_msg) >=2:
+                        identity, message = multipart_msg
+                        client_id = identity
+                        message_text = message.decode()
+                        client_id = client_id.decode()
+                        #self.logger.info(f"WSM - simple_route_server_service - Received from {client_id}: {message_text}")
+                        self.logger.info(f"WSM - simple_route_server_service - Received from {client_id}:")
+                        # process the message
+                        self.handle_message(client_id, message_text)
+                    else:
+                        self.logger.warning(f"WSM - simple_route_server_service - Malformed message: {multipart_msg}")
+                else:
+                    # Sem mensagens no intervalo de timeout
+                    self.logger.debug("WSM - simple_route_server_service - Waiting for messages...")
+            except zmq.ContextTerminated:
+                self.logger.info("WSM - simple_route_server_service -  ZMQ context terminated, terminate server.")
+            except zmq.Again:
+                self.logger.debug("WSM - simple_route_server_service - No message received")
             except zmq.ZMQError as e:
                 self.logger.error(f"WSM - simple_route_server_service - ZQM error: {e}")
             except UnicodeDecodeError as e:
@@ -77,7 +95,10 @@ class FlexibleRouterServerService:
     def handle_message(self, client_id, message):
         try:
             message_data = json.loads(message)
-            self.logger.info(f"Parsing message: {message_data}")
+
+            if "EncryptedAESKey" not in message_data:
+
+                self.logger.info(f"Parsing message: {message_data}")
 
             if self.message_is_encrypted(message_data) == False:
                 response = self.route_message(client_id,message_data)
