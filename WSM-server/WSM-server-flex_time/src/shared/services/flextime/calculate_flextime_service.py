@@ -96,41 +96,60 @@ class CalculateFlextimeService:
     def get_effective_work_hours_for_night(self) -> set[FlexTime]:
         pass
 
-    def define_work_hour_formatted(self, flex_times: list[FlexTime]) -> str:
+    def get_total_worked_in_seconds(self, flex_times: list[FlexTime]) -> float:
         i = 0
-        time_worked = 0.0
-        work_hour_in: datetime | None = None
-        work_hour_out: datetime | None = None
+        total_worked_hours = 0.0
 
         while i < len(flex_times):
             current = flex_times[i]
-            work_hour_in = None
 
-            if i == 0 and current.work_time_type == WorkTimeType.OUT:
-                wsm_logger.debug(
-                    f"Defining work hour formatted, current flex time \"{current.work_time}\", iteration {i}, has journey type \"{current.work_time_type}\". Skipping...")
-                i = i + 1
+            if current.work_time_type == WorkTimeType.OUT:
+                i += 1
                 continue
 
-            work_hour_in = current.work_time
+            work_time_in = current.work_time
 
-            if (i + 1) == len(flex_times):
-                work_hours_left = self._account_work_hours.total_seconds() - time_worked
-                work_hour_out = work_hour_in + timedelta(seconds=work_hours_left) - timedelta(hours=1)
+            if (i + 1) != len(flex_times):
+                work_time_out = flex_times[i + 1].work_time
+                dt = work_time_out - work_time_in
+                total_worked_hours += dt.total_seconds()
+
+            i += 1
+
+        wsm_logger.info(f"User {self._account.uid} has been worked a total of \"{total_worked_hours/3600}\" hour(s)")
+
+        return total_worked_hours
+
+    def define_work_hour_formatted(self, flex_times: list[FlexTime]) -> str:
+        formatted_work_hour = {}
+        work_hour_in: datetime | None = None
+        work_hour_out: datetime | None = None
+
+        if len(flex_times) > 0:
+            first_work_time = flex_times[0]
+            last_work_time = flex_times[-1]
+
+            total_worked_seconds = self.get_total_worked_in_seconds(flex_times)
+            total_worked_left = self._account_work_hours.total_seconds() - total_worked_seconds
+
+            if len(flex_times) == 1:
+                work_hour_in = first_work_time.work_time
+                work_hour_out = work_hour_in + timedelta(seconds=total_worked_left)
             else:
-                _next = flex_times[i + 1].work_time
-                work_hour_out = _next
-                dt = _next - work_hour_in
-                time_worked += dt.total_seconds()
+                if last_work_time.work_time_type == WorkTimeType.OUT:
+                    work_hour_in = first_work_time.work_time
+                    work_hour_out = last_work_time.work_time
+                else:
+                    work_hour_in = last_work_time.work_time
+                    work_hour_out = work_hour_in + timedelta(seconds=total_worked_left)
+        else:
+            wsm_logger.info(f"No flex times was found for account {self._account.uid}")
 
-            i = i + 2
-
-        wsm_logger.info(f"Work hour defined as start \"{work_hour_in}\", and \"{work_hour_out}\"")
-
-        formatted_work_hour = {
-            "start": work_hour_in.isoformat(),
-            "end": work_hour_out.isoformat()
-        }
+        if work_hour_in is not None and work_hour_out is not None:
+            formatted_work_hour = {
+                "start": work_hour_in.isoformat(),
+                "end": work_hour_out.isoformat()
+            }
 
         return json.dumps(formatted_work_hour)
 
@@ -163,7 +182,7 @@ class CalculateFlextimeService:
                 wsm_logger.debug(
                     f"Current flex time \"{current.work_time}\", iteration {i}, with journey type \"{current.work_time_type}\", has work time defined as \"{_next}\"")
 
-            timeframe = (current.work_time.astimezone(self._user_timezone), _next.astimezone(self._user_timezone))
+            timeframe = (current.work_time, _next)
             timeframes.append(timeframe)
 
             wsm_logger.debug(
