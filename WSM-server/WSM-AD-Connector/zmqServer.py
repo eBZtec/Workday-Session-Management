@@ -194,21 +194,32 @@ def process_message(message):
     processed_message = None
     try:
         action = "ad_update"
-        allowed_work_hours = message.get("allowed_work_hours")
         user = message.get("uid")
-        enable = message.get("active_directory_account_status")
-        lock = message.get("lock")
-        lock = bool(lock)
+
+        allowed_work_hours = None
+        enable = None
+        unlock = None
+
+        if "allowed_work_hours" in message:
+            allowed_work_hours = message.get("allowed_work_hours")
+
+        if "account_status" in message:
+            enable = message.get("account_status")
+
+        if "account_unlock" in message:
+            unlock = message.get("unlock")
+            unlock = bool(unlock)
+
         timezone = str(datetime.datetime.now().astimezone().tzinfo)
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
         processed_message = {
             "uid": user,
-            "action":action,
+            "action": action,
             "allowed_work_hours": allowed_work_hours,
             "timezone": timezone,
             "timestamp": timestamp,
             "enable": enable,
-            "unlock": not lock
+            "unlock": unlock
         }
         logger.info(f"Message defined as {processed_message}")
     except Exception as e:

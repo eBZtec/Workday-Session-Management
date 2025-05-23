@@ -8,7 +8,7 @@ class ActiveDirectoryAccountStatusManager:
     @staticmethod
     async def enable(uid: str):
         logger.info(f"Starting process to enable Active Directory account {uid}")
-        rabbitmq_send_message = RabbitMQSendMessageService(queue_name=config.WSM_AGENT_NOTIFICATION_QUEUE)
+        rabbitmq_send_message = RabbitMQSendMessageService(queue_name=config.WSM_CONNECTOR_AD_QUEUE_NAME)
 
         message = {
             "uid": uid,
@@ -23,7 +23,7 @@ class ActiveDirectoryAccountStatusManager:
     @staticmethod
     async def disable(uid: str):
         logger.info(f"Starting process to disable Active Directory account {uid}")
-        rabbitmq_send_message = RabbitMQSendMessageService(queue_name=config.WSM_AGENT_NOTIFICATION_QUEUE)
+        rabbitmq_send_message = RabbitMQSendMessageService(queue_name=config.WSM_CONNECTOR_AD_QUEUE_NAME)
 
         message = {
             "uid": uid,
