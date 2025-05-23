@@ -138,7 +138,7 @@ class CalculateFlextimeService:
             else:
                 if last_work_time.work_time_type == WorkTimeType.OUT:
                     work_hour_in = first_work_time.work_time
-                    work_hour_out = last_work_time.work_time
+                    work_hour_out = work_hour_in + timedelta(seconds=self._account_work_hours.total_seconds())
                 else:
                     work_hour_in = last_work_time.work_time
                     work_hour_out = work_hour_in + timedelta(seconds=total_worked_left)
