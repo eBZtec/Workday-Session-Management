@@ -11,13 +11,6 @@ class LockAccountController:
             await AccountLockManager.lock(uid)
         except Exception as e:
             logger.error(f"Failed to lock account \"{uid}\", reason: {e}")
-        else:
-            try:
-                logger.info(f"Starting process account pooling to update account {uid}")
-                await AccountsPoolingService.execute(uid)
-            except Exception as e:
-                logger.error(
-                    f"Could not process entry {uid} on account pooling, reason: {e} ")
 
     @staticmethod
     async def unlock(uid: str):
@@ -25,10 +18,3 @@ class LockAccountController:
             await AccountLockManager.unlock(uid)
         except Exception as e:
             logger.error(f"Failed to lock account \"{uid}\", reason: {e}")
-        else:
-            try:
-                logger.info(f"Starting process account pooling to update account {uid}")
-                await AccountsPoolingService.execute(uid)
-            except Exception as e:
-                logger.error(
-                    f"Could not process entry {uid} on account pooling, reason: {e} ")
