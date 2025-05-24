@@ -207,8 +207,7 @@ def process_message(message):
             enable = message.get("account_status")
 
         if "account_unlock" in message:
-            unlock = message.get("unlock")
-            unlock = bool(unlock)
+            unlock = message.get("account_unlock")
 
         timezone = str(datetime.datetime.now().astimezone().tzinfo)
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
