@@ -14,7 +14,7 @@ class AccountLockManager:
             "uid": uid,
             "status": "success",
             "message": "",
-            "account_unlock": True
+            "account_unlock": False
         }
         rabbitmq_send_message.send(message)
         logger.info(f"Finishing process to lock account {uid}")
@@ -28,7 +28,7 @@ class AccountLockManager:
             "uid": uid,
             "status": "success",
             "message": "",
-            "account_unlock": False
+            "account_unlock": True
         }
         rabbitmq_send_message.send(message)
         logger.info(f"Finishing process to unlock account {uid}")
