@@ -129,18 +129,17 @@ class CalculateFlextimeService:
             first_work_time = flex_times[0]
             last_work_time = flex_times[-1]
 
+            work_hour_in = first_work_time.work_time
+
             total_worked_seconds = self.get_total_worked_in_seconds(flex_times)
             total_worked_left = self._account_work_hours.total_seconds() - total_worked_seconds
 
             if len(flex_times) == 1:
-                work_hour_in = first_work_time.work_time
                 work_hour_out = work_hour_in + timedelta(seconds=total_worked_left)
             else:
                 if last_work_time.work_time_type == WorkTimeType.OUT:
-                    work_hour_in = first_work_time.work_time
                     work_hour_out = work_hour_in + timedelta(seconds=self._account_work_hours.total_seconds())
                 else:
-                    work_hour_in = last_work_time.work_time
                     work_hour_out = work_hour_in + timedelta(seconds=total_worked_left)
         else:
             wsm_logger.info(f"No flex times was found for account {self._account.uid}")
