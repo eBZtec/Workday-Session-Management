@@ -28,7 +28,8 @@ echo 'git clone for rpmbuild'
 mkdir -p %{_builddir}/wsm-main/Workday_Session_Management/
 cd %{_builddir}/wsm-main/Workday_Session_Management/
 # git clone https://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@github.com/eBZtec/Workday_Session_Management.git tmp_repo
-git clone http://gitea.ebz:3000/eBZ/Workday_Session_Management.git tmp_repo
+# OLD git clone http://gitea.ebz:3000/eBZ/Workday_Session_Management.git tmp_repo
+git clone https://gitea.ebz.tec.br/eBZ/Workday_Session_Management.git tmp_repo
 
 echo 'move and exclude what is not needed'
 rsync -a --exclude='WSM-connector-ad/' --exclude='WSM-agent-windows/' --exclude='Installers/' tmp_repo/ ./
