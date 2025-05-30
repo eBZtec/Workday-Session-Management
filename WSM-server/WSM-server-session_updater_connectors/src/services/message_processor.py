@@ -1,7 +1,6 @@
 import json
 from src.logs.logger import Logger
 from src.config import config
-import time
 
 logger = Logger(log_name='WSM-Server-Agent-Updater').get_logger()
 
@@ -60,12 +59,23 @@ class MessageProcessor:
             
 
             if not target_queue:
-                logger.warning(f"WSM - Session Updater COnnectors - No target queue for user {uid}. Message skipped.")
+                logger.warning(f"WSM - Session Updater Connectors - No target queue for user {uid}. Message skipped.")
                 return
 
-            # Reenviar a mensagem para a fila apropriada
+            # Resent a message to properly target queues
             self.rabbit_manager.send_message(target_queue, message)
-            
+
+            # When target was updated this sent a msg to agent updater to update windows agent (router -> agent windows) 
+            payload = {
+                "action":"updateHours",
+                "user": uid,
+                "message": "",
+                "title": ""
+            }
+            session_agent = ['session_agent']
+            a =1  
+            self.rabbit_manager.send_message(session_agent, payload)
+
         except Exception as e:
-            logger.error(f"WSM - Session Updater COnnectors - Error processing message: {e}")
+            logger.error(f"WSM - Session Updater Connectors - Error processing message: {e}")
             raise
