@@ -200,8 +200,8 @@ def process_message(message):
         enable = None
         unlock = None
 
-        if "allowed_work_hours" in message:
-            allowed_work_hours = message.get("allowed_work_hours")
+        if "logon_hours" in message:
+            allowed_work_hours = message.get("logon_hours")
 
         if "account_status" in message:
             enable = message.get("account_status")
