@@ -31,6 +31,7 @@ class StandardWorkHours(TimestampedBase):
     start_time = Column(String(5), nullable=False)
     end_time = Column(String(5), nullable=False)
     allowed_work_hours = Column(Text, nullable=True)
+    logon_hours = Column(Text, nullable=True)
     formatted_work_hours = Column(Text, nullable=True)
     uf = Column(String(2), nullable=False)
     st = Column(String(35), nullable=False)

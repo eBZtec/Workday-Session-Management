@@ -25,6 +25,7 @@ class StandardWorkHoursSchema(BaseModel):
     start_time: str
     end_time: str
     allowed_work_hours: Optional[str] = None
+    logon_hours: Optional[str] = None
     journey: JourneyType = JourneyType.FIXED_TIME
     uf:str
     st: str

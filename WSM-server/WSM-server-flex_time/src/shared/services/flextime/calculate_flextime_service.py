@@ -20,6 +20,7 @@ class CalculateFlextimeService:
         self._account_work_hours = get_work_hours_quantity(account)
         self._account_work_day_type = get_work_day_type(account)
         self._user_timezone = ZoneInfo("America/Sao_Paulo")
+        self._flex_times = None
 
     def calculate(self) -> StandardWorkHours:
         account = self._account
@@ -37,9 +38,9 @@ class CalculateFlextimeService:
 
         if account.enable:
             wsm_logger.info(f"Account {account.uid} is enabled. Calculating work hours...")
-            current_work_hours = self.get_effective_work_hours()
-            formatted_work_hours = self.define_work_hour_formatted(current_work_hours)
-            flex_time_timeframes = self.flex_times_as_timeframes(current_work_hours)
+            self._flex_times = self.get_effective_work_hours()
+            formatted_work_hours = self.define_work_hour_formatted(self._flex_times)
+            flex_time_timeframes = self.flex_times_as_timeframes(self._flex_times)
             timeframes = cleanup(flex_time_timeframes)
             self.debug_timeframe(timeframes)
         else:
@@ -49,6 +50,7 @@ class CalculateFlextimeService:
 
         account.allowed_work_hours = allowed_work_hours
         account.formatted_work_hours = formatted_work_hours
+        account.logon_hours = self.define_logon_hours()
 
         wsm_logger.info(f"Allowed work hours defined as {allowed_work_hours} for account {account.uid}")
         wsm_logger.debug(f"Formatted Allowed work hours defined as {formatted_work_hours} for account {account.uid}")
@@ -57,6 +59,17 @@ class CalculateFlextimeService:
         wsm_logger.info(f"Finishing service to calculate flex work hours for account \"{self._account.uid}\"")
 
         return account
+
+    def define_logon_hours(self) -> str:
+        work_hour_in, work_hour_out = self.define_work_hour(self._flex_times)
+
+        if work_hour_in is not None and work_hour_out is not None:
+            work_hours = [(work_hour_in, work_hour_out)]
+            work_hours_time_frame = cleanup(work_hours)
+            self.debug_timeframe(work_hours_time_frame)
+
+        return allowed_work_days_as_json(work_hours_time_frame)
+
 
     def get_effective_work_hours(self) -> list[FlexTime]:
         workhours = []
@@ -120,8 +133,7 @@ class CalculateFlextimeService:
 
         return total_worked_hours
 
-    def define_work_hour_formatted(self, flex_times: list[FlexTime]) -> str:
-        formatted_work_hour = {}
+    def define_work_hour(self, flex_times: list[FlexTime]) -> tuple[(datetime | None), (datetime | None)]:
         work_hour_in: datetime | None = None
         work_hour_out: datetime | None = None
 
@@ -143,6 +155,15 @@ class CalculateFlextimeService:
                     work_hour_out = last_work_time.work_time + timedelta(seconds=total_worked_left)
         else:
             wsm_logger.info(f"No flex times was found for account {self._account.uid}")
+
+        wsm_logger.debug(f"Work hour IN defined as : {work_hour_in}")
+        wsm_logger.debug(f"Work hour OUT defined as : {work_hour_out}")
+
+        return work_hour_in, work_hour_out
+
+    def define_work_hour_formatted(self, flex_times: list[FlexTime]) -> str:
+        formatted_work_hour = {}
+        work_hour_in, work_hour_out = self.define_work_hour(flex_times)
 
         if work_hour_in is not None and work_hour_out is not None:
             formatted_work_hour = {
