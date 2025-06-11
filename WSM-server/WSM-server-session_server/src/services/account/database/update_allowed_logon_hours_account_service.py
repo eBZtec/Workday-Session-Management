@@ -37,5 +37,6 @@ class UpdateAllowedLogonHoursAccountService:
             )
             allowed_work_hours = calculate_work_hours_service.calculate()
             await UpdateAccountAttributeService.execute(account.id, "allowed_work_hours", allowed_work_hours)
+            await UpdateAccountAttributeService.execute(account.id, "logon_hours", allowed_work_hours)
         else:
             raise Exception(f"Account {uid} not found.")
