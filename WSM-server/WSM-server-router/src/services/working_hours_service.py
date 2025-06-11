@@ -1,4 +1,4 @@
-from src.logs.logger import Logger
+from src.logs.logger import logger
 from src.config import config
 from src.connections.database_manager import DatabaseManager
 from src.models.models import StandardWorkHours
@@ -8,7 +8,6 @@ from datetime import datetime
 class WorkingHoursService:
     
     def __init__(self):
-        self.logger = Logger(log_name='WSM-Router').get_logger()
         self.dm = DatabaseManager()
 
     def get_allowed_schedule(self, uid):

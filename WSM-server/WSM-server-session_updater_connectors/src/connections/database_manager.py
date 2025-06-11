@@ -1,9 +1,8 @@
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from src.models.models import Target, TargetStatus, StandardWorkHours
-from src.logs.logger import Logger
+from src.logs.logger import logger
 
-logger = Logger(log_name='WSM-Server-Agent-Updater').get_logger()
 
 class DatabaseManager:
 

@@ -1,39 +1,44 @@
-import logging
-import os
-from logging.handlers import TimedRotatingFileHandler
+import threading
+from src.shared.generic.base_logger import BaseLogger
+from src.logs.wsm_logger_factory import LoggerFactory
 
-class Logger:
-    def __init__(self, log_name='WSM-Server-Session-Updater-Connectors', log_dir='logs', level=logging.INFO, retention_days=7):
-        self.logger = logging.getLogger(log_name)
-        self.logger.setLevel(level)
+class Logger(BaseLogger):
+    _instance = None
+    _lock = threading.Lock()
 
-        # Avoid adding duplicate handlers if the logger already has them
-        if not self.logger.hasHandlers():
-            # Creates the log directory if it doesn't exist
-            if not os.path.exists(log_dir):
-                os.makedirs(log_dir)
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            with cls._lock:
+                if not cls._instance:
+                    cls._instance = super(Logger, cls).__new__(cls)
+        return cls._instance
 
-            # Configures the TimedRotatingFileHandler for general logging
-            log_file = os.path.join(log_dir, f"{log_name}.log")
-            file_handler = TimedRotatingFileHandler(log_file, when="midnight", interval=1, backupCount=retention_days)
-            file_handler.setLevel(level)
-            file_handler.setFormatter(logging.Formatter(
-                '%(asctime)s - %(levelname)s - %(message)s',
-                datefmt='%Y-%m-%d %H:%M:%S'
-            ))
 
-            # StreamHandler to display logs on the console
-            stream_handler = logging.StreamHandler()
-            stream_handler.setFormatter(logging.Formatter(
-                '%(levelname)s - %(message)s'
-            ))
+    def __init__(self):
+        # Garante que a inicialização só ocorre uma vez
+        if hasattr(self, "_initialized") and self._initialized:
+            return
 
-            # Adds handlers to the logger
-            self.logger.addHandler(file_handler)
-            self.logger.addHandler(stream_handler)
+        self._logger = LoggerFactory.create_logger()
+        self._initialized = True
 
-    def get_logger(self):
-        """
-        Returns the configured logger.
-        """
-        return self.logger
+    def __init__(self):
+        self._logger = LoggerFactory.create_logger()
+
+    def debug(self, message: str):
+        self._logger.debug(message)
+
+    def info(self, message: str):
+        self._logger.info(message)
+
+    def warning(self, message: str):
+        self._logger.warning(message)
+
+    def error(self, message: str):
+        self._logger.error(message)
+
+    def critical(self, message: str):
+        self._logger.critical(message)
+
+logger = Logger()
+

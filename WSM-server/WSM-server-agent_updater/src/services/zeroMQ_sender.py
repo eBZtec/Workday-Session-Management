@@ -7,8 +7,7 @@ class ZeroMQSender:
     Classe responsável por enviar mensagens via ZeroMQ.
     """
 
-    def __init__(self,router_queue, client_id ="wsm-agent-updater",):
-        self.logger = Logger(log_name='WSM Server Agent Updater').get_logger()
+    def __init__(self,router_queue, client_id ="wsm-agent-updater"):
         self.router_queue = router_queue
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.DEALER)

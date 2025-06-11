@@ -1,7 +1,7 @@
 from src.models.schema.request_models import *
 from src.models.models import Certificate_Authority
 from src.connections.database_manager import DatabaseManager
-from src.logs.logger import Logger
+from src.logs.logger import logger
 from configparser import ConfigParser
 from src.config import config
 import zmq, json, logging, datetime, os
@@ -16,7 +16,7 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key
 class Server():
    
    def __init__(self):
-      self.logger = Logger(log_name='WSM-Router').get_logger()
+      self.logger = logger
       self.database_url = config.DATABASE_URL
       self.zmq_port = config.Z_MQ_PORT
       self.db = DatabaseManager()

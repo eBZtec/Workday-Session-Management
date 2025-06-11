@@ -1,39 +1,44 @@
-import os
-import logging
-import logging.handlers 
+import threading
 from src.config import config
+from src.shared.generic.base_logger import BaseLogger
+from src.config.wsm_logger_factory import LoggerFactory
 
-try:
-    from systemd.journal import JournalHandler
-    HAS_JOURNAL = True
-except:
-    HAS_JOURNAL = False
 
-# Log path
-cwd = os.path.dirname(os.path.abspath(__file__))
-log_file = config.LOG_FILE
+class WSMLogger(BaseLogger):
+    _instance=None
+    _lock=threading.Lock()
 
-# Main logger
-logger = logging.getLogger(config.LOG_LOGGER)
-logger.setLevel(config.LOG_LEVEL)
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            with cls._lock:
+                if not cls._instance:
+                    cls._instance = super(WSMLogger, cls).__new__(cls)
+        return cls._instance
 
-# Log rotate handler
-log_handle = logging.handlers.RotatingFileHandler(
-    log_file,
-    maxBytes=config.LOG_MAX_BYTES,
-    backupCount=config.LOG_BACKUP_COUNT
-)
-log_handle.setLevel(config.LOG_LEVEL)
-log_format = logging.Formatter('%(asctime)s - %(levelname)s - Work Session Management - %(message)s')
-log_handle.setFormatter(log_format)
-logger.addHandler(log_handle)
+    def __init__(self):
+        # Garante que a inicialização só ocorre uma vez
+        if hasattr(self, "_initialized") and self._initialized:
+            return
 
-# Optional handler to journalctl
-if HAS_JOURNAL:
-    journal_handler = JournalHandler()
-    journal_handler.setLevel(config.LOG_LEVEL)
-    journal_formatter = logging.Formatter('%(levelname)s - Work Session Management - %(message)s')
-    journal_handler.setFormatter(journal_formatter)
-    logger.addHandler(journal_handler)
-else:
-    logger.warning("systemd.journal.JournalHandler not available. Log to journalctl deactivated.")
+        self._logger = LoggerFactory.create_logger()
+        self._initialized = True
+
+    def __init__(self):
+        self._logger = LoggerFactory.create_logger()
+
+    def debug(self, message: str):
+        self._logger.debug(message)
+
+    def info(self, message: str):
+        self._logger.info(message)
+
+    def warning(self, message: str):
+        self._logger.warning(message)
+
+    def error(self, message: str):
+        self._logger.error(message)
+
+    def critical(self, message: str):
+        self._logger.critical(message)
+
+logger = WSMLogger()
