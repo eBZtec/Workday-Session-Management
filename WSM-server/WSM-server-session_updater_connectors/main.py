@@ -7,7 +7,7 @@ from src.config import config
 from src.connections.database_manager import DatabaseManager
 from src.services.rabbit_manager_service import RabbitMQManagerService
 from src.services.message_processor import MessageProcessor
-from src.logs.logger import Logger
+from src.logs.logger import logger
 
 # RabbitMQ configs
 RABBITMQ_HOST = config.RABBITMQ_HOST
@@ -15,7 +15,6 @@ RABBITMQ_QUEUE_IN = config.RABBITMQ_QUEUE_IN
 
 # DB Configs
 DB_URI = config.DB_URI
-logger = Logger(log_name='WSM-Server-Agent-Updater').get_logger()
 
 def main():
     db_manager= None

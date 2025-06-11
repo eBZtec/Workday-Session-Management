@@ -20,7 +20,7 @@ class ReportController:
                 return {column.key: getattr(obj, column.key) for column in inspect(obj).mapper.column_attrs}
                   
             result = [to_dict(obj) for obj in query]
-
+            logger.info(f"Filters are OK returning query.")
             return result
         except InvalidFilterException as e:
             logger.error(f"Could not search into audit database, because the error: {e} ")

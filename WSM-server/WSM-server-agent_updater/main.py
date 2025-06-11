@@ -5,8 +5,6 @@ from src.services.zeroMQ_sender import ZeroMQSender
 from src.config import config
 from src.logs.logger import Logger
 
-logger = Logger(log_name='WSM Server Agent Updater').get_logger()
-
 def main():
     """
     Função principal que conecta as classes e inicia os serviços.

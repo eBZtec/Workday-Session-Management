@@ -2,7 +2,7 @@ from src.models.models import Sessions, Client, StandardWorkHours
 from src.connections.database_manager import DatabaseManager
 from src.services.working_hours_service import WorkingHoursService
 from src.services.rabbitmq_session_audit_producer import RabbitMQSessionAuditProducer
-from src.logs.logger import Logger
+from src.logs.logger import logger
 from src.config import config
 from sqlalchemy.inspection import inspect
 import datetime, json
@@ -11,7 +11,6 @@ import re
 class MessageProcessor:
 
     def __init__(self):
-        self.logger = Logger(log_name='WSM-Router').get_logger()
         self.dm = DatabaseManager()
         self.work_hours = WorkingHoursService()
         self.send_audit = RabbitMQSessionAuditProducer()
@@ -205,7 +204,7 @@ class MessageProcessor:
         message_data = json.loads(message_data)
         try:
             hostname = message_data["hostname"]
-            user = message_data["user"]
+            user = message_data["user"].lower()
             status = message_data["status"]
             logon_time = message_data["logonTime"]
             logoff_time = message_data["logoffTime"]
