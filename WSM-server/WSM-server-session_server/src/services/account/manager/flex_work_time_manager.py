@@ -23,7 +23,7 @@ class FlexWorkTimeManager(WorkTimeManager):
 
         if account:
             logger.info(f"Entry {uid} added successfully in the database")
-            FlexTimeManagerService().insert(uid, account.id, work_time)
+            FlexTimeManagerService().insert(account, work_time)
             await ConfigureAccountTargets.execute(account.id)
         else:
             raise Exception(f"Account \"{uid} not inserted into database.")
@@ -43,7 +43,7 @@ class FlexWorkTimeManager(WorkTimeManager):
             entry = work_hours.model_dump()
             dm.update_entry(StandardWorkHours, account.id, entry)
 
-            FlexTimeManagerService().insert(uid, account.id, work_time)
+            FlexTimeManagerService().insert(account, work_time)
 
             await ConfigureAccountTargets.execute(account.id)
 
