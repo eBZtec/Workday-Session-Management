@@ -8,13 +8,12 @@ from cryptography.hazmat.primitives import serialization, hashes
 
 from src.config import config
 from src.connections.database_manager import DatabaseManager
-from src.logs.logger import Logger
+from src.logs.logger import logger
 
 class CryptoMessages:
 
     def __init__(self):
         self.dm = DatabaseManager()
-        self.logger = Logger(log_name='WSM-Router').get_logger()
 
     # Generate a random AES key and IV
     def generate_aes_key_iv(self):

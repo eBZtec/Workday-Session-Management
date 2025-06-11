@@ -20,11 +20,19 @@ WSM_CONNECTOR_AD_QUEUE_NAME = os.getenv('WSM_CONNECTOR_AD_QUEUE_NAME')
 NTP_SERVER= os.getenv('NTP_SERVER')
 NTP_PORT = os.getenv('NTP_PORT')
 OAUTH_SECRET_KEY = os.getenv("OAUTH_VALID_SECRET_KEY")
+
+#Logging configuration
 LOG_FILE = os.getenv("WSM_LOG_PATH")
+LOG_NAME = os.getenv("LOG_NAME")
 LOG_LOGGER = "WSM Logger"
-LOG_LEVEL = logging.DEBUG
-LOG_MAX_BYTES = 100*1024*1024
-LOG_BACKUP_COUNT = 14
+LOG_MAX_BYTES = int(os.getenv("LOG_MAX_BYTES"))
+LOG_BACKUP_COUNT = os.getenv("LOG_BKP_COUNT")
+LOG_DIR=os.getenv("LOG_DIR")
+LOG_FORMAT=os.getenv("LOG_FORMAT")
+LOG_FILENAME=os.getenv("LOG_FILENAME")
+LOG_LEVEL=os.getenv("LOG_LEVEL")
+LOG_DESTINATION=os.getenv("LOG_DESTINATION")
+
 
 if not DATABASE_URL:
     raise ValueError("A variável de ambiente DATABASE_URL não está definida.")

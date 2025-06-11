@@ -1,13 +1,11 @@
-from src.logs.logger import Logger
 from cryptography.fernet import Fernet
 from dotenv import load_dotenv
 import os, tempfile
 
-
-logger_instance = Logger(log_name='WSM-Router', log_dir='logs', level='INFO', retention_days=7)
-
-logger = logger_instance.get_logger()
-
+"""
+Os logs desta classe são direcionados para o stdout, pois existem configurações do logger que existem aqui.
+Caso fosse utilizada a classe de log, existiria referencia circular.
+"""
 
 #load and decrypt env file
 def load_encrypted_env(encrypted_file_path, key_file_path):
@@ -16,15 +14,15 @@ def load_encrypted_env(encrypted_file_path, key_file_path):
         with open (key_file_path,'rb') as key_file:
             key = key_file.read()
     except FileNotFoundError:
-        logger.error(f"Key file '{key_file_path}' not found.")
+        print(f"[ERROR][WSM - ROUTER Config]  Key file '{key_file_path}' not found.")
         raise 
     except Exception as e:
-        logger.error(f"Error reading the key file: {e}") 
+        print(f"[ERROR][WSM - ROUTER Config]  Error reading the key file: {e}") 
         raise   
     try:    
         fernet = Fernet(key)
     except Exception as e:
-        logger.error(f"Error initializing Fernet with the provided key: {e}")
+        print(f"[ERROR][WSM - ROUTER Config]  Error initializing Fernet with the provided key: {e}")
         raise 
 
     try:
@@ -33,10 +31,10 @@ def load_encrypted_env(encrypted_file_path, key_file_path):
             encrypted_data = encrypted_file.read()
             decrypted_data = fernet.decrypt(encrypted_data)
     except FileNotFoundError:
-        logger.error(f"Encrypted file '{encrypted_file_path}' not found.")
+        print (f"Encrypted file '{encrypted_file_path}' not found.")
         raise
     except Exception as e:
-        logger.error(f"Error decrypting the file: {e}")
+        print(f"[ERROR][WSM - ROUTER Config]  Error decrypting the file: {e}")
         raise 
 
     try:
@@ -46,23 +44,23 @@ def load_encrypted_env(encrypted_file_path, key_file_path):
         temp_env_file_path = temp_env_file.name
         temp_env_file.close()
     except Exception as e:
-        logger.error(f"Error creating temporary file: {e}")
+        print(f"[ERROR][WSM - ROUTER Config] Error creating temporary file: {e}")
         raise 
     
     try:
         # Load the variables from the temporary file
         load_dotenv(temp_env_file_path)
     except Exception as e:
-        logger.error(f"Error loading environment variables from temporary file: {e}")
+        print(f"[ERROR][WSM - ROUTER Config] Error loading environment variables from temporary file: {e}")
         raise
     finally:
         # Remove the temporary file after loading
         if temp_env_file_path and os.path.exists(temp_env_file_path):
             try:
                 os.remove(temp_env_file_path)
-                logger.info(f"Temporary file {temp_env_file_path} removed successfully.")
+                print(f"[INFO][WSM - ROUTER Config] Temporary file {temp_env_file_path} removed successfully.")
             except Exception as e:
-                logger.error(f"Error removing temporary file {temp_env_file_path}: {e}")
+                print(f"[ERROR][WSM - ROUTER Config]  Error removing temporary file {temp_env_file_path}: {e}")
                 raise
 
         # Remove ini file if it exists
@@ -70,23 +68,21 @@ def load_encrypted_env(encrypted_file_path, key_file_path):
         if os.path.exists(ini_file_path):
             try:
                 os.remove(ini_file_path)
-                logger.info(f"Successfully removed {ini_file_path}.")
+                print(f"[INFO][WSM - ROUTER Config] Successfully removed {ini_file_path}.")
             except Exception as e:
-                logger.error(f"Error removing {ini_file_path}: {e}")
+                print (f"[ERROR][WSM - ROUTER Config] Error removing {ini_file_path}: {e}")
                 raise
         else:
-            logger.info(f"No {ini_file_path} file detected. Skipping removal.")
+            print(f"[INFO][WSM - ROUTER Config] No {ini_file_path} file detected. Skipping removal.")
 
 
 # Carregar as variáveis do arquivo .env
 load_dotenv()
 
-
 # Path of key and encrypt env
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 relative_path = os.path.join(current_dir, '../../src/config/encrypted.env')
-
 
 encrypted_env_path = os.path.abspath(relative_path)
 key_path = os.path.abspath(os.path.join(current_dir, '../../src/config/secret.key'))
@@ -109,60 +105,62 @@ try:
     AUDIT_QUEUE = os.getenv("AUDIT_QUEUE")
     AUDIT_QUEUE_HOST = os.getenv("AUDIT_QUEUE_HOST")
 
+    #Logging configuration
+    LOG_FILE = os.getenv("WSM_LOG_PATH")
+    LOG_NAME = os.getenv("LOG_NAME")
+    LOG_LOGGER = "WSM Logger"
+    LOG_MAX_BYTES = int(os.getenv("LOG_MAX_BYTES"))
+    LOG_BACKUP_COUNT = os.getenv("LOG_BKP_COUNT")
+    LOG_DIR=os.getenv("LOG_DIR")
+    LOG_FORMAT=os.getenv("LOG_FORMAT")
+    LOG_FILENAME=os.getenv("LOG_FILENAME")
+    LOG_LEVEL=os.getenv("LOG_LEVEL")
+    LOG_DESTINATION=os.getenv("LOG_DESTINATION")
 
     if not DATABASE_URL:
-        logger.error("A variável de ambiente DATABASE_URL não está definida.")
+        print ("[ERROR][WSM - ROUTER Config]  A variável de ambiente DATABASE_URL não está definida.")
         raise ValueError("DATABASE_URL não definida.")
 
     if not Z_MQ_PORT:
-        logger.error("A variável de ambiente Z_MQ_PORT não está definida.")
+        print("[ERROR][WSM - ROUTER Config]  A variável de ambiente Z_MQ_PORT não está definida.")
         raise ValueError("Z_MQ_PORT não definida.")
 
     if not CA_KEY_PASSWORD:
-        logger.error("A variável de ambiente CA_KEY_PASSWORD não está definida.")
+        print("[ERROR][WSM - ROUTER Config]  A variável de ambiente CA_KEY_PASSWORD não está definida.")
         raise ValueError("CA_KEY_PASSWORD não definida.")
 
     if not CA_KEY_PATH:
-        logger.error("A variável de ambiente CA_KEY_PATH não está definida.")
+        print("[ERROR][WSM - ROUTER Config]  A variável de ambiente CA_KEY_PATH não está definida.")
         raise ValueError("CA_KEY_PATH não definida.")
 
     if not CA_CERT_FILE:
-        logger.error("A variável de ambiente CA_CERT_FILE não está definida.")
+        print("[ERROR][WSM - ROUTER Config]  A variável de ambiente CA_CERT_FILE não está definida.")
         raise ValueError("CA_CERT_FILE não definida.")
 
     if not WSM_CERT_FILE:
-        logger.error("A variável de ambiente WSM_CERT_FILE não está definida.")
+        print("[ERROR][WSM - ROUTER Config]  A variável de ambiente WSM_CERT_FILE não está definida.")
         raise ValueError("WSM_CERT_FILE não definida.")
 
     if not WSM_CERT_PRIVATE_KEY:
-        logger.error("A variável de ambiente WSM_CERT_PRIVATE_KEY não está definida.")
+        print("[ERROR][WSM - ROUTER Config]  A variável de ambiente WSM_CERT_PRIVATE_KEY não está definida.")
         raise ValueError("WSM_CERT_PRIVATE_KEY não definida.")
 
     if not WSM_CERT_CN:
-        logger.error("A variável de ambiente WSM_CERT_CN não está definida.")
+        print("[ERROR][WSM - ROUTER Config]  A variável de ambiente WSM_CERT_CN não está definida.")
         raise ValueError("WSM_CERT_CN não definida.")
 
     if not CA_CERT_CN:
-        logger.error("A variável de ambiente CA_CERT_CN não está definida.")
+        print("[ERROR][WSM - ROUTER Config] A variável de ambiente CA_CERT_CN não está definida.")
         raise ValueError("CA_CERT_CN não definida.")
 
-    logger.info("Todas as variáveis de ambiente foram carregadas com sucesso.")
+    print("[INFO][WSM - ROUTER Config] Todas as variáveis de ambiente foram carregadas com sucesso.")
 
 except Exception as e:
-    logger.error("Error loading environment variables: {e}")
+    print("[ERROR][WSM - ROUTER Config] Error loading environment variables: {e}")
     raise 
 
 try:
     load_encrypted_env(encrypted_file_path=encrypted_env_path, key_file_path=key_path)
 except Exception as e:
-    logger.error(f"Error loading encrypted configuration file: {e}")
+    print(f"[ERROR][WSM - ROUTER Config] Error loading encrypted configuration file: {e}")
     raise
-
-
-
-
-
-
-
-
-

@@ -3,6 +3,7 @@ import uvicorn
 from fastapi import FastAPI, Depends, HTTPException, status, Form
 from src.routes.http.router import api_router
 from src.services.auth_service import AuthService, Token
+from src.config.wsm_logger import logger
 
 app = FastAPI()
 # fastapi dev main.py
@@ -38,5 +39,6 @@ def main():
 
 if __name__ == "__main__":
    uvicorn.run("main:app", host="0.0.0.0", port=8880, reload=True)
+   logger.info("Running Audit Server ...")
 
 

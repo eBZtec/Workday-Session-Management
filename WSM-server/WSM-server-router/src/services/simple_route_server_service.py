@@ -1,5 +1,5 @@
 import zmq, json, base64, re, threading, time
-from src.logs.logger import Logger
+from src.logs.logger import logger
 from src.connections.database_manager import DatabaseManager
 from src.config import config
 from src.serialization.message_processor import MessageProcessor
@@ -11,7 +11,7 @@ class FlexibleRouterServerService:
     
     def __init__(self, bind_address="tcp://*:"+config.Z_MQ_PORT):
         
-        self.logger = Logger(log_name='WSM-Router').get_logger()
+        self.logger = logger
         self.context = zmq.Context()
         self.bind_address = bind_address
         self.message_processor = MessageProcessor()
@@ -20,6 +20,7 @@ class FlexibleRouterServerService:
         self.ca_srvr = Server()
         # socket ROUTER config
         self.socket = self.context.socket(zmq.ROUTER)
+        self.socket.setsockopt(zmq.ROUTER_HANDOVER, 1)  ## This configuration can't allow to replace a new connection dealer with same id, this keep the same connection
         self.socket.bind(self.bind_address)
 
     def start(self):
@@ -28,7 +29,7 @@ class FlexibleRouterServerService:
 
         poller = zmq.Poller()
         poller.register(self.socket, zmq.POLLIN)
-
+        self.logger.debug("WSM - simple_route_server_service - Waiting for messages...")
         while True:
             try:    
                 socks = dict(poller.poll(timeout=100))
@@ -36,6 +37,7 @@ class FlexibleRouterServerService:
                     # Receive two parts message: [identidade, mensagem]
                     multipart_msg = self.socket.recv_multipart()
                     self.logger.info(f"Message received:{multipart_msg}")
+                    waiting_logged = False  # Reset flag
                     if len(multipart_msg) >=2:
                         identity, message = multipart_msg
                         client_id = identity
@@ -47,9 +49,9 @@ class FlexibleRouterServerService:
                         self.handle_message(client_id, message_text)
                     else:
                         self.logger.warning(f"WSM - simple_route_server_service - Malformed message: {multipart_msg}")
-                else:
+                #else:
                     # Sem mensagens no intervalo de timeout
-                    self.logger.debug("WSM - simple_route_server_service - Waiting for messages...")
+                    # self.logger.debug("WSM - simple_route_server_service - Waiting for messages...")
             except zmq.ContextTerminated:
                 self.logger.info("WSM - simple_route_server_service -  ZMQ context terminated, terminate server.")
             except zmq.Again:
