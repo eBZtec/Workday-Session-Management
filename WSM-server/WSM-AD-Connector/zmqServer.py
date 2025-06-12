@@ -2,11 +2,10 @@ import os
 import zmq
 import json
 import base64
-import argparse
 import pika
 import datetime
 import logging
-import time
+import sys
 
 from logging.handlers import TimedRotatingFileHandler
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -20,24 +19,44 @@ from dotenv import load_dotenv
 import os
 
 
-logger = logging.getLogger('zmqServer_logger')
-logger.setLevel(logging.DEBUG)
 load_dotenv()
 
-handler = TimedRotatingFileHandler(
-    'zmqServer.log',  # Nome do arquivo
-    when='D',  # Roda com base no dia
-    interval=7,  # Intervalo de 7 dias
-    backupCount=2,  # Número de backups. 0 apaga logs antigos.
-)
-handler.setLevel(logging.DEBUG)
+LOG_NAME = os.getenv("LOG_NAME", "wsm_logger")
+LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG").upper()
+LOG_FORMAT = os.getenv("LOG_FORMAT", "[%(asctime)s] [%(levelname)s] %(message)s")
+LOG_DESTINATION = os.getenv("LOG_DESTINATION", "both").lower()
 
-# Formatting log
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
+# Cria o logger
+logger = logging.getLogger(LOG_NAME)
+logger.setLevel(getattr(logging, LOG_LEVEL, logging.INFO))
 
-# Add  handler to logger
-logger.addHandler(handler)
+# Evita duplicar handlers
+if not logger.handlers:
+    formatter = logging.Formatter(LOG_FORMAT)
+
+    if LOG_DESTINATION in ("file", "both"):
+        LOG_DIR = os.getenv("LOG_DIR", "./logs")
+        LOG_FILENAME = os.getenv("LOG_FILENAME", "wsm.log")
+        LOG_MAX_BYTES = int(os.getenv("LOG_MAX_BYTES", 1048576))
+        LOG_BKP_COUNT = int(os.getenv("LOG_BKP_COUNT", 5))
+
+        os.makedirs(LOG_DIR, exist_ok=True)
+        file_path = os.path.join(LOG_DIR, LOG_FILENAME)
+        file_handler = TimedRotatingFileHandler(
+            file_path,
+            when='D',
+            interval=7,
+            backupCount=LOG_BKP_COUNT
+        )
+        file_handler.setLevel(getattr(logging, LOG_LEVEL, logging.INFO))
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+
+    if LOG_DESTINATION in ("journal", "both"):
+        stream_handler = logging.StreamHandler(sys.stdout)
+        stream_handler.setLevel(getattr(logging, LOG_LEVEL, logging.INFO))
+        stream_handler.setFormatter(formatter)
+        logger.addHandler(stream_handler)
 
 
 # RabbitMQ Reader Class
@@ -127,7 +146,7 @@ def load_public_key():
             key_file.read(),
             backend=default_backend()
         )"""
-    print(f"PUBLIC KEY:{str(public_key)}")
+    #print(f"PUBLIC KEY:{str(public_key)}")
     return public_key
 
 # Decrypt AES key and IV using RSA
@@ -187,7 +206,7 @@ def main():
         except Exception as e:
             logger.error(f"Error processing RabbitMQ message: {e}")
 
-    print("Starting to read RabbitMQ messages...")
+    logger.info("Starting to read RabbitMQ messages...")
     rabbit_reader.start_consuming(process_rabbit_message)
 
 def process_message(message):
@@ -241,7 +260,6 @@ def process_request(request):
         "EncryptedMessage": base64.b64encode(encrypted_message).decode()
     }
     request = json.dumps(payload, indent=4)
-    print(request)
     return request
 
 
@@ -294,7 +312,7 @@ def get_certs(database_url:str ):
         result = results["certificate"]
         return result
     except psycopg2.Error as e:
-        print(f"Erro ao acessar o banco de dados: {e}")
+        logger.error(f"Erro ao acessar o banco de dados: {e}")
         return []
     finally:
         if connection:
