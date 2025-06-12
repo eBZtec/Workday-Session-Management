@@ -1,6 +1,6 @@
 import pika.exceptions
 
-from src.config.wsm_logger import wsm_logger
+from src.config.wsm_logger import logger as wsm_logger
 from src.modules.agent.agent_updater import AgentUpdaterServer
 
 

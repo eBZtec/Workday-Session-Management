@@ -1,7 +1,7 @@
 import pika
 
 from src.config.wsm_config import wsm_config
-from src.config.wsm_logger import wsm_logger
+from src.config.wsm_logger import logger as wsm_logger
 from src.shared.generic.singleton import Singleton
 
 

@@ -1,7 +1,7 @@
 import json
 
 from src.config.wsm_config import wsm_config
-from src.config.wsm_logger import wsm_logger
+from src.config.wsm_logger import logger as wsm_logger
 from src.infra.wsm_queue_manager import wsm_queue_manager
 from src.infra.wsm_session_database import wsm_session_database
 from src.shared.enums.types import JourneyType

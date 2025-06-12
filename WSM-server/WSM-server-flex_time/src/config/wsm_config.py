@@ -30,7 +30,7 @@ class Config(metaclass=Singleton):
             return cls._instance
 
     def _load_env_vars(self):
-        self.log_name = os.getenv("WSM_SERVER_FLEX_TIME_LOG_NAME=")
+        self.log_name = os.getenv("WSM_SERVER_FLEX_TIME_LOG_NAME")
         self.log_dir = os.getenv("WSM_SERVER_FLEX_TIME_LOG_DIR")
         self.log_filename = os.getenv("WSM_SERVER_FLEX_TIME_LOG_FILENAME")
         self.log_format = os.getenv("WSM_SERVER_FLEX_TIME_LOG_FORMAT")

@@ -1,9 +1,7 @@
 import json
-
 import zmq
-
 from src.config.wsm_config import wsm_config
-from src.config.wsm_logger import wsm_logger
+from src.config.wsm_logger import logger as wsm_logger
 from src.infra.wsm_session_database import wsm_session_database
 from src.infra.wsm_zeromq_manager import wsm_zeromq_manager
 from src.shared.enums.types import JourneyType
