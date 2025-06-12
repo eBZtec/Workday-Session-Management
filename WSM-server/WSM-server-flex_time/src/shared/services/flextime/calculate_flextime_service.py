@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy.orm import Session
 
-from src.config.wsm_logger import wsm_logger
+from src.config.wsm_logger import logger as wsm_logger
 from src.shared.enums.types import WorkDayType, WorkTimeType
 from src.shared.helpers.journey import get_work_hours_quantity, get_work_day_type, today_work_time_range, \
     clean_work_timeframes, allowed_work_days_as_json, cleanup

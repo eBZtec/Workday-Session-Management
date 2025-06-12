@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from src.config.wsm_logger import wsm_logger
+from src.config.wsm_logger import WSMLogger as wsm_logger
 from src.shared.models.db.models import StandardWorkHours, FlexTime
 from src.shared.repository.wsm_repository import WSMRepository
 

@@ -2,7 +2,7 @@ from time import sleep
 
 import pika.exceptions
 
-from src.config.wsm_logger import wsm_logger
+from src.config.wsm_logger import logger as wsm_logger
 from src.modules.connectors.connectors_updater import ConnectorsUpdater
 
 
