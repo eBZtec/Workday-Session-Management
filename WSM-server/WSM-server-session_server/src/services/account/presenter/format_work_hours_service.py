@@ -23,5 +23,5 @@ class FormatWorkHoursService:
 
             return str(result)
         except Exception as e:
-            logger.warn(f"Could not format work hours, reason: {e}")
+            logger.warning(f"Could not format work hours, reason: {e}")
         return None
