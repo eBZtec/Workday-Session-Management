@@ -53,7 +53,7 @@ async def execute():
             logger.info(f"Grace logon task - Allowed logon hours defined as {allowed_work_hours} for account {uid}")
 
             await UpdateAccountAttributeService.execute(account.id, "logon_hours", allowed_work_hours)
-            send_message(account)
+            send_message(database_manager, _id)
             logger.info(f"Grace logon task - Pooling account update sent for account {uid}")
         except Exception as e:
             logger.error(f"Grace logon task - Could not process account {account.uid}, reason: {e}")
@@ -72,11 +72,17 @@ def is_today(dt: datetime):
     return False
 
 
-def send_message(account: type[StandardWorkHours]):
-    logger.info(f"Sending connector update for account {account.__dict__} for uid \"{account.uid}\"")
-    rabbitmq_send_message = RabbitMQSendMessageService(queue_name=config.WORK_HOURS_QUEUE)
+def send_message(dm: DatabaseManager, _id: int):
+    account = dm.get_by_id(StandardWorkHours, _id)
 
-    message = account.__dict__
-    rabbitmq_send_message.send(message)
+    if account:
+        logger.info(f"Sending connector update for account {account.__dict__} for uid \"{account.uid}\"")
 
-    logger.info(f"Message {message} successfully sent to queue \"{config.WORK_HOURS_QUEUE}\"")
+        rabbitmq_send_message = RabbitMQSendMessageService(queue_name=config.WORK_HOURS_QUEUE)
+
+        message = account.__dict__
+        rabbitmq_send_message.send(message)
+
+        logger.info(f"Message {message} successfully sent to queue \"{config.WORK_HOURS_QUEUE}\"")
+    else:
+        logger.warning(f"Account id {_id} not found")
