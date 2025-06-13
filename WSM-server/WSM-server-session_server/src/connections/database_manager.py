@@ -1,17 +1,20 @@
 from datetime import datetime
 from typing import Optional, Any, Type
-from sqlalchemy import create_engine, or_, desc
+from sqlalchemy import create_engine, or_, desc, and_
 from sqlalchemy.orm import sessionmaker
 from contextlib import contextmanager
 from dotenv import load_dotenv
 import os
 from src.enums.target_status_type import TargetStatusType
-from src.models.models import Base, TargetStatus, FlexTime
+from src.enums.types import JourneyType
+from src.models.models import Base, TargetStatus, FlexTime, StandardWorkHours
 from src.config import config
 from src.models.models import Holidays, ExtendedWorkHours, Target, Sessions, Client
 
 # Carregar as variáveis do arquivo .env
 load_dotenv()
+
+
 
 class DatabaseManager:
     def __init__(self):
@@ -92,6 +95,15 @@ class DatabaseManager:
             return session.query(model).filter(model.employee_id.ilike(employee_id_)).first()
 
     ######    CUSTOMIZED PONTUAL QUERIES    ############
+
+    def get_users_by_journey_type(self, journey_type: JourneyType = JourneyType.FLEX_TIME) -> list[
+        type[StandardWorkHours]]:
+        with self.session_scope() as session:
+            return session.query(StandardWorkHours).filter(
+                and_(
+                    StandardWorkHours.journey == journey_type,
+                    StandardWorkHours.enable==True)
+            ).all()
 
     def get_holidays(self, city) -> list[Type[Holidays]]:
         with self.session_scope() as session:
