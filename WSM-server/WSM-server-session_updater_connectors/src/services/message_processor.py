@@ -62,7 +62,8 @@ class MessageProcessor:
 
             # Resent a message to properly target queues
             self.rabbit_manager.send_message(target_queue, message)
-
+            
+            """
             # When target was updated this sent a msg to agent updater to update windows agent (router -> agent windows) 
             payload = {
                 "action":"updateHours",
@@ -73,7 +74,8 @@ class MessageProcessor:
             session_agent = ['session_agent']
             a =1  
             self.rabbit_manager.send_message(session_agent, payload)
-
+            """
+            
         except Exception as e:
             logger.error(f"WSM - Session Updater Connectors - Error processing message: {e}")
             raise
