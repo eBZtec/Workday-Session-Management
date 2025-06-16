@@ -1,5 +1,5 @@
 import zmq
-from src.logs.logger import Logger
+from src.logs.logger import logger
 import json
 
 class ZeroMQSender:
@@ -13,6 +13,7 @@ class ZeroMQSender:
         self.socket = self.context.socket(zmq.DEALER)
         self.socket.identity = client_id.encode()
         self.socket.connect(self.router_queue)
+        self.logger = logger
         
 
     def send(self, message):

@@ -3,7 +3,7 @@ from src.services.message_processor import MessageProcessor
 from src.services.rabbitMQ_consumer import RabbitMQConsumer
 from src.services.zeroMQ_sender import ZeroMQSender
 from src.config import config
-from src.logs.logger import Logger
+from src.logs.logger import logger
 
 def main():
     """
