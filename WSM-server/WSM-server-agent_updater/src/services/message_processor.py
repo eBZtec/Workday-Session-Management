@@ -1,5 +1,5 @@
 import json
-from src.logs.logger import Logger
+from src.logs.logger import logger
 
 
 class MessageProcessor:
@@ -9,6 +9,7 @@ class MessageProcessor:
 
     def __init__(self, zmq_sender):
         self.zmq_sender = zmq_sender
+        self.logger = logger
 
     def process_message(self, message):
         """
