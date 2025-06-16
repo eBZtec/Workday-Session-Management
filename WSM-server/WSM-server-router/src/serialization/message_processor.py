@@ -14,6 +14,7 @@ class MessageProcessor:
         self.dm = DatabaseManager()
         self.work_hours = WorkingHoursService()
         self.send_audit = RabbitMQSessionAuditProducer()
+        self.logger = logger
 
 
     def process_client_message(self, ZMQ_client_id, client_message):
@@ -26,7 +27,7 @@ class MessageProcessor:
                 client_data = {}
         except json.JSONDecodeError as e:
             message = {"status": "error", "message": f"Error decoding JSON: {str(e)}"}
-            logger.error(message)
+            self.logger.error(message)
             return message
 
         try:
@@ -52,21 +53,21 @@ class MessageProcessor:
                 return {"status": "beating", "message": "Done"}
             else:
                 self.dm.add_entry(client)     
-            logger.info(f"WSM Router - message_processor - Processing Client: Hostname={client_data.get("hostname")}, IP={client_data.get("ip_address")},"
+            self.logger.info(f"WSM Router - message_processor - Processing Client: Hostname={client_data.get("hostname")}, IP={client_data.get("ip_address")},"
               f"Version={client_data.get("client_version")}, OS={client_data.get("os_name")} {client_data.get("os_version")}, Agent={client_data.get("agent_info")}")
             # return confirmation
             message = {"status": "success", "message": "Client information processed"}
-            logger.info(message)
+            self.logger.info(message)
             return message
         except KeyError as e:
             # return this error when the key in the json is not found
             message = {"status": "error", "message": f"Missing key in client data: {str(e)}"}
-            logger.error(message)
+            self.logger.error(message)
             return message
         except Exception as e:
             # capture other errors
             message = {"status": "error", "message": f"An error occurred while processing client data: {str(e)}"}
-            logger.error(message)
+            self.logger.error(message)
             return message
 
         
