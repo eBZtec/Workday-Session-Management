@@ -175,7 +175,8 @@ class FlexibleRouterServerService:
         self.logger.info("Processing routing client message")
 
         if message_data["RoutingClientMessage"].get("journey") == "FLEX_TIME": # if the user get flex_time, it will call 0MQ server to get workhours
-            message_data = self.get_response_flex_time(message_data["RoutingClientMessage"]["user"])
+            if "user" in message_data["RoutingClientMessage"]:
+                message_data = self.get_response_flex_time(message_data["RoutingClientMessage"]["user"])
 
         user = message_data["RoutingClientMessage"].get("uid") or message_data["RoutingClientMessage"].get("user")
         sessions = self.dm.get_sessions_by_uid(user)
