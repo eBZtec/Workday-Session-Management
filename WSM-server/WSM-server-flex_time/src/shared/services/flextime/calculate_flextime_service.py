@@ -50,7 +50,10 @@ class CalculateFlextimeService:
 
         account.allowed_work_hours = allowed_work_hours
         account.formatted_work_hours = formatted_work_hours
-        account.logon_hours = self.define_logon_hours()
+        if account.enable:
+            account.logon_hours = self.define_logon_hours()
+        else:
+            account.logon_hours = allowed_work_hours
 
         wsm_logger.info(f"Allowed work hours defined as {allowed_work_hours} for account {account.uid}")
         wsm_logger.debug(f"Formatted Allowed work hours defined as {formatted_work_hours} for account {account.uid}")
