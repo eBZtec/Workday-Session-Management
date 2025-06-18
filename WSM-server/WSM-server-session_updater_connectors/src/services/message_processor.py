@@ -63,6 +63,11 @@ class MessageProcessor:
             # Resent a message to properly target queues
             self.rabbit_manager.send_message(target_queue, message)
             
+
+            session_agent = ['session_agent'] # agent queue
+            self.rabbit_manager.send_message(session_agent,message)
+
+
             """
             # When target was updated this sent a msg to agent updater to update windows agent (router -> agent windows) 
             payload = {
