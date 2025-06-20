@@ -34,7 +34,7 @@ async def execute():
                     return
 
             start_work_hour = string_to_time(subtract_hours_hhmm_dt(account.start_time))
-            end_work_hour = string_to_time(account.start_time)
+            end_work_hour = string_to_time(add_hours_hhmm_dt(account.start_time))
             city = account.c
             week_work_days = account.weekdays
             unrestricted = account.unrestricted
@@ -62,6 +62,12 @@ async def execute():
 def subtract_hours_hhmm_dt(hora: str, horas_sub: int = 3) -> str:
     base = datetime.strptime(hora, "%H:%M")
     result = base - timedelta(hours=horas_sub)
+
+    return result.strftime("%H:%M")
+
+def add_hours_hhmm_dt(hora: str, horas_add: int = 3) -> str:
+    base = datetime.strptime(hora, "%H:%M")
+    result = base + timedelta(hours=horas_add)
 
     return result.strftime("%H:%M")
 
