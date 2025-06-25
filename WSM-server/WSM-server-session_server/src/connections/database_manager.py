@@ -9,7 +9,9 @@ from src.enums.target_status_type import TargetStatusType
 from src.enums.types import JourneyType
 from src.models.models import Base, TargetStatus, FlexTime, StandardWorkHours
 from src.config import config
-from src.models.models import Holidays, ExtendedWorkHours, Target, Sessions, Client
+from src.config.wsm_logger import logger
+from src.models.models import Holidays, ExtendedWorkHours, Target, Sessions, Client, Configuration
+
 
 # Carregar as variáveis do arquivo .env
 load_dotenv()
@@ -95,6 +97,23 @@ class DatabaseManager:
             return session.query(model).filter(model.employee_id.ilike(employee_id_)).first()
 
     ######    CUSTOMIZED PONTUAL QUERIES    ############
+
+
+    def upsert_config_entry(self,model, id_, update_data:dict):
+        with self.session_scope() as session:
+            entry = self.get_by_id(model, id_)
+
+            if entry:
+                # Update
+                for key, value in update_data.items():
+                    if hasattr(entry, key):
+                        setattr(entry, key, value)
+                session.add(entry)
+            else:
+            # Insert
+                entry = model(**update_data)
+                session.add(entry)
+
 
     def get_users_by_journey_type(self, journey_type: JourneyType = JourneyType.FLEX_TIME) -> list[
         type[StandardWorkHours]]:

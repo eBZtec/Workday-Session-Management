@@ -9,4 +9,5 @@ class ConfigurationManagerService:
         database_manager = DatabaseManager()
 
         entry = config.model_dump()
-        database_manager.update_entry(Configuration, 1, entry)
+        #database_manager.update_entry(Configuration, 1, entry)
+        database_manager.upsert_config_entry(Configuration,1,entry)
