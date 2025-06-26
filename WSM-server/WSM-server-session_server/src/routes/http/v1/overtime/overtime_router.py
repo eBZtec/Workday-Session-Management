@@ -14,7 +14,7 @@ router = APIRouter()
     name="Insert overtime"
 )
 async def insert(background_task: BackgroundTasks, overtime: ExtendedWorkHoursSchema):
-    background_task.add_task(InsertOvertimeController.execute, overtime)
+    await InsertOvertimeController.execute(overtime)
 
 
 @router.put(
