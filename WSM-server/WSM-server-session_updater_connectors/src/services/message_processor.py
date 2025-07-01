@@ -52,7 +52,7 @@ class MessageProcessor:
                 uid = message["uid"]
                 target_queue = self.db_manager.fetch_target_queue_by_user_uid(uid)
                 target_queue.append(config.RABBITMQ_SESSION_AGENT_QUEUE_NAME)
-            #else:
+            else:
                 uid = message["user"] # direct messages use "user" to refer a user himself 
                 target_queue = [config.RABBITMQ_SESSION_AGENT_QUEUE_NAME]
             
@@ -69,6 +69,7 @@ class MessageProcessor:
             
             # When target was updated this sent a msg to agent updater to update windows agent (router -> agent windows)
             # allowed_schedule = self.set_allowed_schedule(message)
+            """
             payload = {
                 "action":"updateHours",
                 "user": uid,
@@ -76,8 +77,8 @@ class MessageProcessor:
                 "title": ""
             }
             queue_name ='session_agent'
+            """
 
-            self.rabbit_manager.send_message_agent_workhours(queue_name, payload)
             
             
         except Exception as e:
