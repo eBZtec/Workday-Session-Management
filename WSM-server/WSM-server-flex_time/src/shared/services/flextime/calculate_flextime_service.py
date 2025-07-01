@@ -25,6 +25,7 @@ class CalculateFlextimeService:
     def calculate(self) -> StandardWorkHours:
         account = self._account
         timeframes = []
+        work_timeframes_allowed_schedule = []
         formatted_work_hours = None
         work_timeframe = None
         wsm_logger.info(f"Starting service to calculate flex work hours for account \"{account.uid}\"")
@@ -49,6 +50,7 @@ class CalculateFlextimeService:
 
             flextime_work_hour = self.define_work_hour(self._flex_times)
 
+            # Logon hours AD
             work_timeframes = flextime_work_hour + extensions
             timeframes = cleanup(work_timeframes)
             timeframes = clean_work_timeframes(timeframes)
@@ -57,12 +59,20 @@ class CalculateFlextimeService:
 
             formatted_work_hours = self.define_work_hour_formatted(work_timeframe)
             wsm_logger.info(f"Formatted work hours defined as {formatted_work_hours} for account {account.uid}")
+            # Fim logon hours AD
+
+            # Allowed Schedule
+            work_timeframes_allowed_schedule = flex_time_timeframes + extensions
+            work_timeframes_allowed_schedule = cleanup(work_timeframes_allowed_schedule)
+            work_timeframes_allowed_schedule = clean_work_timeframes(work_timeframes_allowed_schedule)
+
+            # Fim Allowed schedule
 
             self.debug_timeframe(timeframes)
         else:
             wsm_logger.info(f"Account {account.uid} is disabled. Blocking work hours...")
 
-        allowed_work_hours = allowed_work_days_as_json(timeframes)
+        allowed_work_hours = allowed_work_days_as_json(work_timeframes_allowed_schedule)
 
         account.allowed_work_hours = allowed_work_hours
         account.formatted_work_hours = formatted_work_hours
