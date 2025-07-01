@@ -239,7 +239,7 @@ class MessageProcessor:
                     return user_json
                 else:
                     self.logger.error(f"WSM Router - message_processor -  Error when trying to find user:{user}")
-                    not_allowed_user = {"action": "notify", "hostname": hostname, "user": user, "timezone": timezone, "unrestricted": False, "enable": False, "allowed_schedule": None, "timestamp" : timestamp, "message": "Seu login não está cadastrado no WSM, sua sessão será mantida.", "title": f"Login {user} não encontrado", "options": None }
+                    not_allowed_user = {"action": "notify", "hostname": hostname, "user": user, "timezone": timezone, "unrestricted": False, "enable": False, "allowed_schedule": None, "timestamp" : timestamp, "message": "Seu login não está cadastrado no WSM.", "title": f"Login {user} não encontrado", "options": None }
                     return not_allowed_user
             except Exception as e:
                 self.logger.error(f"WSM Router - message_processor - Error when trying to set schedule for this uid:{user}")

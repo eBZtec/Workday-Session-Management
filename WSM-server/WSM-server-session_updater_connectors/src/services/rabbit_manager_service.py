@@ -61,6 +61,7 @@ class RabbitMQManagerService:
                 logger.error(f"WSM - Session Updater COnnectors - RabbitMQ Manager Service - Error sending message to queue {queue_name}: {e}")
                 raise
 
+
     def close(self):
         """
         Fecha a conexão com o RabbitMQ.

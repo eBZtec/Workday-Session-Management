@@ -51,7 +51,8 @@ class MessageProcessor:
             if "uid" in message:
                 uid = message["uid"]
                 target_queue = self.db_manager.fetch_target_queue_by_user_uid(uid)
-            else:
+                target_queue.append(config.RABBITMQ_SESSION_AGENT_QUEUE_NAME)
+            #else:
                 uid = message["user"] # direct messages use "user" to refer a user himself 
                 target_queue = [config.RABBITMQ_SESSION_AGENT_QUEUE_NAME]
             
@@ -64,23 +65,28 @@ class MessageProcessor:
             self.rabbit_manager.send_message(target_queue, message)
             
 
-            session_agent = ['session_agent'] # agent queue
-            self.rabbit_manager.send_message(session_agent,message)
 
-
-            """
-            # When target was updated this sent a msg to agent updater to update windows agent (router -> agent windows) 
+            
+            # When target was updated this sent a msg to agent updater to update windows agent (router -> agent windows)
+            # allowed_schedule = self.set_allowed_schedule(message)
             payload = {
                 "action":"updateHours",
                 "user": uid,
                 "message": "",
                 "title": ""
             }
-            session_agent = ['session_agent']
-            a =1  
-            self.rabbit_manager.send_message(session_agent, payload)
-            """
+            queue_name ='session_agent'
+
+            self.rabbit_manager.send_message_agent_workhours(queue_name, payload)
+            
             
         except Exception as e:
             logger.error(f"WSM - Session Updater Connectors - Error processing message: {e}")
             raise
+
+    def set_allowed_schedule(self, allowed_wokkhours):
+        allowed_schedule:str = allowed_schedule
+        allowed_schedule = allowed_schedule.lower()
+        allowed_schedule = json.loads(allowed_schedule)
+
+        return allowed_schedule
