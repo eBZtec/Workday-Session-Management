@@ -14,25 +14,15 @@ class ReportController:
         try:
             session = DatabaseManager()
 
-            # 🔧 Converte FilterItem (Pydantic) para dict se necessário
+            #Convert FilterItem (Pydantic) to dict if necessary
             if isinstance(filter, list) and hasattr(filter[0], 'dict'):
                 filter = [f.dict() for f in filter]
-
-            print("📥 Filtro recebido:", filter)
-
             filter_expression = build_sqlalchemy_filter(filter, SessionsAudit)
-
             query = session.search_with_where_clause_paginated(SessionsAudit, filter_expression, page, page_size)
-
             def to_dict(obj):
                 from sqlalchemy.inspection import inspect
                 return {column.key: getattr(obj, column.key) for column in inspect(obj).mapper.column_attrs}
-
             result = [to_dict(obj) for obj in query]
-
-            print("✅ Resultados encontrados:", len(result))
             return result
-
         except InvalidFilterException as e:
             logger.error(f"Could not search into audit database, because the error: {e}")
-            print("Error:", e)
