@@ -5,7 +5,6 @@ from src.models.schema.request_models import ExtendedWorkHoursSchema
 from src.services.account.presenter.search_account_by_uid_service import SearchAccountByUIDService
 from src.services.overtime.update_overtime_database_service import UpdateOvertimeDatabaseService
 from src.services.pooling.accounts_pooling_service import AccountsPoolingService
-from src.utils.week_day_helper import is_able_to_work, WeekDay
 
 
 class UpdateOvertimeController:
@@ -15,20 +14,20 @@ class UpdateOvertimeController:
         try:
             account = await SearchAccountByUIDService.execute(overtime.uid)
             if account:
-                if is_able_to_work(overtime.extension_start_time.date(), account.weekdays):
-                    await UpdateOvertimeDatabaseService.execute(overtime_id, overtime)
-                else:
-                    weekdays = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"]
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f"Account \"{account.uid}\" is not able to work on \"{weekdays[overtime.extension_end_time.date().weekday()]}\", extension cannot be processed"
-                    )
+                await UpdateOvertimeDatabaseService.execute(overtime_id, overtime)
             else:
-                raise Exception(f"Account \"{overtime.uid}\" not found. Overtime could not be updated")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Account \"{overtime.uid}\" not found"
+                )
         except HTTPException as e:
             raise e
         except Exception as e:
             logger.error(f"Could not insert overtime {overtime.model_dump()}, reason: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=str(e)
+            )
         else:
             logger.info(f"Overtime {overtime.model_dump()} inserted successfully into the database")
             try:
