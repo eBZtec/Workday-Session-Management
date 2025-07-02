@@ -2,7 +2,7 @@ from abc import ABC
 from typing import Any
 from datetime import datetime, date, UTC, timezone
 
-from sqlalchemy import desc, select, and_
+from sqlalchemy import desc, select, and_, Sequence
 from sqlalchemy.orm import Session
 
 from src.shared.models.db.models import FlexTime, ExtendedWorkHours
@@ -18,7 +18,7 @@ class WSMRepository(ABC):
     def get_last_record(self, session: Session, model: Any, filters: dict):
         return session.query(model).filter_by(**filters).order_by(desc(model.id)).first()
 
-    def get_flex_times_between_datetime(self, session: Session, _id: int, start: datetime, end: datetime):
+    def get_flex_times_between_datetime(self, session: Session, _id: int, start: datetime, end: datetime) -> Sequence[FlexTime]:
         stmt = select(FlexTime).where(
             and_(
                 FlexTime.work_time.between(start, end),

@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, time, timedelta
+from datetime import datetime, time, timedelta, date
 from zoneinfo import ZoneInfo
 
 from sqlalchemy.orm import Session
@@ -8,6 +8,7 @@ from src.config.wsm_logger import logger as wsm_logger
 from src.shared.enums.types import WorkDayType, WorkTimeType
 from src.shared.helpers.journey import get_work_hours_quantity, get_work_day_type, today_work_time_range, \
     clean_work_timeframes, allowed_work_days_as_json, cleanup
+from src.shared.helpers.week_day_helper import is_able_to_work
 from src.shared.models.db.models import StandardWorkHours, FlexTime
 from src.shared.repository.wsm_repository import WSMRepository
 
@@ -40,7 +41,7 @@ class CalculateFlextimeService:
 
         if account.enable:
             wsm_logger.info(f"Account {account.uid} is enabled. Calculating work hours...")
-            self._flex_times = self.get_effective_work_hours()
+            self._flex_times = self.get_effective_work_hours(account.weekdays)
 
             flex_time_timeframes = self.flex_times_as_timeframes(self._flex_times)
             wsm_logger.info(f"Defined {flex_time_timeframes} flex timeframe for account {account.uid}")
@@ -93,16 +94,16 @@ class CalculateFlextimeService:
         return account
 
 
-    def get_effective_work_hours(self) -> list[FlexTime]:
+    def get_effective_work_hours(self, work_week_days: str) -> list[FlexTime]:
         workhours = []
         if self._account_work_day_type == WorkDayType.DAY_SHIFT:
-            workhours = self.get_effective_work_hours_for_day()
+            workhours = self.get_effective_work_hours_for_day(work_week_days)
         elif self._account_work_day_type == WorkDayType.NIGHT_SHIFT:
             workhours = self.get_effective_work_hours_for_night()
 
         return workhours
 
-    def get_effective_work_hours_for_day(self) -> list[FlexTime]:
+    def get_effective_work_hours_for_day(self, work_week_days: str) -> list[FlexTime]:
         wsm_logger.info(f"Searching for work times for account \"{self._account.uid}\"")
         flex_times = list()
         today = datetime.today()
@@ -111,7 +112,7 @@ class CalculateFlextimeService:
 
         wsm_logger.info(f"Searching for work times with start date at \"{start_time}\", and end date at \"{end_time}\" for account \"{self._account.uid}\"")
 
-        flex_times_found = WSMRepository().get_flex_times_between_datetime(
+        flex_times_found: list[FlexTime] = WSMRepository().get_flex_times_between_datetime(
             self._session,
             self._account.id,
             start_time,
@@ -119,8 +120,12 @@ class CalculateFlextimeService:
         )
 
         for flex_time in flex_times_found:
-            wsm_logger.debug(f"Adding {flex_time.work_time}, work type {flex_time.work_time_type}")
-            flex_times.append(flex_time)
+            if is_able_to_work(flex_time.work_time.date(), work_week_days):
+                wsm_logger.debug(f"Adding {flex_time.work_time}, work type {flex_time.work_time_type}")
+                flex_times.append(flex_time)
+            else:
+                weekdays = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+                wsm_logger.warning(f"Flextime \"{flex_time.work_time}\" cannot be added, user is not able to work on \"{weekdays[flex_time.work_time.date().weekday()]}'s\"")
 
         wsm_logger.info(
             f"Found \"{len(flex_times)}\" flex times at \"{today}\" for account \"{self._account.uid}\"")
