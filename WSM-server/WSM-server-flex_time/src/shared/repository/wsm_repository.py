@@ -30,12 +30,20 @@ class WSMRepository(ABC):
 
     def get_active_extensions_for_today(self, _id: int, session: Session) -> list[tuple[datetime, datetime]]:
         extensions = []
-        start_date = datetime.now(UTC)
-        end_date = date.fromordinal(start_date.toordinal() + 6)
+        current_date = datetime.now()
+        start_date = datetime(
+            current_date.year,
+            current_date.month,
+            current_date.day,
+            0,
+            0,
+            0,
+            tzinfo=UTC
+        )
         end_date = datetime(
-            end_date.year,
-            end_date.month,
-            end_date.day,
+            current_date.year,
+            current_date.month,
+            current_date.day,
             23,
             59,
             0,
