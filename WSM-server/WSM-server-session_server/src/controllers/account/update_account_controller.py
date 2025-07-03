@@ -32,6 +32,7 @@ class UpdateAccountController:
             if account_found:
                 logger.info(f"Entry {uid} found")
                 logger.info(f"Updating user {uid} into the database")
+                standard_work_hours.enable = account_found.enable
                 await account_manager_factory.update(standard_work_hours)
                 logger.debug(f"Entry {standard_work_hours} updated successfully in the database")
             else:
