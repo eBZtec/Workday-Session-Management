@@ -30,35 +30,21 @@ class WSMRepository(ABC):
 
     def get_active_extensions_for_today(self, _id: int, session: Session) -> list[tuple[datetime, datetime]]:
         extensions = []
-        current_date = datetime.now()
-        start_date = datetime(
-            current_date.year,
-            current_date.month,
-            current_date.day,
-            0,
-            0,
-            0,
-            tzinfo=UTC
-        )
-        end_date = datetime(
-            current_date.year,
-            current_date.month,
-            current_date.day,
-            23,
-            59,
-            0,
-            tzinfo=UTC
-        )
+
         results = session.query(ExtendedWorkHours).filter(
             ExtendedWorkHours.std_wrk_id == _id,
-            ExtendedWorkHours.extension_end_time >= start_date,
-            ExtendedWorkHours.extension_end_time <= end_date,
             ExtendedWorkHours.extension_active == 0
         ).all()
 
         for row in results:
-            extension = (WSMRepository.to_utc(row.extension_start_time), WSMRepository.to_utc(row.extension_end_time))
-            extensions.append(extension)
+            start_time = row.extension_start_time
+
+            is_today = start_time.date() == datetime.today().date()
+
+            if is_today:
+                extension = (WSMRepository.to_utc(row.extension_start_time),
+                             WSMRepository.to_utc(row.extension_end_time))
+                extensions.append(extension)
 
         return extensions
 
