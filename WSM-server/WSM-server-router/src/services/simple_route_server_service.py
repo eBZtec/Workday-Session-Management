@@ -1,11 +1,15 @@
 import zmq, json, base64, re, threading, time
 from src.logs.logger import logger
 from src.connections.database_manager import DatabaseManager
+from src.connections.database_manager_audit import DatabaseManagerAudit
 from src.config import config
 from src.serialization.message_processor import MessageProcessor
 from src.services.encripted_messages_services import CryptoMessages
 from src.ca_services.ca_server import Server 
 from src.services.zmq_client import ZMQClient
+from src.services.ping_scheduler import PingScheduler
+from src.services.peer_liveness_monitor import ZMQPeerMonitor
+
 
 class FlexibleRouterServerService:
     
@@ -16,19 +20,41 @@ class FlexibleRouterServerService:
         self.bind_address = bind_address
         self.message_processor = MessageProcessor()
         self.dm = DatabaseManager()
+        self.dma = DatabaseManagerAudit()
         self.cm = CryptoMessages()
         self.ca_srvr = Server()
         # socket ROUTER config
         self.socket = self.context.socket(zmq.ROUTER)
         self.socket.setsockopt(zmq.ROUTER_HANDOVER, 1)  ## This configuration can't allow to replace a new connection dealer with same id, this keep the same connection
         self.socket.bind(self.bind_address)
+        self._initial_ping_responded = set()
+        self.ping_scheduler = PingScheduler(
+            logger=self.logger,
+            db_manager=self.dm,  # ou outra instância de DatabaseManager que acesse o wsm_session_db
+            send_ping_callback=self.send_ping_to_client,
+            on_peer_timeout_callback=self.cleanup_disconnected_client,
+            interval_seconds=1800,  # 30 minutos
+            max_attempts=3
+        )
+   
+        self.monitor = ZMQPeerMonitor(
+            context=self.context,
+            logger=self.logger,
+            socket=self.socket,
+            on_disconnect_callback=self.cleanup_disconnected_client
+        )
 
+     
     def start(self):
         self.logger.info("WSM - simple_route_server_service - Flexible Router server started...")
         #self.logger.info("Flexible Router server started...")
-
         poller = zmq.Poller()
         poller.register(self.socket, zmq.POLLIN)
+
+        #Session cleaner when router starts and each 30 minutes
+        self.ping_scheduler.start()
+        self.initial_ping_cleanup()
+
         self.logger.debug("WSM - simple_route_server_service - Waiting for messages...")
         while True:
             try:    
@@ -93,6 +119,7 @@ class FlexibleRouterServerService:
         
         except Exception as e:
             self.logger.error(f"Error while decrypting the following message: {message}")
+
         
     def handle_message(self, client_id, message):
         try:
@@ -133,6 +160,7 @@ class FlexibleRouterServerService:
                 "Heartbeat": lambda: self.handle_heartbeat(client_id, message_data), #Cli sent heartbeatin and creation/update into client table
                 "LogonRequest": lambda: self.handle_logon_request(message_data), # Client sent a request to check if is allowed to login (check workhours )
                 "CARequest": lambda: self.handle_ca_request(message_data,client_id), #Requests from cli or AD to certificates.
+                "pong": lambda: self.handle_pong(client_id),
             }
             # Find the appropriate handler
             for key, handler in message_handlers.items():
@@ -149,6 +177,13 @@ class FlexibleRouterServerService:
             raise
     
         # Individual handlers for each message type
+
+    def handle_pong(self, client_id):
+        self.ping_scheduler.receive_pong(client_id)
+        self._initial_ping_responded.add(client_id)
+        self.logger.debug(f"[PONG] Response received from {client_id}")
+        return None
+
     def handle_client_message(self, client_id, client_data):
         self.logger.info("Processing client message")
         return self.message_processor.process_client_message(client_id, client_data)
@@ -252,3 +287,74 @@ class FlexibleRouterServerService:
         self.socket.close()
         self.context.term()
         self.logger.info(" WSM - simple_route_server_service - Flexible Router server stopped.")
+
+    def send_ping_to_client(self, hostname):
+        try:
+            message = {"action": "ping"}
+            self.socket.send_multipart([hostname.encode(), b"", json.dumps(message).encode()])
+            self.logger.info(f"[PING] Ping sent to {hostname}")
+        except Exception as e:
+            self.logger.error(f"[PING] Error when sent ping to {hostname}: {e}")
+
+    def cleanup_disconnected_client(self, hostname):
+        try:
+            self.logger.info(f"Cleaning up DB for disconnected client: {hostname}")
+            sessions = self.dm.get_sessions_joined_with_client(hostname)
+
+            for session in sessions:
+                self.dma.insert_cleaned_session(
+                hostname=session.hostname,
+                login=session.user,
+                start_time=session.start_time,
+                end_time=session.end_time,
+                create_timestamp=session.create_timestamp,
+                update_timestamp=session.update_timestamp,
+                os_version=session.os_version,
+                os_name=session.os_name,
+                ip_address=session.ip_address,
+                client_version=session.client_version,
+                agent_info=session.agent_info
+            )
+            self.dm.remove_sessions_by_hostname(hostname)
+            self.logger.info(f"Removed sessions for client: {hostname}")
+        except Exception as e:
+            self.logger.error(f"Failed to clean up DB for {hostname}: {e}")
+
+
+    def initial_ping_cleanup(self):
+        self.logger.info("[STARTUP] Verifying old sessions...")
+
+        try:
+            hostnames = self.dm.get_active_hostnames()
+        except Exception as e:
+            self.logger.error(f"[STARTUP] Failure when try to check sessions: {e}")
+            return
+
+        if not hostnames:
+            self.logger.info("[STARTUP] No active session located into database")
+            return
+
+        attempts = {}
+        max_attempts = 3
+        delay_between_attempts = 2  # segundos entre pings
+
+        for attempt in range(max_attempts):
+            self.logger.info(f"[STARTUP] Attempt {attempt + 1} of {max_attempts} — sending pings...")
+            for hostname in hostnames:
+                if hostname not in attempts:
+                    attempts[hostname] = 0
+                if attempts[hostname] < max_attempts:
+                    self.send_ping_to_client(hostname)
+                    attempts[hostname] += 1
+            time.sleep(delay_between_attempts)
+
+        self.logger.info("[STARTUP] Response Phase ended. Checking who responded...")
+
+        for hostname in hostnames:
+            if hostname in self._initial_ping_responded:
+                self.logger.info(f"[STARTUP] {hostname} responded with pong — keep session.")
+            else:
+                self.logger.warning(f"[STARTUP] {hostname} Did not respond — it will be cleaned.")
+                self.cleanup_disconnected_client(hostname)
+
+        self._initial_ping_responded.clear
