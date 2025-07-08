@@ -33,7 +33,8 @@ class FlexibleRouterServerService:
             db_manager=self.dm,  # ou outra instância de DatabaseManager que acesse o wsm_session_db
             send_ping_callback=self.send_ping_to_client,
             on_peer_timeout_callback=self.cleanup_disconnected_client,
-            interval_seconds=1800,  # 30 minutos
+            #interval_seconds=1800,  # 30 minutos
+            interval_seconds=10,  # 30 minutos
             max_attempts=3
         )
    
@@ -44,7 +45,7 @@ class FlexibleRouterServerService:
             on_disconnect_callback=self.cleanup_disconnected_client
         )
 
-     
+
     def start(self):
         self.logger.info("WSM - simple_route_server_service - Flexible Router server started...")
         #self.logger.info("Flexible Router server started...")
@@ -179,7 +180,7 @@ class FlexibleRouterServerService:
         # Individual handlers for each message type
 
     def handle_pong(self, client_id):
-        self.ping_scheduler.receive_pong(client_id)
+        self.ping_scheduler.receive_any_message(client_id)
         self._initial_ping_responded.add(client_id)
         self.logger.debug(f"[PONG] Response received from {client_id}")
         return None
@@ -291,7 +292,7 @@ class FlexibleRouterServerService:
     def send_ping_to_client(self, hostname):
         try:
             message = {"action": "ping"}
-            self.socket.send_multipart([hostname.encode(), b"", json.dumps(message).encode()])
+            self.send_message(hostname,message,to_encrypt=True)
             self.logger.info(f"[PING] Ping sent to {hostname}")
         except Exception as e:
             self.logger.error(f"[PING] Error when sent ping to {hostname}: {e}")

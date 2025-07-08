@@ -23,8 +23,11 @@ class PingScheduler:
     def stop(self):
         self._running = False
 
-    def receive_pong(self, hostname):
+    def receive_any_message(self, hostname):
+        # Trata qualquer mensagem recebida como sinal de vida
         with self._lock:
+            if hostname in self._attempts:
+                self.logger.info(f"[PING] {hostname} respondeu com qualquer mensagem — resetando contador.")
             self._attempts.pop(hostname, None)
 
     def has_received_pong(self, hostname):
