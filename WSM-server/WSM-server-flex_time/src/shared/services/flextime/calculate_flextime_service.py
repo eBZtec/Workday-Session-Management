@@ -180,6 +180,9 @@ class CalculateFlextimeService:
                 else:
                     work_hour_out = last_work_time.work_time + timedelta(seconds=total_worked_left)
 
+                    if len(flex_times) >= 3:
+                        work_hour_out = work_hour_out - timedelta(seconds=3600)
+
             wsm_logger.debug(f"Work hour IN defined as : {work_hour_in}")
             wsm_logger.debug(f"Work hour OUT defined as : {work_hour_out}")
 
