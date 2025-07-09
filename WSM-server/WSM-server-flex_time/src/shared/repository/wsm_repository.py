@@ -38,10 +38,12 @@ class WSMRepository(ABC):
 
         for row in results:
             start_time = row.extension_start_time
+            end_time = row.extension_end_time
 
-            is_today = start_time.date() == datetime.today().date()
+            start_is_today = start_time.date() == datetime.today().date()
+            end_is_today = end_time.date() == datetime.today().date()
 
-            if is_today:
+            if start_is_today or end_is_today:
                 extension = (WSMRepository.to_utc(row.extension_start_time),
                              WSMRepository.to_utc(row.extension_end_time))
                 extensions.append(extension)
