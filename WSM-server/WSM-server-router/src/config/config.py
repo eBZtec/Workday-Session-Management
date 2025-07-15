@@ -90,6 +90,7 @@ key_path = os.path.abspath(os.path.join(current_dir, '../../src/config/secret.ke
 try:
     # Configurações gerais
     DATABASE_URL = os.getenv("DEV_DATABASE_URL")
+    DATABASE_URL_AUDIT = os.getenv("DEV_DATABASE_URL_AUDIT")
     MQ_ADDRESS_HOST = os.getenv("DEV_MQ_ADDRESS_HOST")
     MQ_HOST_PORT = os.getenv("DEV_MQ_HOST_PORT")
     WORK_HOURS_QUEUE= os.getenv("DEV_WORK_HOURS_QUEUE")
@@ -104,6 +105,11 @@ try:
 
     AUDIT_QUEUE = os.getenv("AUDIT_QUEUE")
     AUDIT_QUEUE_HOST = os.getenv("AUDIT_QUEUE_HOST")
+
+    #Session cleanup
+    CLEANUP_THRESHOLD_MINUTES=os.getenv("CLEANUP_THRESHOLD_MINUTES")
+    CLEANUP_INTERVAL_MINUTES=os.getenv("CLEANUP_INTERVAL_MINUTES")
+
 
     #Logging configuration
     LOG_FILE = os.getenv("WSM_LOG_PATH")

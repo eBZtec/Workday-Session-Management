@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, or_, select
 from sqlalchemy.orm import sessionmaker
-from src.models.models import StandardWorkHours, ExtendedWorkHours, Sessions, Certificate_Authority, Configuration
+from src.models.models import StandardWorkHours, ExtendedWorkHours, Sessions, Certificate_Authority, Configuration, Client
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from contextlib import contextmanager
@@ -272,3 +272,47 @@ class DatabaseManager:
             return result[0] if result else None
 
 
+    def get_active_hostnames(self):
+        with self.session_scope() as session:
+            rows = session.query(Sessions.hostname).filter(Sessions.status == "active").distinct().all()
+            return [row.hostname for row in rows]
+
+    def get_sessions_joined_with_client(self, hostname):
+        """This function is used to clean sessions that was not closed into database."""
+        with self.session_scope() as session:
+            query = session.query(
+                Sessions.hostname,
+                Sessions.user,
+                Sessions.start_time,
+                Sessions.end_time,
+                Sessions.create_timestamp.label("session_create_timestamp"),
+                Sessions.update_timestamp.label("session_update_timestamp"),
+                Client.os_version,
+                Client.os_name,
+                Client.ip_address,
+                Client.client_version,
+                Client.agent_info,
+                Client.update_timestamp.label("client_update_timestamp")
+            ).join(Client, Sessions.hostname == Client.hostname)
+
+            if hostname:
+                query = query.filter(Sessions.hostname == hostname) 
+
+            return query.all()
+
+    def remove_sessions_by_hostname(self,_hostname):
+        """
+        Remove all sessions associated with hostname
+
+
+        Args:
+            hostname: Client hostname that was not connected
+        """
+
+        with self.session_scope() as session:
+            try:
+                deleted_rows = session.query(Sessions).filter(Sessions.hostname==_hostname).delete(synchronize_session=False)
+                print(f"Deleted {deleted_rows} session(s) for hostname '{_hostname}'") 
+            except Exception as e:
+                print(f"Failed to delete sessions for hostname '{_hostname}': {e}")
+                raise

@@ -1,11 +1,14 @@
-import zmq, json, base64, re, threading, time
+import zmq, json, base64, re, threading, time, datetime, pytz
 from src.logs.logger import logger
 from src.connections.database_manager import DatabaseManager
+from src.connections.database_manager_audit import DatabaseManagerAudit
 from src.config import config
 from src.serialization.message_processor import MessageProcessor
 from src.services.encripted_messages_services import CryptoMessages
 from src.ca_services.ca_server import Server 
 from src.services.zmq_client import ZMQClient
+from src.models.models import Client, Sessions
+
 
 class FlexibleRouterServerService:
     
@@ -16,6 +19,7 @@ class FlexibleRouterServerService:
         self.bind_address = bind_address
         self.message_processor = MessageProcessor()
         self.dm = DatabaseManager()
+        self.dma = DatabaseManagerAudit()
         self.cm = CryptoMessages()
         self.ca_srvr = Server()
         # socket ROUTER config
@@ -23,12 +27,102 @@ class FlexibleRouterServerService:
         self.socket.setsockopt(zmq.ROUTER_HANDOVER, 1)  ## This configuration can't allow to replace a new connection dealer with same id, this keep the same connection
         self.socket.bind(self.bind_address)
 
+
+    """
+    SESSION CLEANING 
+    """
+
+    def start_cleanup_thread(self):
+        def periodic_cleanup_loop():
+            self.logger.info(f"[CLEANUP THREAD] Starting Cleanup Thread")
+            try:
+                cln_interval = int(config.CLEANUP_INTERVAL_MINUTES)
+            except ValueError:
+                self.logger.error(f"[CLEANUP THREAD] Invalid CLEANUP_INTERVAL_MINUTES, using default 40 minutes")
+                cln_interval = 40  #Default 40 minutes AFTER ROUTER WAS INITIALIZED, NOT after last cleanup
+
+            while True:
+                try:
+                    self.cleanup_inactive_sessions(int(config.CLEANUP_THRESHOLD_MINUTES))
+                except Exception as e:
+                    self.logger.error(f"[CLEANUP THREAD] Error during session cleaning: {e}")
+                time.sleep(cln_interval * 60)
+
+        def initial_cleanup_once():
+            try:
+                self.logger.info("[CLEANUP THREAD] Executando limpeza inicial...")
+                self.cleanup_inactive_sessions(int(config.CLEANUP_THRESHOLD_MINUTES))
+                self.logger.info("[CLEANUP THREAD] Limpeza inicial concluída.")
+            except Exception as e:
+                self.logger.error(f"[CLEANUP THREAD] Erro durante a limpeza inicial: {e}")
+
+        # Executa a limpeza inicial em uma thread separada
+        threading.Thread(target=initial_cleanup_once, daemon=True).start()
+
+        # Executa a limpeza periódica
+        threading.Thread(target=periodic_cleanup_loop, daemon=True).start()
+
+    def cleanup_inactive_sessions(self, threshold_minutes):
+        now = datetime.datetime.now(pytz.UTC)
+        threshold_minutes = int(threshold_minutes)
+        cutoff = now - datetime.timedelta(minutes=threshold_minutes)
+
+        try:
+            # Search all sessions with dada associated to clients
+
+            joined_sessions = self.dm.get_sessions_joined_with_client(hostname=None)
+
+            for session_data in joined_sessions:
+                hostname = session_data.hostname
+                user = session_data.user
+                last_contact = session_data.client_update_timestamp
+
+                if last_contact and last_contact < cutoff:
+                    self.logger.warning(f"[CLEANUP] Inactive Host: {hostname} (Last Contact : {last_contact})")
+
+                    # Mounting dict with audit_table format
+
+                    session_dict = {
+                        "hostname": hostname,
+                        "event_type": "logout",
+                        "login": user,
+                        "status": "disconnected",
+                        "start_time": session_data.start_time,
+                        "end_time": now,
+                        "create_timestamp": session_data.session_create_timestamp,
+                        "update_timestamp": now,
+                        "os_version": session_data.os_version,
+                        "os_name": session_data.os_name,
+                        "ip_address": session_data.ip_address,
+                        "client_version": session_data.client_version,
+                        "agent_info": session_data.agent_info
+                    }
+
+                    try:
+                        self.dma.insert_cleaned_session(**session_dict)
+                        self.logger.info(f"[CLEANUP] Audited session to: '{hostname}/{user}'")
+                    except Exception as e:
+                        self.logger.error(f"[CLEANUP] Error to audit session: {hostname}{user}: {e}")
+                    
+
+                    try:
+                        self.dm.delete_user_disconnected(Sessions,session_dict['hostname'], session_dict['login'])
+                        self.logger.info (f"[CLEANUP] Session of {hostname}{user} successfully removed.")
+                    except Exception as e :
+                        self.logger.error(f"[CLEANUP] Error when trying to remove database session of {hostname}{user}: {e}")
+        except Exception as e:
+            self.logger.error(f"[CLEANUP] Search for sessions/clients failed: {e} ")
+
+    """
+        END SESSION CLEANING
+    """
+
     def start(self):
         self.logger.info("WSM - simple_route_server_service - Flexible Router server started...")
-        #self.logger.info("Flexible Router server started...")
-
+        self.start_cleanup_thread()
         poller = zmq.Poller()
         poller.register(self.socket, zmq.POLLIN)
+
         self.logger.debug("WSM - simple_route_server_service - Waiting for messages...")
         while True:
             try:    
@@ -49,9 +143,6 @@ class FlexibleRouterServerService:
                         self.handle_message(client_id, message_text)
                     else:
                         self.logger.warning(f"WSM - simple_route_server_service - Malformed message: {multipart_msg}")
-                #else:
-                    # Sem mensagens no intervalo de timeout
-                    # self.logger.debug("WSM - simple_route_server_service - Waiting for messages...")
             except zmq.ContextTerminated:
                 self.logger.info("WSM - simple_route_server_service -  ZMQ context terminated, terminate server.")
             except zmq.Again:
@@ -93,6 +184,7 @@ class FlexibleRouterServerService:
         
         except Exception as e:
             self.logger.error(f"Error while decrypting the following message: {message}")
+
         
     def handle_message(self, client_id, message):
         try:
@@ -149,6 +241,7 @@ class FlexibleRouterServerService:
             raise
     
         # Individual handlers for each message type
+
     def handle_client_message(self, client_id, client_data):
         self.logger.info("Processing client message")
         return self.message_processor.process_client_message(client_id, client_data)
@@ -232,7 +325,7 @@ class FlexibleRouterServerService:
         }
         # message = json.dumps(payload, indent=4)
         message = json.dumps(payload)
-        print(message)
+        #print(message)
         return message
 
     def send_message(self, client_id, message, to_encrypt):
@@ -252,3 +345,5 @@ class FlexibleRouterServerService:
         self.socket.close()
         self.context.term()
         self.logger.info(" WSM - simple_route_server_service - Flexible Router server stopped.")
+
+   
