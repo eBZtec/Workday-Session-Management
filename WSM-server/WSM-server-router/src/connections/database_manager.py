@@ -280,20 +280,25 @@ class DatabaseManager:
     def get_sessions_joined_with_client(self, hostname):
         """This function is used to clean sessions that was not closed into database."""
         with self.session_scope() as session:
-            return session.query(
+            query = session.query(
                 Sessions.hostname,
                 Sessions.user,
                 Sessions.start_time,
                 Sessions.end_time,
-                Sessions.create_timestamp,
-                Sessions.update_timestamp,
+                Sessions.create_timestamp.label("session_create_timestamp"),
+                Sessions.update_timestamp.label("session_update_timestamp"),
                 Client.os_version,
                 Client.os_name,
                 Client.ip_address,
                 Client.client_version,
-                Client.agent_info
-            ).join(Client, Sessions.hostname == Client.hostname
-            ).filter(Sessions.hostname == hostname).all() 
+                Client.agent_info,
+                Client.update_timestamp.label("client_update_timestamp")
+            ).join(Client, Sessions.hostname == Client.hostname)
+
+            if hostname:
+                query = query.filter(Sessions.hostname == hostname) 
+
+            return query.all()
 
     def remove_sessions_by_hostname(self,_hostname):
         """

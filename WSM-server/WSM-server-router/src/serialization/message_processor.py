@@ -351,7 +351,7 @@ class MessageProcessor:
             except Exception as e:
                 self.logger.error(f"WSM Router: No hostname find for this uid {user}")
                 return {"status": "error", "message": f"No hostname find for this user {user}"}
-        except Exception as e :
+        except Exception as e:
             self.logger.error(f"WSM Router - message_processor - Missing key in WSM Agent Updater data: {str(e)}")
             return {"status": "error", "message": "Invalid logon format request"}
 

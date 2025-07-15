@@ -106,6 +106,11 @@ try:
     AUDIT_QUEUE = os.getenv("AUDIT_QUEUE")
     AUDIT_QUEUE_HOST = os.getenv("AUDIT_QUEUE_HOST")
 
+    #Session cleanup
+    CLEANUP_THRESHOLD_MINUTES=os.getenv("CLEANUP_THRESHOLD_MINUTES")
+    CLEANUP_INTERVAL_MINUTES=os.getenv("CLEANUP_INTERVAL_MINUTES")
+
+
     #Logging configuration
     LOG_FILE = os.getenv("WSM_LOG_PATH")
     LOG_NAME = os.getenv("LOG_NAME")
