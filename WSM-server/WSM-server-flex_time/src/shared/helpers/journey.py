@@ -2,6 +2,7 @@ import json
 from datetime import time, datetime, timedelta, date
 from operator import itemgetter
 
+import pytz
 from pytz import timezone
 
 from src.shared.enums.types import WorkDayType, WeekDay, WorkDay
@@ -180,3 +181,28 @@ def as_minutes(work_hour: datetime):
     hour = timedelta(hours=work_hour.hour, minutes=work_hour.minute, seconds=0)
 
     return int(hour.total_seconds() / 60)
+
+
+def force_utc_naive_time(dt):
+    if dt.tzinfo is not None:
+        if dt.tzinfo == pytz.UTC:
+            return dt  # já está em UTC
+        # remove o fuso horário, mantendo a hora local
+        dt = dt.replace(tzinfo=None)
+    return dt.replace(tzinfo=pytz.UTC)
+
+
+def clean_timezone(work_hours: list[tuple[datetime, datetime]]):
+
+    timeframes = []
+
+    for work_hour in work_hours:
+        start,end = work_hour
+
+        start = force_utc_naive_time(start)
+        end = force_utc_naive_time(end)
+
+        work_hour_temp = start, end
+        timeframes.append(work_hour_temp)
+
+    return timeframes
