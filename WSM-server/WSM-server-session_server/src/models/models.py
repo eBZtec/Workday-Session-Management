@@ -237,5 +237,8 @@ class Target(TimestampedBase):
     # Relacionamento com TargetStatus
     target_status_entries = relationship("TargetStatus", back_populates="target", cascade='all, delete')
 
-
-
+class User(Base):
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username= Column(String, nullable=False)
+    hashed_password = Column(String, nullable=False)

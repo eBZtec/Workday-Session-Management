@@ -1,11 +1,24 @@
-from datetime import timedelta
+from contextlib import asynccontextmanager
+from src.connections.scheduler import scheduler
 import uvicorn
-from fastapi import FastAPI, Depends, HTTPException, status, Form
+from fastapi import FastAPI, Depends, Form
 from src.routes.http.router import api_router
-from src.services.auth_service import AuthService, Token
 from src.config.wsm_logger import logger
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler.start()
+    logger.info("AsyncIO Scheduler started")
+
+    yield
+
+    scheduler.shutdown()
+    logger.info("AsyncIO Scheduler shutdown")
+
+
+
+app = FastAPI(lifespan=lifespan)
 # fastapi dev main.py
 
 # Instance of the authentication service
@@ -15,30 +28,11 @@ app.include_router(
     prefix="/wsm/api"
 )
 
-auth_service = AuthService()
-
-# Login route to get token
-@app.post("/token", response_model=Token)
-async def login_for_access_token(secret_key: str = Form(...)):
-    # Valida a chave secreta
-    if not auth_service.authenticate_with_secret_key(secret_key):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid secret key"
-        )
-    # Generate token JWT
-    access_token = auth_service.create_access_token(
-        data={"sub": "client"},  # O "sub" pode ser qualquer identificação do cliente
-        expires_delta=timedelta(minutes=auth_service.ACCESS_TOKEN_EXPIRE_MINUTES)
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
-
-
 def main():
     pass
 
 if __name__ == "__main__":
-   uvicorn.run("main:app", host="0.0.0.0", port=8880, reload=True)
+   uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
    logger.info("Running Audit Server ...")
 
 

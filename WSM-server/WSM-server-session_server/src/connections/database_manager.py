@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Optional, Any, Type
+from typing import Optional, Any, Type, Generator
 from sqlalchemy import create_engine, or_, desc, and_
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from contextlib import contextmanager
 from dotenv import load_dotenv
 import os
@@ -15,7 +15,6 @@ from src.models.models import Holidays, ExtendedWorkHours, Target, Sessions, Cli
 
 # Carregar as variáveis do arquivo .env
 load_dotenv()
-
 
 
 class DatabaseManager:
@@ -81,6 +80,7 @@ class DatabaseManager:
             if entry:
                 for key, value in update_data.items():
                     setattr(entry, key, value)
+
 
     ######   CUSTOMIZED QUERIES   ###########
 

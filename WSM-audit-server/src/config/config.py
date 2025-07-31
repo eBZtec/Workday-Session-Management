@@ -7,6 +7,7 @@ load_dotenv()
 
 # Configurações gerais
 DATABASE_URL = os.getenv("DEV_DATABASE_URL")
+SESSION_DATABASE_URL = os.getenv("SESSION_DATABASE_URL")
 MQ_ADDRESS_HOST = os.getenv("DEV_MQ_ADDRESS_HOST")
 MQ_HOST_PORT = os.getenv("DEV_MQ_HOST_PORT")
 WORK_HOURS_QUEUE= os.getenv('DEV_WORK_HOURS_QUEUE')

@@ -1,11 +1,14 @@
-from fastapi import APIRouter, status, BackgroundTasks
+from fastapi import APIRouter, status, BackgroundTasks, Depends
 
 from src.controllers.overtime.insert_overtime_controller import InsertOvertimeController
 from src.controllers.overtime.search_overtime_controller import SearchOvertimeController
 from src.controllers.overtime.update_overtime_controller import UpdateOvertimeController
 from src.models.schema.request_models import ExtendedWorkHoursSchema, ExtendedWorkHoursResponse
+from src.services.auth_service import AuthService
 
-router = APIRouter()
+auth_service = AuthService()
+
+router = APIRouter(dependencies=[Depends(auth_service.get_current_user)])
 
 
 @router.post(

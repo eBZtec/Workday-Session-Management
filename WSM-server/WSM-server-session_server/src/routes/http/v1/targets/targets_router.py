@@ -1,9 +1,13 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from src.controllers.targets.targets_controller import TargetsController
 from src.models.schema.request_models import TargetSchema
+from src.services.auth_service import AuthService
 
-router = APIRouter()
+
+auth_service = AuthService()
+
+router = APIRouter(dependencies=[Depends(auth_service.get_current_user)])
 
 
 @router.post("/")

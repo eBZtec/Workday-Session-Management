@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Depends
 from typing import Union, List
 from pydantic import BaseModel
 import json
-
 from src.controllers.report.report_controller import ReportController
+from src.services.auth_service import AuthService
 
-router = APIRouter()
+auth_service = AuthService()
+
+router = APIRouter(dependencies=[Depends(auth_service.get_current_user)])
 
 class FilterItem(BaseModel):
     field: str
@@ -29,11 +31,12 @@ async def report(filter: str = Query(...), page: int = 1, page_size: int = 10):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Erro no filtro: {e}")
 
+"""
 @router.post("/query")
 async def report_post(payload: AuditQueryRequest):
-    """
-    POST com corpo JSON estruturado
-    """
+    
+    #POST com corpo JSON estruturado
+    
     try:
         result = await ReportController.execute(
             filter=payload.filters,
@@ -49,3 +52,4 @@ async def report_post(payload: AuditQueryRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro interno: {e}")
+"""

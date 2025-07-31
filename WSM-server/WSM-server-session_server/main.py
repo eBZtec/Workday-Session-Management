@@ -5,6 +5,7 @@ from src.config.wsm_logger import logger
 from src.connections.scheduler import scheduler
 from src.routes.http.router import api_router
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     scheduler.start()

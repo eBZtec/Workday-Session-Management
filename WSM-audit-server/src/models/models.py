@@ -1,10 +1,8 @@
 from pygments.lexer import default
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, Boolean, Text, PrimaryKeyConstraint, event, Date
+from sqlalchemy import create_engine, Column, Integer, String, DateTime
 from sqlalchemy.dialects.postgresql import CITEXT
-from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from src.models.schema.request_models import SessionTerminationActionSchema
-from datetime import datetime
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -25,3 +23,10 @@ class SessionsAudit(Base):
     ip_address = Column(String(100), nullable=False)
     client_version = Column(String(50), nullable=False)
     agent_info = Column(String(50))
+
+
+class User(Base):
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username= Column(String, nullable=False)
+    hashed_password = Column(String, nullable=False)

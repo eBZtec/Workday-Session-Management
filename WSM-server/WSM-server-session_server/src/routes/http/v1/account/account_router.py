@@ -18,10 +18,10 @@ from src.controllers.account.logoff_account_controller import LogoffAccountContr
 from src.controllers.account.update_account_controller import UpdateAccountController
 from src.controllers.account.create_account_controller import CreateAccountController
 
-router = APIRouter()
 
 auth_service = AuthService()
 
+router = APIRouter(dependencies=[Depends(auth_service.get_current_user)])
 
 @router.post(
     "/",
