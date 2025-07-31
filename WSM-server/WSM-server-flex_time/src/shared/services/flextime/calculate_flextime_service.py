@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from src.config.wsm_logger import logger as wsm_logger
 from src.shared.enums.types import WorkDayType, WorkTimeType
 from src.shared.helpers.journey import get_work_hours_quantity, get_work_day_type, today_work_time_range, \
-    clean_work_timeframes, allowed_work_days_as_json, cleanup
+    clean_work_timeframes, allowed_work_days_as_json, cleanup, clean_timezone
 from src.shared.helpers.week_day_helper import is_able_to_work
 from src.shared.models.db.models import StandardWorkHours, FlexTime
 from src.shared.repository.wsm_repository import WSMRepository
@@ -53,8 +53,12 @@ class CalculateFlextimeService:
 
             # Logon hours AD
             work_timeframes = flextime_work_hour + extensions
+            work_timeframes = clean_timezone(work_timeframes)
+            wsm_logger.info(f"Work timeframes for Active Directory Logon Hours: {work_timeframes}")
             timeframes = cleanup(work_timeframes)
+            wsm_logger.info(f"Cleaning Work timeframes for Active Directory Logon Hours: {timeframes}")
             timeframes = clean_work_timeframes(timeframes)
+            wsm_logger.info(f"Cleaned Work timeframes for Active Directory Logon Hours: {timeframes}")
 
             work_timeframe = self.define_start_end_timeframe(timeframes)
 
@@ -64,8 +68,12 @@ class CalculateFlextimeService:
 
             # Allowed Schedule
             work_timeframes_allowed_schedule = flex_time_timeframes + extensions
-            work_timeframes_allowed_schedule = cleanup(work_timeframes_allowed_schedule)
             work_timeframes_allowed_schedule = clean_work_timeframes(work_timeframes_allowed_schedule)
+            wsm_logger.info(f"Work timeframes for Allowed Schedule: {work_timeframes_allowed_schedule}")
+            work_timeframes_allowed_schedule = cleanup(work_timeframes_allowed_schedule)
+            wsm_logger.info(f"Cleaning Work timeframes for Allowed Schedule: {work_timeframes_allowed_schedule}")
+            work_timeframes_allowed_schedule = clean_work_timeframes(work_timeframes_allowed_schedule)
+            wsm_logger.info(f"Cleaned Work timeframes for Allowed Schedule: {work_timeframes_allowed_schedule}")
 
             # Fim Allowed schedule
 
