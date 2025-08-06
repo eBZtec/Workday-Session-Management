@@ -9,11 +9,15 @@ The entire project are separated in five main aplications:
 
  3. **Session Agent Updater**: The main ideia to this component is a reader from rabbitMQ queue called "session_agent" and rewrite the message to a new ZeroMQ queue with ROUTER-DEALER method, this new queue will be read to a other component. This component only holds a client messages like workhours update/insert and direct messages.
 
- 4. **WSM Router**: This component manage the entire messages with client, redirect API messages to clients or receive/response client criptographed messages. This component works like a Certificate Authority too, doing all the response and receive certificate assign requests etc.
+ 4. **WSM FlexTime Connectors**: This component are responsible to calculate the workhours of users that can't have fixed workhours time.
 
- 5. **WSM AD Connector**: This component read basically the same messages that Session Agent Updater read, but redirects into ZeroMQ queue to AD Service, using 0MQ with request response method.
+ 5. **WSM Router**: This component manage the entire messages with client, redirect API messages to clients or receive/response client criptographed messages. This component works like a Certificate Authority too, doing all the response and receive certificate assign requests etc.
 
- 6. **WSM Archive Processor**: This component manages rabbitMQ messages from WSM Router that refers to users sessions that make logon or logoff events in the client and store into audit database.
+ 6. **WSM AD Connector**: This component read basically the same messages that Session Agent Updater read, but redirects into ZeroMQ queue to Active Directory Service, using ZeroMQ with request response method.
+
+ 7. **WSM Archive Processor**: This component manages rabbitMQ messages from WSM Router that refers to users sessions that make logon or logoff events in the client and store into audit database.
+
+ 8. **WSM Audit Server**: This component are resposible to maintain historycally all user sessions, to auditory purposes. This module have the self database and the data stored in this database comes to WSM Archive Processor.
 
  Below we have a entire project structure, the components in red refers to this components that we explain earlier:
 
