@@ -1,4 +1,5 @@
 import zmq, json, base64, re, threading, time, datetime, pytz
+from zmq.error import ZMQError
 from src.logs.logger import logger
 from src.connections.database_manager import DatabaseManager
 from src.connections.database_manager_audit import DatabaseManagerAudit
@@ -25,7 +26,10 @@ class FlexibleRouterServerService:
         # socket ROUTER config
         self.socket = self.context.socket(zmq.ROUTER)
         self.socket.setsockopt(zmq.ROUTER_HANDOVER, 1)  ## This configuration can't allow to replace a new connection dealer with same id, this keep the same connection
+        self.socket.setsockopt(zmq.ROUTER_MANDATORY,1)
         self.socket.bind(self.bind_address)
+
+        self.active_identities = set()  
 
 
     """
@@ -137,6 +141,7 @@ class FlexibleRouterServerService:
                         client_id = identity
                         message_text = message.decode()
                         client_id = client_id.decode()
+                        self.active_identities.add(client_id)
                         #self.logger.info(f"WSM - simple_route_server_service - Received from {client_id}: {message_text}")
                         self.logger.info(f"WSM - simple_route_server_service - Received from {client_id}:")
                         # process the message
@@ -328,6 +333,7 @@ class FlexibleRouterServerService:
         #print(message)
         return message
 
+    """
     def send_message(self, client_id, message, to_encrypt):
         if to_encrypt:
             message = json.dumps(message)
@@ -338,6 +344,27 @@ class FlexibleRouterServerService:
             json_message = json.dumps(message)
             self.socket.send_multipart([client_id.encode(),"".encode(), json_message.encode()])
             self.logger.info(f" WSM - simple_route_server_service - Sent NOT encrypted to {client_id}")
+    """
+
+    def send_message(self, client_id, message, to_encrypt):
+        try:
+            if to_encrypt:
+                message = json.dumps(message)
+                encrypted = self.encrypt_message(client_id, message)
+                data = encrypted.encode()
+            else:
+                data = json.dumps(message).encode()
+
+            self.socket.send_multipart([client_id.encode(), b"", data])
+            status = "ENCRYPTED" if to_encrypt else "PLAIN"
+            self.logger.info(f"[ZMQ] Sent {status} message to {client_id}")
+        except ZMQError as e:
+            if e.errno == zmq.EHOSTUNREACH:
+                self.logger.warning(f"[ZMQ] Client {client_id} unreachable. Removing from memory.")
+                self.active_identities.discard(client_id)
+            else:
+                self.logger.error(f"[ZMQ] Error sending to {client_id}: {e}")
+
 
 
     def stop(self):
