@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 16.4
--- Dumped by pg_dump version 16.4
+-- Dumped from database version 13.20
+-- Dumped by pg_dump version 13.20
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -47,7 +47,7 @@ CREATE SEQUENCE public.certificate_authority_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.certificate_authority_id_seq OWNER TO wsm;
+ALTER TABLE public.certificate_authority_id_seq OWNER TO wsm;
 
 --
 -- Name: certificate_authority_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wsm
@@ -77,6 +77,42 @@ CREATE TABLE public.client (
 ALTER TABLE public.client OWNER TO wsm;
 
 --
+-- Name: configuration; Type: TABLE; Schema: public; Owner: wsm
+--
+
+CREATE TABLE public.configuration (
+    id integer NOT NULL,
+    grace_login integer DEFAULT 5 NOT NULL,
+    create_timestamp timestamp with time zone NOT NULL,
+    update_timestamp timestamp with time zone NOT NULL
+);
+
+
+ALTER TABLE public.configuration OWNER TO wsm;
+
+--
+-- Name: configuration_id_seq; Type: SEQUENCE; Schema: public; Owner: wsm
+--
+
+CREATE SEQUENCE public.configuration_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.configuration_id_seq OWNER TO wsm;
+
+--
+-- Name: configuration_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wsm
+--
+
+ALTER SEQUENCE public.configuration_id_seq OWNED BY public.configuration.id;
+
+
+--
 -- Name: events; Type: TABLE; Schema: public; Owner: wsm
 --
 
@@ -104,7 +140,7 @@ CREATE SEQUENCE public.events_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.events_id_seq OWNER TO wsm;
+ALTER TABLE public.events_id_seq OWNER TO wsm;
 
 --
 -- Name: events_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wsm
@@ -141,7 +177,7 @@ CREATE SEQUENCE public.exceptions_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.exceptions_id_seq OWNER TO wsm;
+ALTER TABLE public.exceptions_id_seq OWNER TO wsm;
 
 --
 -- Name: exceptions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wsm
@@ -186,13 +222,51 @@ CREATE SEQUENCE public.extended_workhours_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.extended_workhours_id_seq OWNER TO wsm;
+ALTER TABLE public.extended_workhours_id_seq OWNER TO wsm;
 
 --
 -- Name: extended_workhours_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wsm
 --
 
 ALTER SEQUENCE public.extended_workhours_id_seq OWNED BY public.extended_workhours.id;
+
+
+--
+-- Name: flex_time; Type: TABLE; Schema: public; Owner: wsm
+--
+
+CREATE TABLE public.flex_time (
+    id integer NOT NULL,
+    std_wrk_id integer,
+    work_time_type character varying(10) NOT NULL,
+    work_time timestamp with time zone NOT NULL,
+    create_timestamp timestamp with time zone NOT NULL,
+    update_timestamp timestamp with time zone NOT NULL
+);
+
+
+ALTER TABLE public.flex_time OWNER TO wsm;
+
+--
+-- Name: flex_time_id_seq; Type: SEQUENCE; Schema: public; Owner: wsm
+--
+
+CREATE SEQUENCE public.flex_time_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.flex_time_id_seq OWNER TO wsm;
+
+--
+-- Name: flex_time_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wsm
+--
+
+ALTER SEQUENCE public.flex_time_id_seq OWNED BY public.flex_time.id;
 
 
 --
@@ -226,7 +300,7 @@ CREATE SEQUENCE public.holidays_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.holidays_id_seq OWNER TO wsm;
+ALTER TABLE public.holidays_id_seq OWNER TO wsm;
 
 --
 -- Name: holidays_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wsm
@@ -264,7 +338,7 @@ CREATE SEQUENCE public.messages_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.messages_id_seq OWNER TO wsm;
+ALTER TABLE public.messages_id_seq OWNER TO wsm;
 
 --
 -- Name: messages_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wsm
@@ -305,34 +379,26 @@ CREATE TABLE public.standard_workhours (
     st character varying(35) NOT NULL,
     c character varying(100) NOT NULL,
     weekdays character varying(7) NOT NULL,
-    journey VARCHAR(15) NOT NULL DEFAULT 'FIXED_TIME',
     session_termination_action character varying(15),
     cn character varying(240) NOT NULL,
     l character varying(240),
     unrestricted boolean,
     enable boolean NOT NULL,
-    block_station_during_interval BOOLEAN NOT NULL DEFAULT false,
-    block_station_during_interval_in_minutes INTEGER,
     deactivation_date timestamp with time zone,
     create_timestamp timestamp with time zone NOT NULL,
-    update_timestamp timestamp with time zone NOT NULL
+    update_timestamp timestamp with time zone NOT NULL,
+    journey character varying(15) DEFAULT 'FIXED_TIME'::character varying NOT NULL,
+    block_station_during_interval boolean DEFAULT false NOT NULL,
+    block_station_during_interval_in_minutes integer,
+    lock boolean DEFAULT false NOT NULL,
+    active_directory_account_status boolean,
+    disable_reason character varying,
+    formatted_work_hours text,
+    logon_hours text
 );
 
 
 ALTER TABLE public.standard_workhours OWNER TO wsm;
-
-CREATE TABLE IF NOT EXISTS flex_time (
-	id serial4 NOT NULL,
-	std_wrk_id int4 NULL,
-	work_time_type VARCHAR(10) NOT NULL,
-	work_time timestamptz NOT NULL,
-    work_time_type VARCHAR(150) NOT NULL,
-	create_timestamp timestamptz NOT NULL,
-	update_timestamp timestamptz NOT NULL,
-	CONSTRAINT flex_time_pkey PRIMARY KEY (id)
-);
-
-ALTER TABLE public.flex_time OWNER TO wsm;
 
 --
 -- Name: standard_workhours_id_seq; Type: SEQUENCE; Schema: public; Owner: wsm
@@ -347,7 +413,7 @@ CREATE SEQUENCE public.standard_workhours_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.standard_workhours_id_seq OWNER TO wsm;
+ALTER TABLE public.standard_workhours_id_seq OWNER TO wsm;
 
 --
 -- Name: standard_workhours_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wsm
@@ -385,7 +451,7 @@ CREATE SEQUENCE public.target_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.target_id_seq OWNER TO wsm;
+ALTER TABLE public.target_id_seq OWNER TO wsm;
 
 --
 -- Name: target_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wsm
@@ -423,7 +489,7 @@ CREATE SEQUENCE public.target_status_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.target_status_id_seq OWNER TO wsm;
+ALTER TABLE public.target_status_id_seq OWNER TO wsm;
 
 --
 -- Name: target_status_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wsm
@@ -433,10 +499,52 @@ ALTER SEQUENCE public.target_status_id_seq OWNED BY public.target_status.id;
 
 
 --
+-- Name: users; Type: TABLE; Schema: public; Owner: wsm
+--
+
+CREATE TABLE public.users (
+    id integer NOT NULL,
+    username character varying NOT NULL,
+    hashed_password character varying NOT NULL
+);
+
+
+ALTER TABLE public.users OWNER TO wsm;
+
+--
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: wsm
+--
+
+CREATE SEQUENCE public.users_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.users_id_seq OWNER TO wsm;
+
+--
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wsm
+--
+
+ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
+
+
+--
 -- Name: certificate_authority id; Type: DEFAULT; Schema: public; Owner: wsm
 --
 
 ALTER TABLE ONLY public.certificate_authority ALTER COLUMN id SET DEFAULT nextval('public.certificate_authority_id_seq'::regclass);
+
+
+--
+-- Name: configuration id; Type: DEFAULT; Schema: public; Owner: wsm
+--
+
+ALTER TABLE ONLY public.configuration ALTER COLUMN id SET DEFAULT nextval('public.configuration_id_seq'::regclass);
 
 
 --
@@ -458,6 +566,13 @@ ALTER TABLE ONLY public.exceptions ALTER COLUMN id SET DEFAULT nextval('public.e
 --
 
 ALTER TABLE ONLY public.extended_workhours ALTER COLUMN id SET DEFAULT nextval('public.extended_workhours_id_seq'::regclass);
+
+
+--
+-- Name: flex_time id; Type: DEFAULT; Schema: public; Owner: wsm
+--
+
+ALTER TABLE ONLY public.flex_time ALTER COLUMN id SET DEFAULT nextval('public.flex_time_id_seq'::regclass);
 
 
 --
@@ -496,11 +611,10 @@ ALTER TABLE ONLY public.target_status ALTER COLUMN id SET DEFAULT nextval('publi
 
 
 --
--- Name: alembic_version alembic_version_pkc; Type: CONSTRAINT; Schema: public; Owner: wsm
+-- Name: users id; Type: DEFAULT; Schema: public; Owner: wsm
 --
 
-ALTER TABLE ONLY public.alembic_version
-    ADD CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num);
+ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
 
 
 --
@@ -528,6 +642,14 @@ ALTER TABLE ONLY public.client
 
 
 --
+-- Name: configuration configuration_pkey; Type: CONSTRAINT; Schema: public; Owner: wsm
+--
+
+ALTER TABLE ONLY public.configuration
+    ADD CONSTRAINT configuration_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: events events_pkey; Type: CONSTRAINT; Schema: public; Owner: wsm
 --
 
@@ -549,6 +671,14 @@ ALTER TABLE ONLY public.exceptions
 
 ALTER TABLE ONLY public.extended_workhours
     ADD CONSTRAINT extended_workhours_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: flex_time flex_time_pkey; Type: CONSTRAINT; Schema: public; Owner: wsm
+--
+
+ALTER TABLE ONLY public.flex_time
+    ADD CONSTRAINT flex_time_pkey PRIMARY KEY (id);
 
 
 --
@@ -616,6 +746,22 @@ ALTER TABLE ONLY public.target_status
 
 
 --
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: wsm
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users users_username_key; Type: CONSTRAINT; Schema: public; Owner: wsm
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_username_key UNIQUE (username);
+
+
+--
 -- Name: client client_certificate_authority_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wsm
 --
 
@@ -629,6 +775,14 @@ ALTER TABLE ONLY public.client
 
 ALTER TABLE ONLY public.extended_workhours
     ADD CONSTRAINT extended_workhours_std_wrk_id_fkey FOREIGN KEY (std_wrk_id) REFERENCES public.standard_workhours(id);
+
+
+--
+-- Name: flex_time flex_time_std_wrk_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wsm
+--
+
+ALTER TABLE ONLY public.flex_time
+    ADD CONSTRAINT flex_time_std_wrk_id_fkey FOREIGN KEY (std_wrk_id) REFERENCES public.standard_workhours(id);
 
 
 --
@@ -661,8 +815,6 @@ ALTER TABLE ONLY public.target_status
 
 ALTER TABLE ONLY public.target_status
     ADD CONSTRAINT target_status_std_wrk_id_fkey FOREIGN KEY (std_wrk_id) REFERENCES public.standard_workhours(id);
-
-ALTER TABLE ONLY public.flex_time ADD CONSTRAINT flex_time_std_wrk_id_fkey FOREIGN KEY (std_wrk_id) REFERENCES public.standard_workhours(id);
 
 
 --

@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 16.4
--- Dumped by pg_dump version 16.4
+-- Dumped from database version 13.20
+-- Dumped by pg_dump version 13.20
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -38,7 +38,8 @@ CREATE TABLE public.session_audit (
     os_name character varying(50),
     ip_address character varying(100) NOT NULL,
     client_version character varying(50) NOT NULL,
-    agent_info character varying(50)
+    agent_info character varying(50),
+    audit_source text
 );
 
 
@@ -57,7 +58,7 @@ CREATE SEQUENCE public.session_audit_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.session_audit_id_seq OWNER TO wsm;
+ALTER TABLE public.session_audit_id_seq OWNER TO wsm;
 
 --
 -- Name: session_audit_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wsm
