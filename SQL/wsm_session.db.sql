@@ -310,44 +310,6 @@ ALTER SEQUENCE public.holidays_id_seq OWNED BY public.holidays.id;
 
 
 --
--- Name: messages; Type: TABLE; Schema: public; Owner: wsm
---
-
-CREATE TABLE public.messages (
-    id integer NOT NULL,
-    std_wrk_id integer,
-    uid character varying(50) NOT NULL,
-    message character varying(200) NOT NULL,
-    create_timestamp timestamp with time zone NOT NULL,
-    update_timestamp timestamp with time zone NOT NULL
-);
-
-
-ALTER TABLE public.messages OWNER TO wsm;
-
---
--- Name: messages_id_seq; Type: SEQUENCE; Schema: public; Owner: wsm
---
-
-CREATE SEQUENCE public.messages_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.messages_id_seq OWNER TO wsm;
-
---
--- Name: messages_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wsm
---
-
-ALTER SEQUENCE public.messages_id_seq OWNED BY public.messages.id;
-
-
---
 -- Name: sessions; Type: TABLE; Schema: public; Owner: wsm
 --
 
@@ -583,13 +545,6 @@ ALTER TABLE ONLY public.holidays ALTER COLUMN id SET DEFAULT nextval('public.hol
 
 
 --
--- Name: messages id; Type: DEFAULT; Schema: public; Owner: wsm
---
-
-ALTER TABLE ONLY public.messages ALTER COLUMN id SET DEFAULT nextval('public.messages_id_seq'::regclass);
-
-
---
 -- Name: standard_workhours id; Type: DEFAULT; Schema: public; Owner: wsm
 --
 
@@ -698,14 +653,6 @@ ALTER TABLE ONLY public.holidays
 
 
 --
--- Name: messages messages_pkey; Type: CONSTRAINT; Schema: public; Owner: wsm
---
-
-ALTER TABLE ONLY public.messages
-    ADD CONSTRAINT messages_pkey PRIMARY KEY (id);
-
-
---
 -- Name: sessions sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: wsm
 --
 
@@ -783,14 +730,6 @@ ALTER TABLE ONLY public.extended_workhours
 
 ALTER TABLE ONLY public.flex_time
     ADD CONSTRAINT flex_time_std_wrk_id_fkey FOREIGN KEY (std_wrk_id) REFERENCES public.standard_workhours(id);
-
-
---
--- Name: messages messages_std_wrk_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: wsm
---
-
-ALTER TABLE ONLY public.messages
-    ADD CONSTRAINT messages_std_wrk_id_fkey FOREIGN KEY (std_wrk_id) REFERENCES public.standard_workhours(id);
 
 
 --
